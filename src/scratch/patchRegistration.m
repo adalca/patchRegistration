@@ -1,33 +1,27 @@
-%%
-addpath(genpath('C:\Users\adalca\Dropbox (Personal)\MATLAB\external_toolboxes\demons')); % for iminterpolate
+%% preamble
+% TODOS: use atlsa via BUCKNER_ATLAS_PATH
+
+% parameters
+resize = 128 * ones(1,3);
 
 %% load data
-% load data
-BUCKNER_PATH = 'D:\Research\patchSynthesis\data\buckner';
-BUCKNER_ATLAS_PATH = 'D:\Research\data\buckner\atlases\';
-% nii1 = loadNii(fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61.nii.gz'));
-% nii1seg = loadNii(fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61_seg.nii.gz'));
-% BUCKNER_ATLAS_PATH
-nii2 = loadNii(fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61.nii.gz'));
-nii2seg = loadNii(fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61_seg.nii.gz'));
+% filenames. TODO: use medialDataset
+file1 = fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61.nii.gz');
+mask1 = fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61_seg.nii.gz');
+file2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61.nii.gz');
+mask2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61_seg.nii.gz');
 
-% extract volumes
+% extract bounding box for brain volumes
+nii1seg = loadNii(nii1maskname);
+nii2seg = loadNii(nii2maskname);
 [~, ~, range] = boundingBox(nii1seg.img > 0 | nii2seg.img > 0);
 
-vol1 = nii1.img;
-vol1(nii1seg.img == 0) = 0;
-croppedVol1 = vol1(range{:});
-croppedVol1seg = nii1seg.img(range{:});
-vol1 = volresize(double(vol1)/255, [128, 128, 128]);
+% extract prepared volumes.
+vol1 = sim.loadNii(file1, 'mask', mask1, 'crop', range, 'uint82double', true, 'resize', resize);
+vol2 = sim.loadNii(file2, 'mask', mask2, 'crop', range, 'uint82double', true, 'resize', resize);
 
-vol2 = nii2.img;
-vol2(nii2seg.img == 0) = 0;
-croppedVol2 = vol2(range{:});
-croppedVol2seg = nii2seg.img(range{:});
-vol2 = volresize(double(vol2)/255, [128, 128, 128]);
-
-view3Dopt(vol1, vol2, volresize(croppedVol1seg, [128, 128, 128]), ...
-    volresize(croppedVol2seg, [128, 128, 128]));
+% visualize extracted volumes.
+view3Dopt(vol1, vol2);
 
 %% visualize a quick patch search for sub-volumes
 % select sub volumes
