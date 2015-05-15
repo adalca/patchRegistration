@@ -2,7 +2,9 @@
 % TODOS: use atlsa via BUCKNER_ATLAS_PATH
 
 % parameters
-resize = 128 * ones(1,3);
+patchSize = [5, 5, 5];
+resize = 64 * ones(1,3);
+smallvolCrop = {15:35,15:35,15:35};
 
 %% load data
 % filenames. TODO: use medialDataset
@@ -12,27 +14,30 @@ file2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61.ni
 mask2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61_seg.nii.gz');
 
 % extract bounding box for brain volumes
-nii1seg = loadNii(nii1maskname);
-nii2seg = loadNii(nii2maskname);
+nii1seg = loadNii(mask1);
+nii2seg = loadNii(mask2);
 [~, ~, range] = boundingBox(nii1seg.img > 0 | nii2seg.img > 0);
 
 % extract prepared volumes.
 vol1 = sim.loadNii(file1, 'mask', mask1, 'crop', range, 'uint82double', true, 'resize', resize);
 vol2 = sim.loadNii(file2, 'mask', mask2, 'crop', range, 'uint82double', true, 'resize', resize);
+v1sel = vol1(smallvolCrop{:});
+v2sel = vol2(smallvolCrop{:});
 
 % visualize extracted volumes.
 view3Dopt(vol1, vol2);
+view3Dopt(v1sel, v2sel);
 
-%% visualize a quick patch search for sub-volumes
-% select sub volumes
-v1sel = vol1(25:75,25:75,54:74);
-v2sel = vol2(25:75,25:75,54:74);
-[patches, pDst, pIdx, pRefIdxs, srcgridsize] = patchlib.volknnsearch(v1sel, v2sel, [5, 5, 5], 'half', 'K', 1, 'local', 10);
+%% visualize displacement in quick patch search for sub-volumes
+% TODO - maybe move this to an example in patchlib. and reference here as a good thing to look up.
+% do a quick local patch search and get the nearest neighbor
+[~, ~, pIdx, ~, srcgridsize, refgridsize] = ...
+    patchlib.volknnsearch(v1sel, v2sel, patchSize, 'sliding', 'K', 1, 'local', 10);
 
-% visualize in 3D
-[x, y, z] = ind2sub(srcgridsize, pIdx);
-[xi] = size2ndgrid(srcgridsize);
-view3Dopt(v1sel, reshape(x, srcgridsize)-xi{1}, reshape(y, srcgridsize)-xi{2}, reshape(z, srcgridsize)-xi{3});
+% visualize the location in 3D
+srcgrididx = patchlib.grid(size(v1sel), patchSize, 'sliding');
+disp = patchlib.corresp2disp(size(v1sel), refgridsize, pIdx, 'srcGridIdx', srcgrididx, 'reshape', true);
+view3Dopt(v1sel, disp{:});
 
 %% 3D registration with MRF overlap
 
