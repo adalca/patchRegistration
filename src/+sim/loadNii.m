@@ -12,7 +12,7 @@ function vol = loadNii(niifile, varargin)
 %
 % Contact: adalca at csail.mit.edu
 
-    % input parser
+    % input parsing
     p = inputParser();
     p.addRequired('niifile', @(x) ischar(x) || isstruct(x));
     p.addParameter('mask', [], @(x) ischar(x) || isnumeric(x) || isstruct(x));
@@ -21,13 +21,16 @@ function vol = loadNii(niifile, varargin)
     p.addParameter('uint82double', false, @islogical);
     p.parse(niifile, varargin{:});
     
+    % get volume
     nii = loadNii(niifile);
     vol = nii.img;
     
-    if p.Results.uint2double
+    % uint8 --> double
+    if p.Results.uint82double
         vol = double(nii.img)/255;
     end
     
+    % masking 
     if ~isempty(p.Results.mask)
         if ischar(p.Results.mask)
             mnii = loadNii(p.Results.mask);
@@ -41,13 +44,14 @@ function vol = loadNii(niifile, varargin)
     else
         mask = true(size(vol));
     end
-    
     vol(~mask) = 0;
     
+    % croping
     if ~isempty(p.Results.crop)
         vol = vol(p.Results.crop{:});
     end
     
+    % resizing
     if ~isempty(p.Results.resize)
         vol = volresize(vol, p.Results.resize);
     end
