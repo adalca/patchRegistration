@@ -19,7 +19,7 @@ function [I_2, I_DX, I_DY, I_DZ] = ball3D(I_1, varargin)
     I_DY = I_DX;
     
     % warp the image I_1 according to the I_Ds to create I_2
-    I_2 = iminterpolate3D(I_1, I_DX, I_DY, I_DZ);
+    I_2 = volwarp(I_1, {I_DX, I_DY, I_DZ}, 'interpmethod', 'nearest');
          
     % show the original image, the final image, and the two displacement
     % images
