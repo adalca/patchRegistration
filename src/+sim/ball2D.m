@@ -10,10 +10,11 @@ function [I_2, I_DX, I_DY] = ball2D(I_1, varargin)
     
     % create a ball of ones in the center of the displacement images for x
     % and y; 
-    radius = 5;
+    radius = 6;
     
-    [xx, yy] = meshgrid(1:W, 1:H);
-    I_DX = sqrt((xx-W/2).^2+(yy-W/2).^2)<=radius;   
+    [xx, yy] = ndgrid(1:W, 1:H);
+    I_DX = sqrt((xx-W/2).^2+(yy-H/2).^2)<=radius; 
+    I_DX = I_DX + (sqrt((xx-W/2).^2+(yy-H/2).^2)<=radius/2);  
     I_DY = I_DX;
     
     % warp the image I_1 according to the I_Ds to create I_2

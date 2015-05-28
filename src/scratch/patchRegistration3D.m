@@ -14,22 +14,12 @@ function patchRegistration3D(exid, varargin)
         I_1 = volresize(imd(310:330, 310:330, 1:21), [21, 21, 21]);
     else
         %manual image
-        I_1 = zeros(21,21,21);
-        for i = 1:21
-            for j = 1:21
-                for k = 1:21
-                    if i<11 && j<11
-                        I_1(i,j,k) = 0;
-                    elseif i<11 && j>=11
-                        I_1(i,j,k) = 0.33;
-                    elseif i>=11 && j<11
-                        I_1(i,j,k) = 0.66;
-                    else
-                        I_1(i,j,k) = 1;
-                    end
-                end
-            end
-        end
+        W = 21;
+        H = 21;
+        D = 21;
+        I_1 = zeros(W, H, D);
+        [xx, yy, zz] = ndgrid(1:W, 1:H, 1:D);
+        I_1 = I_1 + 1*(xx >= W/2 & yy >= H/2 & zz) + 0.33*(xx < W/2 & yy >= H/2 & zz) + 0.66*(xx >= W/2 & yy < H/2 & zz);
     end
     
     [I_2, I_DX, I_DY, I_DZ] = sim.ball3D(I_1);
@@ -38,7 +28,7 @@ function patchRegistration3D(exid, varargin)
     pH = patchSize(2);
     pD = patchSize(3);
     warning('We should use 1, but we are using 2 as a band aid.')
-    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 2, 'location', 0.1, 'excludePatches', true, 'K', 27);
+    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 2, 'location', 0.45, 'excludePatches', true, 'K', 27);
     patches = patchlib.lib2patches(pDst, pIdx);
     
     usemex = exist('pdist2mex', 'file') == 3;
@@ -46,7 +36,7 @@ function patchRegistration3D(exid, varargin)
     
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize , 'edgeDst', edgefn, ...
-            'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
+            'lambda_node', 0.1, 'lambda_edge', 0.01, 'pIdx', pIdx, 'refgridsize', refgridsize);
         
     disp = patchlib.corresp2disp(srcgridsize, refgridsize, pi, 'reshape', true);
     DX_final = padarray(disp{1}, [pH-1 pW-1 pD-1], 0, 'post');
@@ -56,17 +46,17 @@ function patchRegistration3D(exid, varargin)
         
     % display results
         
-    subplot(4, 3, 1); imagesc(I_1(:,:,2)); colormap gray; title('moving image'); axis off;
-    subplot(4, 3, 2); imagesc(I_2(:,:,2)); colormap gray; title('target image'); axis off;
-    subplot(4, 3, 3); imagesc(I_3(:,:,2)); colormap gray; title('registrated image'); axis off;
+    subplot(4, 3, 1); imagesc(I_1(:,:,11)); colormap gray; title('moving image'); axis off;
+    subplot(4, 3, 2); imagesc(I_2(:,:,11)); colormap gray; title('target image'); axis off;
+    subplot(4, 3, 3); imagesc(I_3(:,:,11)); colormap gray; title('registrated image'); axis off;
     
-    subplot(4, 3, 4); imagesc(I_DX(:,:,2)); colormap gray; title('correct disp x'); axis off;
-    subplot(4, 3, 5); imagesc(I_DY(:,:,2)); colormap gray; title('correct disp y'); axis off;
-    subplot(4, 3, 6); imagesc(I_DZ(:,:,2)); colormap gray; title('correct disp z'); axis off;
+    subplot(4, 3, 4); imagesc(I_DX(:,:,11)); colormap gray; title('correct disp x'); axis off;
+    subplot(4, 3, 5); imagesc(I_DY(:,:,11)); colormap gray; title('correct disp y'); axis off;
+    subplot(4, 3, 6); imagesc(I_DZ(:,:,11)); colormap gray; title('correct disp z'); axis off;
     
-    subplot(4, 3, 7); imagesc(disp{1}(:,:,2)); colormap gray; title('estimated disp x'); axis off;
-    subplot(4, 3, 8); imagesc(disp{2}(:,:,2)); colormap gray; title('estimated disp y'); axis off;
-    subplot(4, 3, 9); imagesc(disp{3}(:,:,2)); colormap gray; title('estimated disp z'); axis off;
+    subplot(4, 3, 7); imagesc(disp{1}(:,:,11)); colormap gray; title('estimated disp x'); axis off;
+    subplot(4, 3, 8); imagesc(disp{2}(:,:,11)); colormap gray; title('estimated disp y'); axis off;
+    subplot(4, 3, 9); imagesc(disp{3}(:,:,11)); colormap gray; title('estimated disp z'); axis off;
 end
 
 

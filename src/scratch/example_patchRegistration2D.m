@@ -2,8 +2,9 @@ function example_patchRegistration2D(exid)
     %Run patchlib.volknnsearch and lib2patches to get mrf unary potentials automatically. 
     %Then call patchmrf and use patchlib.correspdst for the pair potentials. 
     %Then repeat
-    
-    I_1 = zeros(21, 21);
+    W = 41;
+    H = 41;
+    I_1 = zeros(W, H);
     if exid == 1
         I_1(3, 3) = 1; % get an image with a bump
         I_DX = I_1;
@@ -11,19 +12,8 @@ function example_patchRegistration2D(exid)
         I_2 = volwarp(I_1, {I_DX, I_DY}); % move the bump by DX, DY
     else
     %manual image
-        for i = 1:21
-            for j = 1:21
-                if i<11 && j<11
-                    I_1(i,j) = 0;
-                elseif i<11 && j>=11
-                    I_1(i,j) = 0.33;
-                elseif i>=11 && j<11
-                    I_1(i,j) = 0.66;
-                else
-                    I_1(i,j) = 1;
-                end
-            end
-        end
+        [xx, yy] = ndgrid(1:W, 1:H);
+        I_1 = 1*(xx >= W/2 & yy >= H/2) + 0.33*(xx < W/2 & yy >= H/2) + 0.66*(xx >= W/2 & yy < H/2);
         [I_2, I_DX, I_DY] = sim.ball2D(I_1);
     end   
     
@@ -32,7 +22,7 @@ function example_patchRegistration2D(exid)
     pH = patchSize(2);
 
     warning('We should use 1, but we are using 2 as a band aid.')
-    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 2, 'location', 0.1, 'excludePatches', true, 'K', 9);
+    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 2, 'location', 0.45, 'excludePatches', true, 'K', 9);
     patches = patchlib.lib2patches(pDst, pIdx);
     
     usemex = exist('pdist2mex', 'file') == 3;
@@ -40,12 +30,12 @@ function example_patchRegistration2D(exid)
     
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize , 'edgeDst', edgefn, ...
-            'lambda_node', 0.2, 'lambda_edge', 0, 'pIdx', pIdx, 'refgridsize', refgridsize);
+            'lambda_node', 1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
         
     disp = patchlib.corresp2disp(srcgridsize, refgridsize, pi, 'reshape', true);
     DX_final = padarray(disp{1}, [pH-1 pW-1], 0, 'post');
     DY_final = padarray(disp{2}, [pH-1 pW-1], 0, 'post');
-    I_3 = volwarp(I_1, {DX_final, DY_final});
+    I_3 = volwarp(I_1, {DX_final, DY_final}, 'interpmethod', 'nearest');
         
     % display results
         
