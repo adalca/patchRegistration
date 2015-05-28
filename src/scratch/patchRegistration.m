@@ -1,10 +1,11 @@
 %% preamble
 % TODOS: use atlsa via BUCKNER_ATLAS_PATH
+warning('work with ATLAS');
 
 % parameters
-patchSize = [5, 5, 5];
-resize = 64 * ones(1,3);
-smallvolCrop = {15:35,15:35,15:35};
+patchSize = [3, 3, 3];
+resize = 32 * ones(1,3);
+smallvolCrop = {1:32, 1:32, 1:32};
 
 %% load data
 % filenames. TODO: use medialDataset
@@ -20,148 +21,85 @@ nii2seg = loadNii(mask2);
 
 % extract prepared volumes.
 vol1 = sim.loadNii(file1, 'mask', mask1, 'crop', range, 'uint82double', true, 'resize', resize);
+vol1seg = sim.loadNii(mask1, 'mask', mask1, 'crop', range, 'resize', resize, 'resizeInterpMethod', 'nearest');
 vol2 = sim.loadNii(file2, 'mask', mask2, 'crop', range, 'uint82double', true, 'resize', resize);
+vol2seg = sim.loadNii(mask2, 'mask', mask2, 'crop', range, 'resize', resize, 'resizeInterpMethod', 'nearest');
+
+% extract even smaller volumes
 v1sel = vol1(smallvolCrop{:});
 v2sel = vol2(smallvolCrop{:});
+v1selseg = vol1seg(smallvolCrop{:});
+v2selseg = vol2seg(smallvolCrop{:});
 
 % visualize extracted volumes.
 view3Dopt(vol1, vol2);
 view3Dopt(v1sel, v2sel);
 
-%% visualize displacement in quick patch search for sub-volumes
-% TODO - maybe move this to an example in patchlib. and reference here as a good thing to look up.
-% do a quick local patch search and get the nearest neighbor
-[~, ~, pIdx, ~, srcgridsize, refgridsize] = ...
-    patchlib.volknnsearch(v1sel, v2sel, patchSize, 'sliding', 'K', 1, 'local', 10);
-
-% visualize the location in 3D
-srcgrididx = patchlib.grid(size(v1sel), patchSize, 'sliding');
-disp = patchlib.corresp2disp(size(v1sel), refgridsize, pIdx, 'srcGridIdx', srcgrididx, 'reshape', true);
-view3Dopt(v1sel, disp{:});
-
 %% 3D registration with MRF overlap
-
-% initialize
-newsize = 30; % TODO: warning: croppedVol1/2 can be different size so this resizing is tricky
-warning('do ATL');
-v1sel = volblur(volresize(double(croppedVol1)/255, [1, 1, 1]*newsize), 1);
-v1selseg = volresize(double(croppedVol1seg)/255, [1, 1, 1]*newsize, 'nearest');
-v2sel = volblur(volresize(double(croppedVol2)/255, [1, 1, 1]*newsize), 1);
-v2selseg = volresize(double(croppedVol2seg)/255, [1, 1, 1]*newsize, 'nearest');
-ref = v2sel;
-patchSize = [5, 5, 5];
-patchOverlap = 'half';
+% setup
+patchOverlap = 'sliding';
+usemex = exist('pdist2mex', 'file') == 3;
+edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], usemex); % TODO:force no cross-over?
 
 % patch search
 tic;
 [patches, pDst, pIdx, pRefIdxs, srcgridsize, refgridsize] = patchlib.volknnsearch(v1sel, ...
-    ref, patchSize, patchOverlap, 'K', 20, 'location', 0.01, 'local', 5); %'mask', mask, %'NSmethod', 'kdtree'
+    v2sel, patchSize, patchOverlap, 'K', 27, 'location', 0.01, 'local', 1, 'fillK', true); 
 toc;
 
 % MRF on overlap
 tic;
-usemex = exist('pdist2mex', 'file') == 3;
-edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], usemex); 
-edgefn = @(a1,a2,a3,a4) discretecorrespdst(a1, a2, a3, a4, [], usemex); 
 [qp, ~, ~, ~, pi] = ...
     patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap , 'edgeDst', edgefn, ...
-    'lambda_node', 0.1, 'lambda_edge', 100, 'pIdx', pIdx, 'refgridsize', refgridsize);
-resimg3 = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
+    'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
 idx = patchlib.grid(size(v1sel), patchSize, patchOverlap);
 disp = patchlib.corresp2disp(size(v1sel), refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
-view3Dopt(v1sel, resimg3, v2sel, disp{:})
+disp = patchlib.interpDisp(disp, patchSize, patchOverlap, size(v1sel)); % interpolate displacement
+for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
 toc;
 
-% interpolate displacement
-idxsub = patchlib.grid(size(v1sel), patchSize, patchOverlap, 'sub');
-assert(all(size(idxsub{1}) == srcgridsize));
-[xi, yi, zi] = ndgrid(1:size(v1sel, 1), 1:size(v1sel, 2), 1:size(v1sel, 3));
-disp2 = {};
-for i = 1:numel(disp)
-    disp2{i} = interpn(idxsub{:}, disp{i}, xi, yi, zi);
-end
-view3Dopt(v1sel, resimg3, v2sel, disp2{:})
+% recreate volumes.
+v1wfwd = volwarp(v1sel, disp); % linear by default
+v2wbwd = volwarp(v2sel, disp, 'backward'); % linear by default
+% TODO: work with quilts as well?
+%   v1quiltfromv2 = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
 
-% translate im2sel via new disp (maybe)
-v2selmoved = iminterpolate(v2sel, disp2{2}, disp2{1}, disp2{3});
-v2selsegmoved = iminterpolate(v2selseg, disp2{2}, disp2{1}, disp2{3}, 'nearest');
-v2selsegmoved(isnan(v2selsegmoved)) = 0;
-
-view3Dopt(v1sel, v2selmoved, v2sel, v1selseg, v2selsegmoved, v2selseg)
+% visualize warps
+view3Dopt(v1sel, v2sel, v1wfwd, v2wbwd);
 
 % compute dice of v1selseg and: v2selsegmoved and v2selseg.
+v1segwfwd = volwarp(v1selseg, disp, 'interpmethod', 'nearest');
+v2segwbwd = volwarp(v2selseg, disp, 'backward', 'interpmethod', 'nearest');
 d1 = dice(v1selseg, v2selseg, 'all');
-d2 = dice(v1selseg, v2selsegmoved, 'all');
-figure(); boxplot(d2' - d1');
+d2 = dice(v1selseg, v2segwbwd, 'all');
+d3 = dice(v2selseg, v1selseg, 'all');
+d4 = dice(v2selseg, v1segwfwd, 'all');
+figure(); boxplot([d2', d4'] - [d1', d3']);
 
-% TODO: upsample warp all the way to the original, and move segments at that level
-warpNew = warpresize(disp2, size(croppedVol1seg));
-v2fullsegmoved = iminterpolate(croppedVol2seg, warpNew{2}, warpNew{1}, warpNew{3}, 'nearest');
-v2fullmoved = iminterpolate(double(croppedVol2)/255, warpNew{2}, warpNew{1}, warpNew{3});
-d1 = dice(croppedVol1seg, croppedVol2seg, 'all');
-d2 = dice(croppedVol1seg, v2fullsegmoved, 'all');
+%% upsample the warp
 
-view3Dopt(croppedVol1, v2fullmoved, croppedVol2, croppedVol1seg, v2fullsegmoved, croppedVol2seg)
+% upsample warp all the way to the original, and move segments at that level
+% this only works if there was no smallvolCrop
+largeresize = 64*ones(1, 3);
+vol1large = sim.loadNii(file1, 'mask', mask1, 'crop', range, 'uint82double', true, 'resize', largeresize);
+vol1largeseg = sim.loadNii(mask1, 'mask', mask1, 'crop', range, 'resize', largeresize, 'resizeInterpMethod', 'nearest');
+vol2large = sim.loadNii(file2, 'mask', mask2, 'crop', range, 'uint82double', true, 'resize', largeresize);
+vol2largeseg = sim.loadNii(mask2, 'mask', mask2, 'crop', range, 'resize', largeresize, 'resizeInterpMethod', 'nearest');
+warpNew = warpresize(disp, size(vol1large));
 
+% move the images and visualize
+v1largewfwd = volwarp(vol1large, warpNew); % this takes forever
+v2largewbwd = volwarp(vol2large, warpNew, 'backward');
+view3Dopt(vol1large, vol2large, v1largewfwd, v2largewbwd);
 
-
-
-% TODO: move to atlas?
-
-
-% % patch quilt
-% resimg = patchlib.quilt(patches(:,:,1), srcgridsize, patchSize, patchOverlap);  
-% resimg2 = patchlib.quilt(patches, srcgridsize, patchSize, patchOverlap);  
-% disp = patchlib.corresp2disp(srcgridsize, refgridsize, pIdx(:, 1), 'reshape', true);
-% view3Dopt(v1sel, ref, resimg, disp{:});
-
-% warp result? via DEMONS function? First need to interpolate warps? need MRF for that.
-
-
-%% try using a mask?
-% IDEA: use masks to determine which patches to look up. only look up patches with high gradients.
-% setup a small window mask
-x = size2ndgrid(size(v1sel));
-xr = cellfun(@(x) abs(x - newsize/2) < 10, x, 'UniformOutput', false);
-mask = xr{1} & xr{2} & xr{3};
-
-% setup a gradient-based mask
-g3 = volGradients(v1sel, [3, 3, 3], 1, [1, 1, 1], 'cell');
-g5 = volGradients(v1sel, [5, 5, 5], 1, [1, 1, 1], 'cell');
-g = sum(abs(cat(4, g3{:})), 4);
-mask = g > 0.6;
-
-
-
-%% 3d registration.
-load vols;
-src = vols(1).full(75:175, 75:175, 75:175);
-ref = vols(2).full(75:175, 75:175, 75:175);
-% src = volresize(vols(1).full(50:200, 50:200, 50:200), [50, 50, 50]);
-% ref = volresize(vols(2).full(50:200, 50:200, 50:200), [50, 50, 50]);
-patchSize = [5, 5, 5];
-[patches, pDst, pIdx, pRefIdxs, srcgridsize, refgridsize] = ...
-    patchlib.volknnsearch(src, ref, patchSize , 'mrf', 'K', 50, 'location', 0.01, 'local', 3); 
-
-srcgrididx = patchlib.grid(size(src), patchSize, 'mrf');
-resimg = patchlib.quilt(patches(:,:,1), srcgridsize, patchSize, 'mrf');  
-disp = patchlib.corresp2disp(size(src), refgridsize, pIdx(:, 1), 'reshape', true, ...
-    'srcGridIdx', srcgrididx);
-
-edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], true);
-edgefn = @discretecorrespdst;
-[qp, ~, ~, pi] = ...
-    patchlib.patchmrf(patches, srcgridsize, pDst, patchSize , 'edgeDst', edgefn, ...
-    'lambda_node', 0.1, 'lambda_edge', 10, 'pIdx', pIdx, 'refgridsize', refgridsize, ...
-    'gridIdx', srcgrididx, 'srcSize', size(src));
-disp2 = patchlib.corresp2disp(size(src), refgridsize, pi, 'reshape', true, ...
-    'srcGridIdx', srcgrididx);
-resimg2 = patchlib.quilt(qp, srcgridsize, patchSize, 'mrf'); resimg(1, 1) = 0.7;
-
-%%
-% error('try slice registration and movign forward with demons move fwd code... or just... grab patches?')
-% error('moving forward is easy, see demons code. It''s just an interpolation method?');
-
+% see
+v1largesegwfwd = volwarp(vol1largeseg, warpNew, 'interpmethod', 'nearest');
+v2largesegwbwd = volwarp(vol2largeseg, warpNew, 'backward', 'interpmethod', 'nearest');
+d1 = dice(vol1largeseg, vol2largeseg, 'all');
+d2 = dice(vol1largeseg, v2largesegwbwd, 'all');
+d3 = dice(vol2largeseg, vol1largeseg, 'all');
+d4 = dice(vol2largeseg, v1largesegwfwd, 'all');
+figure(); boxplot([d2', d4'] - [d1', d3']);
 
 %% Other registration scripts
 patchRegistration_cardiac; % cardiac
