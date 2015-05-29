@@ -1,9 +1,9 @@
-function [I_2, I_D] = randShift(vol, sigma, verbose)
+function [I_2, I_D] = randShift(vol, sigma, maxDisp, maxDist, verbose)
     % This function creates a n-dimentional random displacement image, where `n = ndims(vol)`, 
     % and apply the displacement to `vol`. 
     %
     % 'sigma' is the sigma value to apply to the gaussian blur
-    %
+    % 'maxDisp' and 'maxDist' set the displacement interval for randomness
     % `verbose` is a `logical` on whether to display the results or not (only applicable if n == 2 or n == 3).
     
     
@@ -11,8 +11,6 @@ function [I_2, I_D] = randShift(vol, sigma, verbose)
     n = ndims(vol);
     s = size(vol);
     I_1 = vol;
-    maxDisp = 2;
-    maxDist = 2;
     
     % create the two displacement images with gaussian blur
     I_D = arrayfunc(@(x) (round(volblur((rand(s)*(maxDisp*2)-maxDist), sigma))), s);

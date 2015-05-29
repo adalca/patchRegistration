@@ -16,7 +16,12 @@ function example_patchRegistration2D(exid)
         %cat.jpg example
         imd = im2double(rgb2gray(imread('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\cat.jpg')));
         I_1 = volresize(imd, [81,81]);
-        [I_2, I_D] = sim.randShift(I_1, 1, false);
+        [I_2, I_D] = sim.randShift(I_1, 1, 4, 4, false);
+    elseif exid == 4
+        %Real example
+        nii = loadNii('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\robert\0002_orig.nii');
+        I_1 = volresize(double(nii.img(:, :, 100)), [81, 81]);
+        [I_2, I_D] = sim.randShift(I_1, 3, 4, 4, false);
     else
         %manual image quadrants
         [xx, yy] = ndgrid(1:W, 1:H);
