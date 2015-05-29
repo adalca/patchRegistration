@@ -2,8 +2,8 @@ function example_patchRegistration2D(exid)
     %Run patchlib.volknnsearch and lib2patches to get mrf unary potentials automatically. 
     %Then call patchmrf and use patchlib.correspdst for the pair potentials. 
     %Then repeat
-    W = 81;
-    H = 81;
+    W = 41;
+    H = 41;
     I_1 = zeros(W, H);
     if exid == 1
         I_1(3, 3) = 1; % get an image with a bump
@@ -13,18 +13,18 @@ function example_patchRegistration2D(exid)
         I_1 = rand(W, H);
         [I_2, I_D] = sim.ovoidShift(I_1, 6, false);
     elseif exid == 3
-        %cat.jpg example
+        %coloredSquare.jpg example
         imd = im2double(rgb2gray(imread('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\cat.jpg')));
-        I_1 = volresize(imd, [81,81]);
-        [I_2, I_D] = sim.randShift(I_1, 1, false);
+        I_1 = volresize(imd(100:140, 300:340), [41, 41]);
+        [I_2, I_D] = sim.ovoidShift(I_1, 6, false);
     else
-        %manual image quadrants
+    %manual image quadrants
         [xx, yy] = ndgrid(1:W, 1:H);
         I_1 = 1*(xx >= W/2 & yy >= H/2) + 0.33*(xx < W/2 & yy >= H/2) + 0.66*(xx >= W/2 & yy < H/2);
         [I_2, I_D] = sim.ovoidShift(I_1, 6, false);
     end   
     
-    patchSize = [3, 3];
+    patchSize = [5, 5];
     pW = patchSize(1);
     pH = patchSize(2);
 
@@ -37,7 +37,7 @@ function example_patchRegistration2D(exid)
     
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize , 'edgeDst', edgefn, ...
-            'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
+            'lambda_node', 0.01, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
         
     disp = patchlib.corresp2disp(srcgridsize, refgridsize, pi, 'reshape', true);
     DX_final = padarray(disp{1}, [pH-1 pW-1], 0, 'post');

@@ -6,7 +6,7 @@ function patchRegistration3D(exid, varargin)
     if exid == 1
         %Real example
         nii = loadNii('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\robert\0002_orig.nii');
-        I_1 = volresize(double(nii.img(1:135, 1:135, 1:135)), [21, 21, 21]);
+        I_1 = volresize(double(nii.img(115:135, 115:135, 115:135)), [21, 21, 21]);
     elseif exid == 2
         %coloredSquare.jpg example
         imd = im2double(imread('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\coloredSquare.jpg'));
@@ -22,13 +22,13 @@ function patchRegistration3D(exid, varargin)
         I_1 = I_1 + 1*(xx >= W/2 & yy >= H/2 & zz) + 0.33*(xx < W/2 & yy >= H/2 & zz) + 0.66*(xx >= W/2 & yy < H/2 & zz);
     end
     
-    [I_2, I_D] = sim.randShift(I_1, 1, false);
+    [I_2, I_D] = sim.ovoidShift(I_1, 6, false);
     patchSize = [3,3,3];
     pW = patchSize(1);
     pH = patchSize(2);
     pD = patchSize(3);
     warning('We should use 1, but we are using 2 as a band aid.')
-    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 1, 'location', 0.4, 'excludePatches', true, 'K', 27, 'fillK', true);
+    [~, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(I_1, I_2, patchSize, 'local', 2, 'location', 0.4, 'excludePatches', true, 'K', 27);
     patches = patchlib.lib2patches(pDst, pIdx);
     
     usemex = exist('pdist2mex', 'file') == 3;
@@ -36,7 +36,7 @@ function patchRegistration3D(exid, varargin)
     
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize , 'edgeDst', edgefn, ...
-            'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
+            'lambda_node', 0.4, 'lambda_edge', 0.4, 'pIdx', pIdx, 'refgridsize', refgridsize);
         
     disp = patchlib.corresp2disp(srcgridsize, refgridsize, pi, 'reshape', true);
     DX_final = padarray(disp{1}, [pH-1 pW-1 pD-1], 0, 'post');
@@ -48,7 +48,7 @@ function patchRegistration3D(exid, varargin)
     patchview.figure();
     subplot(4, 3, 1); imagesc(I_1(:,:,11)); colormap gray; title('moving image'); axis off;
     subplot(4, 3, 2); imagesc(I_2(:,:,11)); colormap gray; title('target image'); axis off;
-    subplot(4, 3, 3); imagesc(I_3(:,:,11)); colormap gray; title('registered image'); axis off;
+    subplot(4, 3, 3); imagesc(I_3(:,:,11)); colormap gray; title('registrated image'); axis off;
     
     subplot(4, 3, 4); imagesc(I_D{1}(:,:,11)); colormap gray; title('correct disp x'); axis off;
     subplot(4, 3, 5); imagesc(I_D{2}(:,:,11)); colormap gray; title('correct disp y'); axis off;
