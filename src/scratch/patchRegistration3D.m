@@ -37,7 +37,7 @@ function patchRegistration3D(exid, varargin)
             'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
         
     idx = patchlib.grid(size(I_1), patchSize, patchOverlap);
-    disp = patchlib.corresp2disp(srcgridsize, refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
+    disp = patchlib.corresp2disp(size(I_1), refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
     disp = patchlib.interpDisp(disp, patchSize, patchOverlap, size(I_1)); % interpolate displacement
     for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
 
