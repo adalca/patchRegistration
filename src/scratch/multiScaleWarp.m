@@ -23,6 +23,10 @@ function multiScaleWarp(exid)
         nii = loadNii('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\robert\0002_orig.nii');
         source = volresize(double(nii.img(:, :, 100)), [81, 81]);
         [target, ~] = sim.randShift(source, 3, 4, 4, false);
+    elseif exid == 5
+        % Checkboard example
+        source = checkerboard(10, 6, 6);
+        [target, ID] = sim.randShift(source, 3, 6, 6, false);
     else
         %manual image quadrants
         [xx, yy] = ndgrid(1:W, 1:H);
@@ -32,9 +36,10 @@ function multiScaleWarp(exid)
     
     patchSize = [3, 3];
     patchOverlap = 'sliding';
-    disp = {zeroes(size(source)), zeroes(size(source))};
+    disp = {zeros(size(source)), zeros(size(source))};
     
-    for s = 32:256
+    for s = 30:size(source, 1)
+        s
         % resizing the original source and target images to s
         targetS = volresize(target, [s, s]);
         sourceS = volresize(source, [s, s]);
@@ -46,8 +51,16 @@ function multiScaleWarp(exid)
         
         % find the new distances
         dispSWarped = singleScaleWarp(sourceSWarped, targetS, patchSize, patchOverlap, false);
-        disp = dispS*dispSWarped;
+        disp = composeWarps(dispS, dispSWarped);
     end
+    
+    % compose the final image using the resulting displacements
+    final = volwarp(source, disp, 'interpmethod', 'nearest');
+    
+    % display results
+    patchview.figure();
+    drawWarpedImages(source, target, final, disp); 
+    view3Dopt(source, target, final, disp{:});
 end
 
 

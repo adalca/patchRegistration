@@ -5,12 +5,12 @@ function patchRegistration3D(exid)
     
     if exid == 1
         %Real example
-        file = 'C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\robert\0002_orig.nii';
+        file = '/afs/csail.mit.edu/u/a/abobu/toolbox/robert/0002_orig.nii';
         nii = loadNii(file);
         sourceI = volresize(double(nii.img), [21, 21, 21]);
     elseif exid == 2
         %coloredSquare.jpg example
-        imd = im2double(imread('C:\Users\Andreea\Dropbox (MIT)\MIT\Sophomore\Spring\UROP\coloredSquare.jpg'));
+        imd = im2double(imread('/afs/csail.mit.edu/u/a/abobu/toolbox/coloredSquare.jpg'));
         imd = padarray(imd, [0 0 18], 0, 'post');
         sourceI = volresize(imd(310:330, 310:330, 1:21), [21, 21, 21]);
     else
