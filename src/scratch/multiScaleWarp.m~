@@ -23,7 +23,7 @@ function multiScaleWarp(exid)
         nii = loadNii('/afs/csail.mit.edu/u/a/abobu/toolbox/robert/0002_orig.nii');
         source = volresize(double(nii.img(:, :, 152))/255, [W, H]);
         [target, ID] = sim.randShift(source, 3, 4, 4, false);
-        target = volresize(double(nii.img(:, :, 152))/255, [W, H]);
+        target = volresize(double(nii.img(:, :, 155))/255, [W, H]);
     elseif exid == 5
         % Checkboard example
         source = checkerboard(10, 3, 3);
@@ -39,7 +39,7 @@ function multiScaleWarp(exid)
     patchOverlap = 'sliding';
     disp = {zeros(size(source)), zeros(size(source))};
     
-    for s = 32:4:size(source, 1)
+    for s = 10:2:size(source, 1)
         s
         % resizing the original source and target images to s
             targetS = volresize(target, [s, s]);
@@ -47,17 +47,14 @@ function multiScaleWarp(exid)
         % resize de warp distances and then apply them to the resized
         % source
         dispS = warpresize(disp, [s, s]);
-        figuresc(); 
-        % warp t times - LOOP HAS A BUG
+        % warp t times
         for t = 1:5           
             sourceSWarped = volwarp(sourceS, dispS);
-            subplot(5, 1, t); imshow([sourceSWarped, targetS]);
 
             % find the new distances
             localDisp = singleScaleWarp(sourceSWarped, targetS, patchSize, patchOverlap, false);
             disp = composeWarps(dispS, localDisp);
             dispS = disp;
-            assert(isclean([disp{:}]))
         end
     end
     
@@ -67,7 +64,7 @@ function multiScaleWarp(exid)
     % display results
     patchview.figure();
     drawWarpedImages(source, target, final, disp); 
-    %view3Dopt(source, target, final, disp{:});
+    view3Dopt(source, target, final, disp{:});
 end
 
 

@@ -13,7 +13,9 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
     % setup variables
     n = ndims(source);
     
-    [patches, pDst, pIdx,~,srcgridsize,refgridsize] = patchlib.volknnsearch(source, target, patchSize, patchOverlap, 'local', 2, 'location', 0.4, 'K', 25, 'fillK', true);
+    [patches, pDst, pIdx,~,srcgridsize,refgridsize] = ...
+        patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
+        'local', 1, 'location', 0.01, 'K', 9, 'fillK', true);
     
     usemex = exist('pdist2mex', 'file') == 3;
     edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], usemex); 
