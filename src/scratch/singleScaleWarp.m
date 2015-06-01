@@ -29,14 +29,19 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
     disp = patchlib.interpDisp(disp, patchSize, patchOverlap, size(source)); % interpolate displacement
     for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
 
-    final = volwarp(source, disp, 'interpmethod', 'nearest');
-        
+    % TODO: need to pad because of the top-left vs center issue. You want to shift the center of the
+    % patches, not the top-left!
+    
+    
+    % display / view warp.
     if(verbose)
+        warpedSource = volwarp(source, disp, 'interpmethod', 'nearest');
+        
         assert(n == 2 || n == 3, 'Dimension incorrect for verbose. Can only use verbose with 2D or 3D');
         
         patchview.figure();
-        drawWarpedImages(source, target, final, disp); 
-        view3Dopt(source, target, final, disp{:});
+        drawWarpedImages(source, target, warpedSource, disp); 
+        view3Dopt(source, target, warpedSource, disp{:});
     end   
 end
 
