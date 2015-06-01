@@ -12,30 +12,32 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
 
     % setup variables
     n = ndims(source);
-    
-    [patches, pDst, pIdx,~,srcgridsize,refgridsize] = ...
-        patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
-        'local', 1, 'location', 0.01, 'K', 9, 'fillK', true);
-    
     usemex = exist('pdist2mex', 'file') == 3;
     edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], usemex); 
     
+    % get optimal patch movements via knnsearch and patchmrf.
+    [patches, pDst, pIdx,~,srcgridsize,refgridsize] = ...
+        patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
+        'local', 1, 'location', 0.01, 'K', 9, 'fillK', true);
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, 'edgeDst', edgefn, ...
             'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, 'refgridsize', refgridsize);
-        
+    
+    % compute the full displacement    
     idx = patchlib.grid(size(source), patchSize, patchOverlap);
-    disp = patchlib.corresp2disp(size(source), refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
-    disp = patchlib.interpDisp(disp, patchSize, patchOverlap, size(source)); % interpolate displacement
+    griddisp = patchlib.corresp2disp(size(source), refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
+    disp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source)); % interpolate displacement
     for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
 
-    % Padding of warp
+    % Padding of displacement warp
     % We need to pad because of the top-left vs center issue. You want to shift the center of the
     % patches, not the top-left!
     patchEdge = (patchSize - 1)/2;
-    disp = cellfunc(@(d) d(1:(end-2*patchEdge+1)), disp); % crop the end edges. 
+    disp = cellfunc(@(d) trimarray(d, patchEdge*2, 'post'), disp);
     disp = cellfunc(@(d) padarray(d, patchEdge, 'both'), disp);
-    assert(all(cellfun(@(d) all(size(d) == size(source)))));
+    assert(all(cellfun(@(d) all(size(d) == size(source)), disp)));
+    
+    % TODO: instead of padding, the interpDisp should be
     
     % display / view warp.
     if(verbose)
