@@ -29,9 +29,13 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
     disp = patchlib.interpDisp(disp, patchSize, patchOverlap, size(source)); % interpolate displacement
     for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
 
-    % TODO: need to pad because of the top-left vs center issue. You want to shift the center of the
+    % Padding of warp
+    % We need to pad because of the top-left vs center issue. You want to shift the center of the
     % patches, not the top-left!
-    
+    patchEdge = (patchSize - 1)/2;
+    disp = cellfunc(@(d) d(1:(end-2*patchEdge+1)), disp); % crop the end edges. 
+    disp = cellfunc(@(d) padarray(d, patchEdge, 'both'), disp);
+    assert(all(cellfun(@(d) all(size(d) == size(source)))));
     
     % display / view warp.
     if(verbose)
