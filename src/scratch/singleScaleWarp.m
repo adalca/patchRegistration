@@ -40,7 +40,7 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
     % shift by (patchSize-1)/2 to put the displacement in the center of the patches
     disp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2); 
     assert(all(cellfun(@(d) all(size(d) == size(source)), disp)));
-    for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
+    for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end % TODO: check that this doesn't happen often.
     
     % display / view warp.
     if(verbose)
