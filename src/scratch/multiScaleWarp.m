@@ -3,6 +3,8 @@ function multiScaleWarp(exid)
     %Then call patchmrf and use patchlib.correspdst for the pair potentials. 
     %Then repeat
     
+    warning off backtrace
+    
     W = 64;
     H = 64;
     source = zeros(W, H);
@@ -39,25 +41,34 @@ function multiScaleWarp(exid)
     patchOverlap = 'sliding';
     disp = {zeros(size(source)), zeros(size(source))};
     
-    for s = 32:4:size(source, 1)
-        s
+    scales = 32:4:size(source, 1);
+    nInnerReps = 5;
+    
+    for s = scales
+        fprintf('Scale %d\n', s);
+        
         % resizing the original source and target images to s
-            targetS = volresize(target, [s, s]);
-            sourceS = volresize(source, [s, s]);
+        targetS = volresize(target, [s, s]);
+        sourceS = volresize(source, [s, s]);
+        
         % resize de warp distances and then apply them to the resized
         % source
         dispS = warpresize(disp, [s, s]);
-        figuresc(); 
-        % warp t times - LOOP HAS A BUG
-        for t = 1:5           
+        
+        % warp t times 
+        for t = 1:nInnerReps           
             sourceSWarped = volwarp(sourceS, dispS);
-            subplot(5, 1, t); imshow([sourceSWarped, targetS]);
 
             % find the new distances
             localDisp = singleScaleWarp(sourceSWarped, targetS, patchSize, patchOverlap, false);
             disp = composeWarps(dispS, localDisp);
+            for i = 1:numel(disp), disp{i}(isnan(disp{i})) = 0; end
             dispS = disp;
             assert(isclean([disp{:}]))
+            
+            % do some debug displaying
+            % figure(1);
+            % subplot(nInnerReps, 1, t); imshow([sourceSWarped, targetS, localDisp{:}, disp{:}]);
         end
     end
     
