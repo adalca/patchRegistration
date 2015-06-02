@@ -13,7 +13,11 @@ function [disp] = singleScaleWarp(source, target, patchSize, patchOverlap, verbo
 % Important Notes:
 % - note that patchlib sets up patches in the top left of the patches, whereas we want to "move" the
 % center of the patches. Thus, we can either use trimarray and padarray after we get the full
-% displacement, or use interpDisp with a shift.    
+% displacement, or use interpDisp with a shift.   
+%
+% TODO: 
+% - Combine this code with Adrian's original code. 
+% - Allow for 'volknnparams' which are a combination of the default params plus any params passed in. 
 
     % setup variables
     n = ndims(source);
