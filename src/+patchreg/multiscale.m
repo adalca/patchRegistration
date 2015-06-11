@@ -22,9 +22,9 @@ function [sourceWarped, displ] = ...
         fprintf('multiscale: running scale %d\n', s);
         
         % resizing the original source and target images to s
-        srcSize = cellfun(@(x) x(s), srcSizes);
+        srcSize = cellfun(@(x) round(x(s)), srcSizes);
         scTarget = volresize(target, srcSize);
-        trgSize = cellfun(@(x) x(s), trgSizes);
+        trgSize = cellfun(@(x) round(x(s)), trgSizes);
         scSource = volresize(source, trgSize);
         
         % resize the warp distances and then apply them to the resized source
