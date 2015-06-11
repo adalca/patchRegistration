@@ -16,6 +16,16 @@ function finalW = composeWarps(warp1, warp2)
     % image
     deltaW = cellfunc(@(x) interpn(grid{:}, x, gridAndW1{:}), warp2);
     
+    % correct any NANs in the displacements. 
+    % Usually these happen at the edges due to silly interpolations.
+    nNANs = sum(cellfun(@(x) sum(isnan(x(:))), deltaW));
+    if nNANs > 0
+        warning('Found %d NANs. Transforming them to 0s', nNANs);
+        for i = 1:numel(deltaW), 
+            deltaW{i}(isnan(deltaW{i})) = 0; 
+        end
+    end
+    
     % get the overall warp displacement in the reference frame of the first
     % warp image
     finalW = cellfunc(@plus, deltaW, warp1);
