@@ -1,4 +1,4 @@
-function [sourceWarped, displ] = ...
+function [sourceWarped, displ, varargout] = ...
     multiscale(source, target, patchSize, patchOverlap, nScales, nInnerReps, varargin)
 %
 %
@@ -18,6 +18,7 @@ function [sourceWarped, displ] = ...
     displ = repmat({zeros(size(source))}, [1, ndims(source)]);    
     
     % go through the multiple scales
+    h = figuresc();
     for s = 1:nScales
         fprintf('multiscale: running scale %d\n', s);
         
@@ -36,17 +37,35 @@ function [sourceWarped, displ] = ...
             scSourceWarped = volwarp(scSource, displ);
 
             % find the new warp (displacements)
-            [~, localDispl] = ...
-                patchreg.singlescale(scSourceWarped, scTarget, patchSize, patchOverlap, varargin{:});
+            [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
+                patchOverlap, 'currentdispl', displ, varargin{:});
+            dbdispl = displ; % for debug
             displ = composeWarps(displ, localDispl);
             assert(isclean([displ{:}]));
             
-            % do some debug displaying
-            % figure(1);
-            % subplot(nInnerReps, 1, t); imshow([sourceSWarped, targetS, localDisp{:}, disp{:}]);
+            % do some debug displaying for 2D data
+            if ndims(source) == 2 %#ok<ISMAT>
+                figure(h);
+                r = cat(3, displ{1}, displ{1}*0, displ{2});
+                l = cat(3, localDispl{1}, localDispl{1}*0, localDispl{2});
+                d = cat(3, dbdispl{1}, dbdispl{1}*0, dbdispl{2});
+                subplot(nScales, nInnerReps, (s-1) * nInnerReps + t); 
+                im = [repmat(scSourceWarped, [1, 1, 3]), repmat(scTarget, [1, 1, 3]), d, l, r];
+                im = imresize(im, size(source) .* [1, 5]);
+                imagesc(im);
+                drawnow();
+            elseif ndims(source) == 3
+                dbdispl = resizeWarp(displ, size(source));
+                view3Dopt(source, volwarp(source, dbdispl), target, dbdispl{:});
+            end
         end
     end
     
     % compose the final image using the resulting displacements
-    sourceWarped = volwarp(source, displ, 'interpmethod', 'nearest');    
+    sourceWarped = volwarp(source, displ);
+    
+    if nargout == 3
+        [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
+        varargout{1} = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
+    end
 end
