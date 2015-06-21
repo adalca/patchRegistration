@@ -1,4 +1,4 @@
-function [sourceWarped, warp] = singlescale(source, target, patchSize, patchOverlap, varargin)
+function [sourceWarped, warp, qp] = singlescale(source, target, patchSize, patchOverlap, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -22,18 +22,20 @@ function [sourceWarped, warp] = singlescale(source, target, patchSize, patchOver
     % patchlib. 
     % TODO: fix (use pdist2) upon completion. 
     if local > 0
+        searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
-            'local', local, 'location', 0.01, 'K', prod(patchSize), 'fillK', true, searchargs{:});
+            'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
     else
+        % unverified/explored.
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
-            'location', 0.01, 'K', prod(patchSize), 'fillK', true, searchargs{:});
+            'location', 0.01, 'K', 10, 'fillK', true, searchargs{:});
     end
     
-    [~, ~, ~, ~, pi] = ...
+    [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 0.1, 'lambda_edge', 0.1, 'pIdx', pIdx, ...
+            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 10, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, mrfargs{:});
     
     % compute the displacement on the grid
@@ -41,8 +43,8 @@ function [sourceWarped, warp] = singlescale(source, target, patchSize, patchOver
     griddisp = patchlib.corresp2disp(srcSize, refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
     
     % interpolate to a full displacement 
-    % shift by (patchSize-1)/2 to put the displacement in the center of the patches
-    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2); 
+    % shift by (patchSize-1)/2 + 1 to put the displacement in the center of the patches
+    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2 + 1); 
     assert(all(cellfun(@(d) all(size(d) == size(source)), warp)));
     
     % correct any NANs in the displacements. 
@@ -69,6 +71,7 @@ function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patc
     p.addOptional('searchargs', {}, @iscell);
     p.addOptional('mrfargs', {}, @iscell);
     p.addParameter('local', 1, @isnumeric);
+    p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
     p.parse(source, target, patchSize, patchOverlap, varargin{:});
 
     % extract param/Value pairs
@@ -77,6 +80,18 @@ function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patc
     local = p.Results.local;
 
      % setup variables
+    edgefn = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl); 
+end
+
+
+function dst = edgefunc(a1, a2, a3, a4, currentdispl)
+    dvFact = 100;
     usemex = exist('pdist2mex', 'file') == 3;
-    edgefn = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, [], usemex); 
+    dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
+    
+    loc1 = mat2cellsplit(a1.loc);
+    loc2 = mat2cellsplit(a2.loc);
+    displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
+    displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
+    dst = dst + norm(displ1 - displ2);
 end
