@@ -38,7 +38,7 @@ function [sourceWarped, displ, varargout] = ...
             scSourceWarped = volwarp(scSource, displ);
 
             % find the new warp (displacements)
-            [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
+            [~, localDispl, qp, pi] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
                 patchOverlap, 'currentdispl', displ, varargin{:});
             dbdispl = displ; % for debug
             displ = composeWarps(displ, localDispl);
@@ -64,8 +64,10 @@ function [sourceWarped, displ, varargout] = ...
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ);
     
-    if nargout == 3
+    if nargout >= 3
         [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
         varargout{1} = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
+        %varargout{2} = pi;
+        %varargout{3} = pi;
     end
 end

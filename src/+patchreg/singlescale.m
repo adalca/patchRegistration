@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp] = singlescale(source, target, patchSize, patchOverlap, varargin)
+function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, patchOverlap, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -53,7 +53,8 @@ function [sourceWarped, warp, qp] = singlescale(source, target, patchSize, patch
     if nNANs > 0
         warning('Found %d NANs. Transforming them to 0s', nNANs);
         for i = 1:numel(warp), 
-            warp{i}(isnan(warp{i})) = 0; 
+            warp{i} = inpaintn(warp{i});
+%             warp{i}(isnan(warp{i})) = 0; 
         end
     end   
     
