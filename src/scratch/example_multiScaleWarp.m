@@ -1,14 +1,14 @@
-function example_multiScaleWarp(exid)
+function [sourceWarped, displ] = example_multiScaleWarp(exid)
 
     % parameters
     patchSize = [3, 3];
     patchOverlap = 'sliding';
-    nScales = 10;
-    nInnerReps = 10;
+    nScales = 20;
+    nInnerReps = 1;
     warning off backtrace; % turn off backtrace for warnings.
     
-    W = 64;
-    H = 64;
+    W = 128;
+    H = 128;
     source = zeros(W, H);
     if exid == 1
         source(30, 30) = 1; % get an image with a bump
@@ -24,10 +24,15 @@ function example_multiScaleWarp(exid)
         [target, ID] = sim.randShift(source, 3, 20, 20, false);
     elseif exid == 4
         %Real example
-        nii = loadNii('/afs/csail.mit.edu/u/a/abobu/toolbox/robert/0002_orig.nii');
-        source = volresize(double(nii.img(:, :, 152))/255, [W, H]);
-        [target, ID] = sim.randShift(source, 3, 4, 4, false);
-        target = volresize(double(nii.img(:, :, 152))/255, [W, H]);
+%         nii = loadNii('/afs/csail.mit.edu/u/a/abobu/toolbox/robert/0002_orig.nii');
+        matlabmridata = load('mri');
+        matlabmri = permute(matlabmridata.D, [1, 2, 4, 3]);
+        maxval = max(double(matlabmri(:)));
+        midframe = round(size(matlabmri, 3)/2);
+        midframe = 15;
+        source = volresize(double(matlabmri(:, :, midframe))./maxval, [W, H]);
+        [target, ID] = sim.randShift(source, 5, 20, 20, false);
+        target = volresize(double(matlabmri(:, :, midframe+1))./maxval, [W, H]);
     elseif exid == 5
         % Checkboard example
         source = checkerboard(10, 3, 3);
@@ -39,12 +44,15 @@ function example_multiScaleWarp(exid)
         [target, ID] = sim.ovoidShift(source, 6, false);
     end   
     
-    % call.
+    % do multi scale registration
     [sourceWarped, displ] = ...
         patchreg.multiscale(source, target, patchSize, patchOverlap, nScales, nInnerReps);
     
     % display results
-    patchview.figure();
-    drawWarpedImages(source, target, sourceWarped, displ); 
-    %view3Dopt(source, target, final, disp{:});
+    if ndims(source) == 2 %#ok<ISMAT>
+        patchview.figure();
+        drawWarpedImages(source, target, sourceWarped, displ); 
+    elseif ndims(source) == 3
+        view3Dopt(source, target, final, displ{:});
+    end
     
