@@ -19,6 +19,7 @@ function [sourceWarped, displ, varargout] = ...
     
     % go through the multiple scales
     h = figuresc();
+    himgs = {}; titles = {};
     for s = 1:nScales
         fprintf('multiscale: running scale %d\n', s);
         
@@ -45,15 +46,14 @@ function [sourceWarped, displ, varargout] = ...
             
             % do some debug displaying for 2D data
             if ndims(source) == 2 %#ok<ISMAT>
-                figure(h);
-                r = cat(3, displ{1}, displ{1}*0, displ{2});
-                l = cat(3, localDispl{1}, localDispl{1}*0, localDispl{2});
-                d = cat(3, dbdispl{1}, dbdispl{1}*0, dbdispl{2});
-                subplot(nScales, nInnerReps, (s-1) * nInnerReps + t); 
-                im = [repmat(scSourceWarped, [1, 1, 3]), repmat(scTarget, [1, 1, 3]), d, l, r];
-                im = imresize(im, size(source) .* [1, 5]);
-                imagesc(im);
-                drawnow();
+                titles = {titles{:}, 'warped source', 'target', 'prevdispl_y', 'prevdispl_x', ...
+                    'localdispl_y', 'localdispl_x', 'displ_y', 'displ_x'};
+                localhimgs = {scSourceWarped, scTarget, dbdispl{:}, localDispl{:}, displ{:}};
+                himgs = {himgs{:}, localhimgs{:}};
+                
+                subgrid = [nScales, nInnerReps * numel(localhimgs)];
+                view2D(himgs, 'figureHandle', h, 'subgrid', subgrid, 'titles', titles);
+                
             elseif ndims(source) == 3
                 dbdispl = resizeWarp(displ, size(source));
                 view3Dopt(source, volwarp(source, dbdispl), target, dbdispl{:});
