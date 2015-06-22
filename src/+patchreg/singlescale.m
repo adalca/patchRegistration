@@ -43,8 +43,8 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     griddisp = patchlib.corresp2disp(srcSize, refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
     
     % interpolate to a full displacement 
-    % shift by (patchSize-1)/2 + 1 to put the displacement in the center of the patches
-    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2 + 1); 
+    % shift by (patchSize-1)/2 to put the displacement in the center of the patches
+    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2); 
     assert(all(cellfun(@(d) all(size(d) == size(source)), warp)));
     
     % correct any NANs in the displacements. 
