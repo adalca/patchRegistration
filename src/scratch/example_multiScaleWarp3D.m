@@ -3,8 +3,8 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
     % parameters
     patchSize = [5, 5, 5];
     patchOverlap = [0, 0, 0] + 1;
-    nScales = 3;
-    nInnerReps = 1;
+    nScales = 2;
+    nInnerReps = 3;
     warning off backtrace; % turn off backtrace for warnings.
     
     W = 64;

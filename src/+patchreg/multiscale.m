@@ -10,7 +10,7 @@ function [sourceWarped, displ, varargout] = ...
         
     % pre-compute the source and target sizes at each scale.
     % e.g. 2.^linspace(log2(32), log2(256), 4)
-    minScale = min(16, min([size(source), size(target)])/2);
+    minScale = min(9, min([size(source), size(target)])/2);
     srcSizes = arrayfunc(@(x) 2 .^ linspace(log2(minScale), log2(x), nScales), size(source));
     trgSizes = arrayfunc(@(x) 2 .^ linspace(log2(minScale), log2(x), nScales), size(target));
 
@@ -38,7 +38,7 @@ function [sourceWarped, displ, varargout] = ...
             scSourceWarped = volwarp(scSource, displ);
 
             % find the new warp (displacements)
-            [~, localDispl, qp, pi] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
+            [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
                 patchOverlap, 'currentdispl', displ, varargin{:});
             dbdispl = displ; % for debug
             displ = composeWarps(displ, localDispl);
@@ -64,10 +64,8 @@ function [sourceWarped, displ, varargout] = ...
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ);
     
-    if nargout >= 3
+    if nargout == 3
         [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
         varargout{1} = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
-        %varargout{2} = pi;
-        %varargout{3} = pi;
     end
 end
