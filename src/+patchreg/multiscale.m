@@ -10,7 +10,7 @@ function [sourceWarped, displ, varargout] = ...
         
     % pre-compute the source and target sizes at each scale.
     % e.g. 2.^linspace(log2(32), log2(256), 4)
-    minScale = min(9, min([size(source), size(target)])/2);
+    minScale = min(16, min([size(source), size(target)])/2);
     srcSizes = arrayfunc(@(x) 2 .^ linspace(log2(minScale), log2(x), nScales), size(source));
     trgSizes = arrayfunc(@(x) 2 .^ linspace(log2(minScale), log2(x), nScales), size(target));
 
@@ -21,13 +21,14 @@ function [sourceWarped, displ, varargout] = ...
     h = figuresc();
     himgs = {}; titles = {};
     for s = 1:nScales
-        fprintf('multiscale: running scale %d\n', s);
+        fprintf('multiscale: running scale %d with size\n', s);
         
         % resizing the original source and target images to s
         srcSize = cellfun(@(x) round(x(s)), srcSizes);
         scTarget = volresize(target, srcSize);
         trgSize = cellfun(@(x) round(x(s)), trgSizes);
         scSource = volresize(source, trgSize);
+        disp(srcSize)
         
         % resize the warp distances and then apply them to the resized source
         displ = resizeWarp(displ, srcSize);
@@ -55,16 +56,22 @@ function [sourceWarped, displ, varargout] = ...
                 view2D(himgs, 'figureHandle', h, 'subgrid', subgrid, 'titles', titles);
                 
             elseif ndims(source) == 3
-                dbdispl = resizeWarp(displ, size(source));
-                view3Dopt(source, volwarp(source, dbdispl), target, dbdispl{:});
+                % TODO: measure amount of change in new localDispl
+                %dbdispl = resizeWarp(displ, size(source));
+                %view3Dopt(source, volwarp(source, dbdispl), target, dbdispl{:});
+                % TODO: do a 2d of mid-frame?
             end
+        end
+        
+        if s > 3 %|| s > 1
+            disp(s);
         end
     end
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ);
     
-    if nargout == 3
+    if nargout >= 3
         [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
         varargout{1} = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
     end

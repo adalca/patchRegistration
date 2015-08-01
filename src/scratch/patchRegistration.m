@@ -9,8 +9,8 @@ smallvolCrop = {1:32, 1:32, 1:32};
 
 %% load data
 % filenames. TODO: use medialDataset
-file1 = fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61.nii.gz');
-mask1 = fullfile(BUCKNER_PATH, 'buckner01', 'buckner01_brain_affinereg_to_b61_seg.nii.gz');
+file1 = fullfile(BUCKNER_PATH, 'buckner02', 'buckner02_brain_affinereg_to_b61.nii.gz');
+mask1 = fullfile(BUCKNER_PATH, 'buckner02', 'buckner02_brain_affinereg_to_b61_seg.nii.gz');
 file2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61.nii.gz');
 mask2 = fullfile(BUCKNER_PATH, 'buckner03', 'buckner03_brain_affinereg_to_b61_seg.nii.gz');
 

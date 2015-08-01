@@ -33,10 +33,17 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
             'location', 0.01, 'K', 10, 'fillK', true, searchargs{:});
     end
     
+    % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
+    % patches are copies of the displacements? TODO: do study.
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 10, 'pIdx', pIdx, ...
+            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 5, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, mrfargs{:});
+    
+    % first try for second method:
+    
+    
+    
     
     % compute the displacement on the grid
     idx = patchlib.grid(srcSize, patchSize, patchOverlap);
@@ -48,14 +55,14 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     assert(all(cellfun(@(d) all(size(d) == size(source)), warp)));
     
     % correct any NANs in the displacements. 
-    % Usually these happen at the edges due to silly interpolations.
+    % Usually these happen at the edges
     nNANs = sum(cellfun(@(x) sum(isnan(x(:))), warp));
+    nElems = sum(cellfun(@(x) numel(x), warp));
     if nNANs > 0
-        warning('Found %d NANs. Transforming them to 0s', nNANs);
-        for i = 1:numel(warp), 
-            warp{i} = inpaintn(warp{i});
-%             warp{i}(isnan(warp{i})) = 0; 
-        end
+        warning('patchreg.singlescale: Found %d (%3.2f%%) NANs. Inpainting.', nNANs, nNANs/nElems);
+        
+        % warning: setting the nans to 0 is not correct. Using inpainting.
+        warp = cellfunc(@inpaintn, warp);
     end   
     
     % warp

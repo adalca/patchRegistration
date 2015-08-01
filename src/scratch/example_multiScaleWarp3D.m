@@ -1,22 +1,32 @@
 function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
 
     % parameters
-    patchSize = [5, 5, 5];
+    patchSize = [1, 1, 1] * 3;
     patchOverlap = [0, 0, 0] + 1;
-    nScales = 2;
+    nScales = 7;
     nInnerReps = 3;
     warning off backtrace; % turn off backtrace for warnings.
     
-    W = 64;
-    H = 64;
-    D = 64;
+    % setup buckner path based on username
+    [~, whoami] = system('whoami');
+    spl = strsplit(whoami, '\');
+    usrname = spl{end}; 
+    if strcmp(usrname, 'abobu')
+        BUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
+    else
+        BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';
+    end
+    
+    W = 32;
+    H = 32;
+    D = 32;
     source = zeros(W, H, D);
     if exid == 1
-        %Real example
-         niiS = loadNii('/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/buckner02_brain_affinereg_to_b61.nii.gz');
-         source = volresize(double(niiS.img)/255, [W, H, D]);
-         niiT = loadNii('/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/buckner03_brain_affinereg_to_b61.nii.gz');
-         target = volresize(double(niiT.img)/255, [W, H, D]);
+         % Real example
+         niiSource = loadNii(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz'));
+         source = padarray(volresize(double(niiSource.img)/255, [W, H, D]), patchSize, 'both');
+         niiTarget = loadNii(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61.nii.gz'));
+         target = padarray(volresize(double(niiTarget.img)/255, [W, H, D]), patchSize, 'both');
     end   
     
     % do multi scale registration

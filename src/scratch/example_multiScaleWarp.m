@@ -3,8 +3,8 @@ function [sourceWarped, displ] = example_multiScaleWarp(exid)
     % parameters
     patchSize = [3, 3];
     patchOverlap = 'sliding';
-    nScales = 10;
-    nInnerReps = 3;
+    nScales = 5;
+    nInnerReps = 2;
     warning off backtrace; % turn off backtrace for warnings.
     
     W = 128;
@@ -29,7 +29,7 @@ function [sourceWarped, displ] = example_multiScaleWarp(exid)
         matlabmri = permute(matlabmridata.D, [1, 2, 4, 3]);
         maxval = max(double(matlabmri(:)));
         midframe = round(size(matlabmri, 3)/2);
-        midframe = 15;
+        midframe = 17;
         source = volresize(double(matlabmri(:, :, midframe))./maxval, [W, H]);
         [target, ID] = sim.randShift(source, 5, 20, 20, false);
         target = volresize(double(matlabmri(:, :, midframe+1))./maxval, [W, H]);
