@@ -41,8 +41,10 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
             'refgridsize', refgridsize, mrfargs{:});
     
     % first try for second method:
-    
-    
+    dispPatchSize = ones(1, numel(patchSize)) * (2*local+1);
+    nodePot = exp(-0.1 * pDst); % weight should be different than in mrf.
+    piver = stateDispQuilt(nodePot, dispPatchSize, patchOverlap, srcgridsize);
+    disp('done ver');
     
     
     % compute the displacement on the grid
