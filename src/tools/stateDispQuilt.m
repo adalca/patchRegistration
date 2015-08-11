@@ -18,9 +18,11 @@ function vol = stateDispQuilt(pDst, patchSize, patchOverlap, gridSize)
     % reshape it one dimension bellow to get a conglomerate volume. 
     newPdst = repmat(pDst, 1, 1, patchElem);
     newPdst = permute(newPdst, [1, 3, 2]);
+
     % blur kernel along the new dimension
     filter = gaussianblob(patchSize, 1);
     newPdst = bsxfun(@times, newPdst, filter(:)');
+
     % reshape to N x newPatchSize
     newPdst = reshape(newPdst, N, patchElem^2);
 
@@ -30,15 +32,21 @@ function vol = stateDispQuilt(pDst, patchSize, patchOverlap, gridSize)
     vol = patchlib.quilt(newPdst, [gridSize, 1], newPatchSize, patchOverlap, 'voteAggregator', votefn);
 end
   
+function product = nanprod(varargin)
+    varargin{1}(isnan(varargin{1})) = 1;
+    product = prod(varargin{:});
+end
+
 % function for obtaining the Nth output from the max function
 function value = nth_output_max(N, X, patchSize)
-    multvotes = prod(X, 1);
+    
+    multvotes = nanprod(X, 1);
 %     [value{1:N}] = max(multvotes, [], ndims(X));
 %     valuea = value{N};
 
     % blur displacement patch multvotes and then take max
     sz = size(multvotes);
-    m = reshape(multvotes, [prod(sz(1:end-1)), patchSize]);
+    m = reshape(multvotes, [nanprod(sz(1:end-1)), patchSize]);
     q = cellfunc(@(x) volblur(x, 1, patchSize), cellfunc(@(x) squeeze(x), dimsplit(1, m)));
     q = cellfunc(@(x) reshape(x, [1 size(x)]), q);
     q = reshape(cat(1, q{:}), sz);

@@ -42,8 +42,15 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % first try for second method:
     dispPatchSize = ones(1, numel(patchSize)) * (2*local+1);
-    nodePot = exp(-0.1 * pDst); % weight should be different than in mrf.
+    alpha = 0.000001;
+    nodePot = exp(-alpha * pDst) + rand(size(pDst))*0.00001; % weight should be different than in mrf.
+%     boolM = false(srcgridsize);
+%     boolM(5:10, 5:10) = true(6, 6);
+%     arrayZero = zeros(1, 9);
+%     arrayZero(5) = 1;
+%     nodePot(boolM(:), :) = repmat(arrayZero, sum(boolM(:)), 1);
     piver = stateDispQuilt(nodePot, dispPatchSize, patchOverlap, srcgridsize);
+    
     disp('done ver');
     
     
