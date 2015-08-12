@@ -33,49 +33,20 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
             'location', 0.01, 'K', 10, 'fillK', true, searchargs{:});
     end
     
-    % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
-    % patches are copies of the displacements? TODO: do study.
-    [qp, ~, ~, ~, pi] = ...
-            patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 5, 'pIdx', pIdx, ...
-            'refgridsize', refgridsize, mrfargs{:});
+    % Regularization Method 1: mrf warp
+    [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, srcgridsize, refgridsize, edgefn, mrfargs);
     
-    % first try for second method:
-    dispPatchSize = ones(1, numel(patchSize)) * (2*local+1);
-    alpha = 0.000001;
-    nodePot = exp(-alpha * pDst) + rand(size(pDst))*0.00001; % weight should be different than in mrf.
-%     boolM = false(srcgridsize);
-%     boolM(5:10, 5:10) = true(6, 6);
-%     arrayZero = zeros(1, 9);
-%     arrayZero(5) = 1;
-%     nodePot(boolM(:), :) = repmat(arrayZero, sum(boolM(:)), 1);
-    piver = stateDispQuilt(nodePot, dispPatchSize, patchOverlap, srcgridsize);
+    % Regularization Method 2: quilt warp.
+    alpha = 5;
+    qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
     
-    disp('done ver');
-    
-    
-    % compute the displacement on the grid
-    idx = patchlib.grid(srcSize, patchSize, patchOverlap);
-    griddisp = patchlib.corresp2disp(srcSize, refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
-    
-    % interpolate to a full displacement 
-    % shift by (patchSize-1)/2 to put the displacement in the center of the patches
-    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, size(source), (patchSize - 1)/2); 
-    assert(all(cellfun(@(d) all(size(d) == size(source)), warp)));
-    
-    % correct any NANs in the displacements. 
-    % Usually these happen at the edges
-    nNANs = sum(cellfun(@(x) sum(isnan(x(:))), warp));
-    nElems = sum(cellfun(@(x) numel(x), warp));
-    if nNANs > 0
-        warning('patchreg.singlescale: Found %d (%3.2f%%) NANs. Inpainting.', nNANs, nNANs/nElems);
-        
-        % warning: setting the nans to 0 is not correct. Using inpainting.
-        warp = cellfunc(@inpaintn, warp);
-    end   
+    % visualize. TODO: add a warp just directly from pIdx, without either regularization method
+    h = figure(77);
+    view2D([warp, qwarp], 'subgrid', [2, numel(warp)], 'figureHandle', h);
     
     % warp
     sourceWarped = volwarp(source, warp);
+    drawnow;
 end
 
 function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, varargin)
@@ -111,4 +82,51 @@ function dst = edgefunc(a1, a2, a3, a4, currentdispl)
     displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
     displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
     dst = dst + norm(displ1 - displ2);
+end
+
+
+function [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, srcgridsize, refgridsize, edgefn, mrfargs)
+ % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
+    % patches are copies of the displacements? TODO: do study.
+    [qp, ~, ~, ~, pi] = ...
+            patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
+            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 10, 'pIdx', pIdx, ...
+            'refgridsize', refgridsize, mrfargs{:});
+
+    % compute the displacement on the grid
+    idx = patchlib.grid(srcSize, patchSize, patchOverlap);
+    griddisp = patchlib.corresp2disp(srcSize, refgridsize, pi, 'srcGridIdx', idx, 'reshape', true);
+        
+    % interpolate to a full displacement 
+    % shift by (patchSize-1)/2 to put the displacement in the center of the patches
+    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, srcSize, (patchSize - 1)/2); 
+    assert(all(cellfun(@(d) all(size(d) == srcSize), warp)));
+    
+    % correct any NANs in the displacements. 
+    % Usually these happen at the edges
+    nNANs = sum(cellfun(@(x) sum(isnan(x(:))), warp));
+    nElems = sum(cellfun(@(x) numel(x), warp));
+    if nNANs > 0
+        warning('patchreg.singlescale: Found %d (%3.2f%%) NANs. Inpainting.', nNANs, nNANs/nElems);
+        
+        % warning: setting the nans to 0 is not correct. Using inpainting.
+        warp = cellfunc(@inpaintn, warp);
+    end   
+end
+
+function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
+
+    % first try for second method:
+    dispPatchSize = ones(1, numel(patchSize)) * (2*local+1);
+    [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, srcgridsize, dispPatchSize);
+    
+    nodePot = exp(-alpha * pDstOrd); 
+    nodePot = bsxfun(@times, nodePot, 1./sum(nodePot, 2));    
+    
+    piver = stateDispQuilt(nodePot, dispPatchSize, patchOverlap, srcgridsize);
+    
+    pisub = bsxfun(@minus, ind2subvec(dispPatchSize, piver(:)), ceil(dispPatchSize/2));
+    pisub = -pisub; % since we're doing the warp in the other direction.
+    
+    warp = cellfunc(@(x) reshape(x, srcSize), dimsplit(2, pisub));
 end
