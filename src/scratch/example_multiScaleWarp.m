@@ -3,7 +3,7 @@ function [sourceWarped, displ] = example_multiScaleWarp(exid)
     % parameters
     patchSize = [3, 3];
     patchOverlap = 'sliding';
-    nScales = 5;
+    nScales = 3;
     nInnerReps = 2;
     warning off backtrace; % turn off backtrace for warnings.
     
