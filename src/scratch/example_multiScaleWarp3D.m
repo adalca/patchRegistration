@@ -3,15 +3,15 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
     % parameters
     patchSize = [1, 1, 1] * 3;
     patchOverlap = [0, 0, 0] + 1;
-    nScales = 7;
-    nInnerReps = 3;
+    nScales = 4;
+    nInnerReps = 4;
     warning off backtrace; % turn off backtrace for warnings.
     
     % setup buckner path based on username
     [~, whoami] = system('whoami');
     spl = strsplit(whoami, '\');
     usrname = spl{end}; 
-    if strcmp(usrname, 'abobu')
+    if strncmp(usrname, 'abobu', 5)
         BUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
     else
         BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';

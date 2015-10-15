@@ -44,7 +44,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % Regularization Method 2: quilt warp.
     alpha = 5;
-    qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
+    %qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
     
     % visualize. 
     if ndims(source) == 2 %#ok<ISMAT>
@@ -55,7 +55,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
         colormap gray;
     end
     
-    % warp
+    % warp - use quilt warp
     sourceWarped = volwarp(source, warp);
     drawnow;
 end
