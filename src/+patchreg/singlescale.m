@@ -44,7 +44,9 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % Regularization Method 2: quilt warp.
     alpha = 5;
-    %qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
+    if ndims(source) == 2
+        qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
+    end 
     
     % visualize. 
     if ndims(source) == 2 %#ok<ISMAT>
@@ -68,7 +70,7 @@ function [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patch
     % patches are copies of the displacements? TODO: do study.
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 10, 'pIdx', pIdx, ...
+            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, mrfargs{:});
         
      warp = pIdx2Warp(pi, srcSize, patchSize, patchOverlap, refgridsize);

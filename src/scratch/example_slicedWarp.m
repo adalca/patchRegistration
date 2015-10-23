@@ -1,4 +1,4 @@
-function [sourceWarped, displ] = example_multiScaleWarp(exid)
+function [sourceWarped, displ] = example_slicedWarp(exid)
 
     % parameters
     patchSize = [3, 3];
