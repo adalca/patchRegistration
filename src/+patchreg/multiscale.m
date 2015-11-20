@@ -19,10 +19,21 @@ function [sourceWarped, displ, varargout] = ...
     trgSizes = arrayfunc(@(x) 2 .^ linspace(log2(minScale), log2(x), nScales), size(target));
 
     % initiate a zero displacement
-    displ = repmat({zeros(size(source))}, [1, ndims(source)]); 
+    firstSize = cellfun(@(x) round(x(1)), srcSizes);
+    %firstGrid = patchlib.grid(firstSize, patchSize, patchOverlap);
+    displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
     % compute ID for run:
     ID = num2str(datenum(now));
+    savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
+    dirName = ID;
+    if patchOverlap == [0, 0, 0]
+        dirName = strcat(dirName, '_sparse');
+    elseif patchOverlap == [2, 2, 2]
+        dirName = strcat(dirName, '_dense');
+    end
+    mkdir(savePath, dirName);
+    savePath = sprintf('%s%s/', savePath, dirName);
     
     % go through the multiple scales
     h = figuresc();
@@ -51,7 +62,7 @@ function [sourceWarped, displ, varargout] = ...
             a = tic();
             [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
                 patchOverlap, infer_method, 'currentdispl', displ, varargin{:});
-            fprintf('multiscale: running scale %d with size\n', s);
+            fprintf('multiscale: running scale %d with size\n'        , s);
             tics = toc(a)
 
             dbdispl = displ; % for debug
@@ -73,8 +84,7 @@ function [sourceWarped, displ, varargout] = ...
             parameters = struct('patchSize', patchSize, 'searchPatch', searchPatch, 'patchOverlap', patchOverlap, 'nScales', nScales, 'nInnerReps', nInnerReps, 'inferMethod', infer_method, 'lambdaNode', 1, 'lambdaEdge', 1, 'inferenceThreshold', 10^-4);
             
             %save things
-            savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
-            outputName = sprintf('%s_%d_%d.mat',ID, s, t);
+            outputName = sprintf('%d_%d.mat', s, t);
             save([savePath outputName], 'volumes', 'tics', 'normDispl', 'diceCoeff', 'parameters');
             
             % do some debug displaying for 2D data
@@ -95,9 +105,8 @@ function [sourceWarped, displ, varargout] = ...
             end
         end
         
-        if s > 3 %|| s > 1
-            disp(s);
-        end
+        displ = mrfgrid2dense(displ, srcSize, patchSize, patchOverlap);
+        
     end
     
     % compose the final image using the resulting displacements

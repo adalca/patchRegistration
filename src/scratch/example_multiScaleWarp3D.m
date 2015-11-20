@@ -32,9 +32,9 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
          
          % Segmentation images
          niiSourceSegm = loadNii(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61_seg.nii.gz'));
-         sourceSegm = padarray(volresize(double(niiSourceSegm.img), [W, H, D]), patchSize, 'both');
+         sourceSegm = padarray(volresize(niiSourceSegm.img, [W, H, D], 'nearest'), patchSize, 'both');
          niiTargetSegm = loadNii(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61_seg.nii.gz'));
-         targetSegm = padarray(volresize(double(niiTargetSegm.img), [W, H, D]), patchSize, 'both');
+         targetSegm = padarray(volresize(niiTargetSegm.img, [W, H, D], 'nearest'), patchSize, 'both');
     end   
     
     % do multi scale registration
