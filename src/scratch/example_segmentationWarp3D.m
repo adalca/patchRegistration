@@ -17,9 +17,9 @@ function [sourceWarped, displ, sourceSegmWarped] = example_segmentationWarp3D(ex
         BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';
     end
     
-    W = 32;
-    H = 32;
-    D = 32;
+    W = 64;
+    H = 64;
+    D = 64;
     source = zeros(W, H, D);
     if exid == 1
          % Real example

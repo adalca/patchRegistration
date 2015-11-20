@@ -10,6 +10,8 @@ function finalW = composeWarps(warp1, warp2)
     grid = size2ndgrid(size(warp1{1}));
     
     % add the grid and the first warp to get the predicted positions
+    % gridAndW1 is actually the position at which each voxel should move.
+    % And I will rename the variable to show this :)
     gridAndW1 = cellfunc(@plus, grid, warp1);
     
     % get the displacement values in the refrence frame of the second warp

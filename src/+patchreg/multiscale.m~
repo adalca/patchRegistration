@@ -22,7 +22,7 @@ function [sourceWarped, displ, varargout] = ...
     displ = repmat({zeros(size(source))}, [1, ndims(source)]); 
     
     % compute ID for run:
-    ID = num2str(datenum(now));
+    ID = num2str(datenum(datetime('now')));
     
     % go through the multiple scales
     h = figuresc();
@@ -57,7 +57,7 @@ function [sourceWarped, displ, varargout] = ...
             dbdispl = displ; % for debug
             displ = composeWarps(displ, localDispl);
             assert(isclean([displ{:}]));
-            scaledLocalDispl = resizeWarp(localDispl, size(source)); 
+            scaledLocalDispl = resizeWarp(localDispl, srcSize); 
             
             normLocalDispl = cellfun(@(x) norm(x(:))/numel(x), localDispl);
             normScaledLocalDispl = cellfun(@(x) norm(x(:))/numel(x), scaledLocalDispl);
@@ -73,8 +73,8 @@ function [sourceWarped, displ, varargout] = ...
             parameters = struct('patchSize', patchSize, 'searchPatch', searchPatch, 'patchOverlap', patchOverlap, 'nScales', nScales, 'nInnerReps', nInnerReps, 'inferMethod', infer_method, 'lambdaNode', 1, 'lambdaEdge', 1, 'inferenceThreshold', 10^-4);
             
             %save things
-            savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
-            outputName = sprintf('%s_%d_%d.mat',ID, s, t);
+            savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output';
+            outputName = sprintf('%s_%d_%d.mat',ID, int2str(s), int2str(t));
             save([savePath outputName], 'volumes', 'tics', 'normDispl', 'diceCoeff', 'parameters');
             
             % do some debug displaying for 2D data

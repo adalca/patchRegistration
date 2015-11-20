@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, patchOverlap, varargin)
+function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, patchOverlap, infer_method, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -15,7 +15,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
 
     % input parse
     srcSize = size(source);
-    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, varargin{:});
+    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, varargin{:});
     
     % get optimal patch movements via knnsearch and patchmrf.
     % explanation: We're using volknnsearch simply because of existing implementaiton. In concept,
@@ -40,7 +40,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % Regularization Method 1: mrf warp
     [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, srcgridsize, ...
-        refgridsize, edgefn, mrfargs);
+        refgridsize, edgefn, mrfargs, infer_method);
     
     % Regularization Method 2: quilt warp.
     alpha = 5;
@@ -65,13 +65,13 @@ end
 %% Warp functions
 
 function [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, ...
-    srcgridsize, refgridsize, edgefn, mrfargs)
+    srcgridsize, refgridsize, edgefn, mrfargs, infer_method)
  % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
     % patches are copies of the displacements? TODO: do study.
     [qp, ~, ~, ~, pi] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
             'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
-            'refgridsize', refgridsize, mrfargs{:});
+            'refgridsize', refgridsize, 'infer_method', infer_method, mrfargs{:});
         
      warp = pIdx2Warp(pi, srcSize, patchSize, patchOverlap, refgridsize);
 end
@@ -81,7 +81,6 @@ function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgrids
     % first try for second method:
     dispPatchSize = ones(1, numel(patchSize)) * (2*local+1);
     [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, srcgridsize, dispPatchSize);
-    
     nodePot = exp(-alpha * pDstOrd); 
     nodePot = bsxfun(@times, nodePot, 1./sum(nodePot, 2));    
     
@@ -128,18 +127,19 @@ end
 
 %% Logistics
 
-function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, varargin)
+function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, varargin)
 
     p = inputParser();
     p.addRequired('source', @isnumeric);
     p.addRequired('target', @isnumeric);
     p.addRequired('patchSize', @isnumeric);
     p.addRequired('patchOverlap', @(x) isnumeric(x) | ischar(x));
+    p.addRequired('infer_method');
     p.addOptional('searchargs', {}, @iscell);
     p.addOptional('mrfargs', {}, @iscell);
     p.addParameter('local', 1, @isnumeric);
     p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
-    p.parse(source, target, patchSize, patchOverlap, varargin{:});
+    p.parse(source, target, patchSize, patchOverlap, infer_method, varargin{:});
 
     % extract param/Value pairs
     searchargs = p.Results.searchargs;
