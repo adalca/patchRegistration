@@ -30,7 +30,7 @@ function [sourceWarped, displ, varargout] = ...
     else
         savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
     end
-    dirName = sprintf('%f_gridSpacing%d', now, patchSize - patchOverlap);
+    dirName = sprintf('%f_gridSpacing%d_%d_%d', now, patchSize - patchOverlap);
     mkdir(savePath, dirName);
     savePath = sprintf('%s%s/', savePath, dirName);
     

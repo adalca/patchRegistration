@@ -2,7 +2,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
 
     % parameters
     patchSize = [1, 1, 1] * 3;
-    gridSpacing = [1, 1, 1] * 3;
+    gridSpacing = [1, 1, 1] * 1;
     patchOverlap = patchSize - gridSpacing;
     nScales = 3;
     nInnerReps = 3;
