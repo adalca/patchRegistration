@@ -24,7 +24,12 @@ function [sourceWarped, displ, varargout] = ...
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
     % compute ID for run:
-    savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
+    % TODO: the paths should be moved outside of multiscale.
+    if ispc
+        savePath = 'D:/Dropbox (MIT)/Research/patchRegistration/output/';
+    else
+        savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
+    end
     dirName = sprintf('%f_gridSpacing%d', now, patchSize - patchOverlap);
     mkdir(savePath, dirName);
     savePath = sprintf('%s%s/', savePath, dirName);

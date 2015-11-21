@@ -59,7 +59,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % warp - use quilt warp
     sourceWarped = volwarp(source, warp);
-    drawnow;
+    %drawnow;
 end
 
 %% Warp functions
