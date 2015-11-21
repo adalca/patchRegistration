@@ -24,14 +24,8 @@ function [sourceWarped, displ, varargout] = ...
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
     % compute ID for run:
-    ID = num2str(datenum(now));
     savePath = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
-    dirName = ID;
-    if patchOverlap == [0, 0, 0]
-        dirName = strcat(dirName, '_sparse');
-    elseif patchOverlap == [2, 2, 2]
-        dirName = strcat(dirName, '_dense');
-    end
+    dirName = sprintf('%f_gridSpacing%d', now, dirpatchSize - patchOverlap);
     mkdir(savePath, dirName);
     savePath = sprintf('%s%s/', savePath, dirName);
     
@@ -63,7 +57,7 @@ function [sourceWarped, displ, varargout] = ...
             [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
                 patchOverlap, infer_method, 'currentdispl', displ, varargin{:});
             fprintf('multiscale: running scale %d with size\n'        , s);
-            tics = toc(a)
+            tics = toc(a);
 
             dbdispl = displ; % for debug
             displ = composeWarps(displ, localDispl);
@@ -105,7 +99,7 @@ function [sourceWarped, displ, varargout] = ...
             end
         end
         
-        displ = mrfgrid2dense(displ, srcSize, patchSize, patchOverlap);
+        % displ = mrfgrid2dense(displ, srcSize, patchSize, patchOverlap);
         
     end
     
