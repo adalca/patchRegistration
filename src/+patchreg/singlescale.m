@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, patchOverlap, infer_method, varargin)
+function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, infer_method, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -15,7 +15,8 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
 
     % input parse
     srcSize = size(source);
-    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, varargin{:});
+    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, srcPatchOverlap, infer_method, varargin{:});
+    refPatchOverlap = 'sliding';
     
     % get optimal patch movements via knnsearch and patchmrf.
     % explanation: We're using volknnsearch simply because of existing implementaiton. In concept,
@@ -26,26 +27,26 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     if local > 0
         searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-            patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
+            patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
             'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
     else
         % unverified/explored.
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-            patchlib.volknnsearch(source, target, patchSize, patchOverlap, ...
+            patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
             'location', 0.01, 'K', 10, 'fillK', true, searchargs{:});
     end
     
     % Unregularized warp 
-    unregwarp = pIdx2Warp(pIdx(:, 1), srcSize, patchSize, patchOverlap, refgridsize);
+    unregwarp = pIdx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
     
     % Regularization Method 1: mrf warp
-    [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, srcgridsize, ...
+    [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
         refgridsize, edgefn, mrfargs, infer_method);
     
     % Regularization Method 2: quilt warp.
-    alpha = 5;
     if ndims(source) == 2
-        qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha);
+        alpha = 5;
+        qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, local, alpha);
     end 
     
     % visualize. 
@@ -59,7 +60,6 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, p
     
     % warp - use quilt warp
     sourceWarped = volwarp(source, warp);
-    %drawnow;
 end
 
 %% Warp functions
