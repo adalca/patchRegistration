@@ -2,10 +2,12 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
 
     % parameters
     patchSize = [1, 1, 1] * 3;
-    gridSpacing = [1, 1, 1] * 1;
+    gridSpacing = [1, 1, 1] * 3;
+    
+    assert(all(gridSpacing > 0));
     patchOverlap = patchSize - gridSpacing;
-    nScales = 3;
-    nInnerReps = 3;
+    nScales = 5;
+    nInnerReps = 2;
     warning off backtrace; % turn off backtrace for warnings.
     infer_method = @UGM_Infer_LBP;
     
@@ -19,9 +21,9 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
         BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';
     end
     
-    W = 32;
-    H = 32;
-    D = 32;
+    W = 99;
+    H = 120;
+    D = 103;
     source = zeros(W, H, D);
     if exid == 1
          % Real example
