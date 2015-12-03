@@ -1,5 +1,7 @@
 function denseWarp = mrfgrid2dense(sparseWarp, volsize, patchSize, patchOverlap)
 % convert a sparse warp into a dense warp
+    error('This should not be used. We probably didn''t account for how disp2warp and idx2warp work');
+
     gridSpacing = patchSize - patchOverlap;
     gridIdx = patchlib.grid(volsize, patchSize, patchOverlap);
     
