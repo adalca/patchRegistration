@@ -31,4 +31,5 @@ function finalW = composeWarps(warp1, warp2)
     % get the overall warp displacement in the reference frame of the first
     % warp image
     finalW = cellfunc(@plus, deltaW, warp1);
+    assert(isclean(finalW));
 end
