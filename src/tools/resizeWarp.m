@@ -1,8 +1,8 @@
 function warpNew = resizeWarp(warp, newsize, varargin)
 % resize the given warp  to the newsize, and adjust the warp values appropriately.
-% warpNew = warpresize(warp, newsize) warp is a ndims x 1 cell, newsize is a ndims-long vector
+%   warpNew = warpresize(warp, newsize) warp is a ndims x 1 cell, newsize is a ndims-long vector
 %
-% warpNew = warpresize(warp, newsize, interpMethod).
+%   warpNew = warpresize(warp, newsize, interpMethod).
 % 
 % contact: adalca@csail.mit.edu
 
