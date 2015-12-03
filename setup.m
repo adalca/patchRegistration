@@ -2,18 +2,49 @@
 % - adalca's main toolboxes: mgt, patchlib, mvit
 % - view3D (TODO: make this optional)
 
-%% Set up paths;
-EXTLIB_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\external_toolboxes';
-TOOLS_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\toolboxes';
+
+%% setup paths
+
+% get username
+[~, whoami] = system('whoami');
+spl = strsplit(whoami, '/');
+usrname = spl{end}; 
+
+% constants
+if ispc % windows paths
+    OUTPUT_PATH = 'D:/Dropbox (MIT)/Research/patchRegistration/output/';
+    if strncmp(usrname, 'abobu', 5) 
+        BUCKNER_PATH = 'Windows/path/to/data';
+        
+    else
+        assert(strncmp(usrname, 'adalca', 6) )
+        BUCKNER_PATH = 'D:/Dropbox (MIT)/Public/robert/buckner';
+        % should switch to 'D:\Research\patchSynthesis\data\buckner', but need seg
+        BUCKNER_ATLAS_PATH = 'D:\Research\data\buckner\atlases\';
+        TOOLS_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\toolboxes';
+        EXTLIB_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\external_toolboxes';
+    end
+
+else % unix/mac paths
+    OUTPUT_PATH = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
+    if strncmp(usrname, 'abobu', 5)
+        BUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
+        TOOLS_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox';
+        EXTLIB_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox';
+    else
+        assert(strncmp(usrname, 'adalca', 6) )
+        BUCKNER_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc';
+    end
+end
+
+%% add paths as necessary
 VIEW_PATH = fullfile(EXTLIB_PATH, 'view3D'); 
 UGM_PATH = fullfile(EXTLIB_PATH, 'UGM'); 
-
-%% add paths
 addpath(genpath(TOOLS_PATH));
 addpath(genpath(VIEW_PATH));
 addpath(genpath(UGM_PATH));
 addpath(genpath(fileparts(mfilename('fullpath'))));
 
-%% Data paths
-BUCKNER_PATH = 'D:\Research\patchSynthesis\data\buckner';
-BUCKNER_ATLAS_PATH = 'D:\Research\data\buckner\atlases\';
+
+%% settings
+warning off backtrace; % turn off backtrace for warnings.
