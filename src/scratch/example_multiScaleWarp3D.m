@@ -1,54 +1,76 @@
-function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
+function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_PATH)
+% example run of subject-to-subject multiscale warp.
+% requires: OUTPUT_PATH, BUCKNER_PATH
 
+    %% Set up run
+    
     % parameters
-    patchSize = [1, 1, 1] * 3;
-    gridSpacing = [1, 1, 1] * 3;
+    params.patchSize = [1, 1, 1] * 3; % patch size for comparing patches.
+    params.gridSpacing = [1, 1, 1] * 3; % grid spacing
+    params.searchSize = [1, 1, 1] * 3; % search region size. Note: >> local = (searchSize-1)/2.
+    params.nScales = 5;
+    params.nInnerReps = 2;
+    opts.infer_method = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
+    opts.warpDir = 'backward'; % 'backward' or 'forward'
     
-    assert(all(gridSpacing > 0));
-    patchOverlap = patchSize - gridSpacing;
-    nScales = 5;
-    nInnerReps = 2;
-    warning off backtrace; % turn off backtrace for warnings.
-    infer_method = @UGM_Infer_LBP;
-    warpDir = 'backward';
+    % max data size along largest dimension
+    MAX_VOL_SIZE = 48;
+
+    % files. TODO: should switch to registering to atlas
+    sourceFile = sprintf(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz'));
+    targetFile = sprintf(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61.nii.gz'));
     
-    % setup buckner path based on username
-    [~, whoami] = system('whoami');
-    spl = strsplit(whoami, '\');
-    usrname = spl{end}; 
-    if strncmp(usrname, 'abobu', 5)
-        BUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
-    else
-        BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';
-    end
+    % segmentation files. Only really necessary for some quick visualization at the end.
+    sourceSegFile = sprintf(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61_seg.nii.gz'));
+    targetSegFile = sprintf(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61_seg.nii.gz'));
     
-    W = 32;
-    H = 32;
-    D = 32;
-    source = zeros(W, H, D);
-    if exid == 1
-         % Real example
-         niiSource = loadNii(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz'));
-         source = padarray(volresize(double(niiSource.img)/255, [W, H, D]), patchSize, 'both');
-         niiTarget = loadNii(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61.nii.gz'));
-         target = padarray(volresize(double(niiTarget.img)/255, [W, H, D]), patchSize, 'both');
-         
-         % Segmentation images
-         niiSourceSegm = loadNii(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61_seg.nii.gz'));
-         sourceSegm = padarray(volresize(niiSourceSegm.img, [W, H, D], 'nearest'), patchSize, 'both');
-         niiTargetSegm = loadNii(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61_seg.nii.gz'));
-         targetSegm = padarray(volresize(niiTargetSegm.img, [W, H, D], 'nearest'), patchSize, 'both');
-    end   
+    %% Prepare run
+    % prepare source
+    niiSource = loadNii(sourceFile);
+    szRatio = max(size(niiSource.img)) ./ MAX_VOL_SIZE;
+    newSize = round(size(niiSource.img) ./ szRatio);
+    source = padarray(volresize(double(niiSource.img)/255, newSize), params.patchSize, 'both');
     
+    % prepare target
+    niiTarget = loadNii(targetFile);
+    szRatio = max(size(niiTarget.img)) ./ MAX_VOL_SIZE;
+    newSize = round(size(niiTarget.img) ./ szRatio);
+    target = padarray(volresize(double(niiTarget.img)/255, newSize), params.patchSize, 'both');
+    
+    % prepare save path
+    dirName = sprintf('%f_gridSpacing%d_%d_%d', now, gridSpacing);
+    mkdir(OUTPUT_PATH, dirName);
+    opts.savefile = sprintf('%s%s/%s', OUTPUT_PATH, dirName, '%d_%d.mat');
+    
+    %% Patch Registration
     % do multi scale registration
-    [sourceWarped, displ] = ...
-        patchreg.multiscale(source, target, sourceSegm, targetSegm, patchSize, patchOverlap, nScales, nInnerReps, infer_method, warpDir);
+    displ = patchreg.multiscale(source, target, params, opts);
+    
+    %% Immediate Output Processing
+    % This is just some quick visualization. Analysis should be done separately
+    
+    % compose the final image using the resulting displacements
+    sourceWarped = volwarp(source, displ, opts.warpDir);
+    
+    % TODO: try to do quilt instead of warp. Soemthing like:
+    % [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
+    % alternativeWarped = patchlib.quilt(qp, srcgridsize, patchSize, patchOverlap); 
     
     % display results
     if ndims(source) == 2 %#ok<ISMAT>
         patchview.figure();
         drawWarpedImages(source, target, sourceWarped, displ); 
+    
     elseif ndims(source) == 3
-        view3Dopt(source, target, sourceWarped, displ{:});
+        % prepare segmentations
+        sourceSegm = padarray(volresize(nii2vol(sourceSegFile), size(source), 'nearest'), patchSize, 'both');
+        targetSegm = padarray(volresize(nii2vol(targetSegFile), size(target), 'nearest'), patchSize, 'both');
+
+        sourceSegmWarped = volwarp(source, displ, opts.warpDir, 'interpmethod', 'nearest');
+        
+        % visualize
+        view3Dopt(source, target, sourceWarped, ...
+            sourceSegm, targetSegm, sourceSegmWarped, ...
+            displ{:});
     end
     
