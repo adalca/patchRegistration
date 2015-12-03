@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, varargin)
+function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, patchSize, srcGridSpacing, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -8,13 +8,12 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
 % TODO: 
 %   - have explicit definition of default parameters (e.g. location 0.01 for knnargs)
 %   - for large-scale search, *add* diffeomorphism constraint to edgefun.
-%   - consider separating the warp computation from the warping itself. 
-%       - However, what's the proper naming?
 %
 % Warning: are we assuming size(source) == size(target) here?
 
     % input parse
-    inputs = parseInputs(source, target, patchSize, srcPatchOverlap, varargin{:});
+    inputs = parseInputs(source, target, patchSize, srcGridSpacing, varargin{:});
+    srcPatchOverlap = inputs.srcPatchOverlap;
     refPatchOverlap = 'sliding';
     srcSize = size(source);
     
@@ -52,7 +51,8 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
             
         case 'mrf'
             % Regularization Method 1: mrf warp
-            [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
+            [warp, quiltedPatches, quiltedpIdx] = ...
+                mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
                 refgridsize, inputs.edgefn, inputs.mrfargs, infer_method);
 
         case 'quilt'
@@ -63,23 +63,20 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
         otherwise
             error('warp regularization: unknown method');
     end
-    
-    % warp - use MRF warp
-    sourceWarped = volwarp(source, warp, warpDir);
 end
 
 %% Warp functions
 
-function [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, ...
+function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, ...
     srcgridsize, refgridsize, edgefn, mrfargs, infer_method)
  % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
     % patches are copies of the displacements? TODO: do study.
-    [qp, ~, ~, ~, pi] = ...
+    [quiltedPatches, ~, ~, ~, quiltedpIdx] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
             'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, 'infer_method', infer_method, mrfargs{:});
         
-     warp = patchreg.idx2Warp(pi, srcSize, patchSize, patchOverlap, refgridsize);
+     warp = patchreg.idx2Warp(quiltedpIdx, srcSize, patchSize, patchOverlap, refgridsize);
 end
 
 function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha)
@@ -106,7 +103,7 @@ end
 
 %% Logistics
 
-function inputs = parseInputs(source, target, patchSize, srcPatchOverlap, varargin)
+function inputs = parseInputs(source, target, patchSize, srcGridSpacing, varargin)
 
     p = inputParser();
     p.addRequired('source', @isnumeric);
@@ -121,9 +118,11 @@ function inputs = parseInputs(source, target, patchSize, srcPatchOverlap, vararg
     p.addParameter('infer_method', @UGM_Infer_LBP, @(x) isa(x, 'function_handle'));
     p.addParameter('local', 1, @isnumeric);
     p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
-    p.parse(source, target, patchSize, srcPatchOverlap, varargin{:});
+    p.parse(source, target, patchSize, srcGridSpacing, varargin{:});
     inputs = p.Results;
 
+    inputs.srcPatchOverlap = patchSize - srcGridSpacing;
+    
     % setup variables
     usemex = exist('pdist2mex', 'file') == 3;
     inputs.edgefn = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
