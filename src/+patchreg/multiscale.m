@@ -1,17 +1,15 @@
 function displ = multiscale(source, target, params, opts, varargin)
-% 
+% MULTISCALE run a full patch-based registration.
 %
-% params: patchSize, searchSize, gridSpacing, nScales, nInnerReps
-% opts: infer_method, warpDir, <savefile>
+% displ = multiscale(source, target, params, opts)
+%   params: struct with: patchSize, searchSize, gridSpacing, nScales, nInnerReps
+%   opts: struct with: inferMethod, warpDir, warpReg, <savefile>
 %
-% Rough algorithm:
-% Run patchlib.volknnsearch and lib2patches to get mrf unary potentials automatically. 
-% Then call patchmrf and use patchlib.correspdst for the pair potentials. 
-% Then repeat
+% displ = multiscale(source, target, params, opts, varargin) see singlescale(...)
 %
-% infer_method offers the possibility to choose inference methods: LoopyBP,
-% MeanField, Fast PD
+% inferMethod offers the possibility to choose inference methods: LoopyBP, MeanField, Fast PD
 %
+% TODO: better documentation :)
 
     % input checking
     assert(all(gridSpacing > 0));

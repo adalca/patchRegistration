@@ -23,6 +23,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
 %       + grid on mrf, 
 %       + large-scale search (here, can *add* diffeomorphism constraint to edgefun)
 %   - Move out hardcoded parameters (e.g. locations)
+%   - shoudl somehow make symmetric the patch search? Jointly they should find e/o ?
 
     % parse inputs
     narginchk(4, inf);
@@ -40,7 +41,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     local = (params.searchSize - 1) / 2;
     if local > 0
         searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
-        if strcmp(warpDir, 'backward')
+        if strcmp(opts.warpDir, 'backward')
             [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
             'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
