@@ -1,5 +1,5 @@
 function [sourceWarped, displ, varargout] = ...
-    multiscale(source, target, sourceSegm, targetSegm, patchSize, patchOverlap, nScales, nInnerReps, infer_method, varargin)
+    multiscale(source, target, sourceSegm, targetSegm, patchSize, patchOverlap, nScales, nInnerReps, infer_method, warpDir, varargin)
 %
 %
 % Rough algorithm:
@@ -10,7 +10,7 @@ function [sourceWarped, displ, varargout] = ...
 % infer_method offers the possibility to choose inference methods: LoopyBP,
 % MeanField, Fast PD
 %
-        
+
     % pre-compute the source and target sizes at each scale.
     % e.g. 2.^linspace(log2(32), log2(256), 4)
     minSize = 16; %usually good to use 16.
@@ -55,12 +55,12 @@ function [sourceWarped, displ, varargout] = ...
         % warp several times
         for t = 1:nInnerReps           
             % warp the source to match the current displacement
-            scSourceWarped = volwarp(scSource, displ);
+            scSourceWarped = volwarp(scSource, displ, warpDir);
 
             % find the new warp (displacements)
             a = tic();
             [~, localDispl, qp] = patchreg.singlescale(scSourceWarped, scTarget, patchSize, ...
-                patchOverlap, infer_method, 'currentdispl', displ, varargin{:});
+                patchOverlap, infer_method, warpDir, 'currentdispl', displ, varargin{:});
             fprintf('multiscale: running scale %d with size\n'        , s);
             tics = toc(a);
 
@@ -75,7 +75,7 @@ function [sourceWarped, displ, varargout] = ...
             
             local = 1;
             searchPatch = ones(1, ndims(scSourceWarped)) .* local .* 2 + 1;
-            sourceWarpedSegm = volwarp(scSourceSegm, displ, 'interpmethod', 'nearest');
+            sourceWarpedSegm = volwarp(scSourceSegm, displ, warpDir, 'interpmethod', 'nearest');
             diceCoeff = dice(sourceWarpedSegm, scTargetSegm);
             
             normDispl = struct('local', normLocalDispl, 'scaledLocal', normScaledLocalDispl, 'current', normCurrentDispl);  
@@ -109,7 +109,7 @@ function [sourceWarped, displ, varargout] = ...
     end
     
     % compose the final image using the resulting displacements
-    sourceWarped = volwarp(source, displ);
+    sourceWarped = volwarp(source, displ, warpDir);
     
     if nargout >= 3
         [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);

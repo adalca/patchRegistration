@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, infer_method, varargin)
+function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, infer_method, warpDir, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -15,7 +15,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
 
     % input parse
     srcSize = size(source);
-    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, srcPatchOverlap, infer_method, varargin{:});
+    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, srcPatchOverlap, infer_method, warpDir, varargin{:});
     refPatchOverlap = 'sliding';
     
     % get optimal patch movements via knnsearch and patchmrf.
@@ -26,9 +26,15 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
     % TODO: fix (use pdist2) upon completion. 
     if local > 0
         searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
-        [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-            patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
+        if warpDir == 'backward'
+            [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
+            patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
             'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
+        else
+            [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
+                patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
+                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
+        end
     else
         % unverified/explored.
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
@@ -58,8 +64,8 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
         colormap gray;
     end
     
-    % warp - use quilt warp
-    sourceWarped = volwarp(source, warp);
+    % warp - use MRF warp
+    sourceWarped = volwarp(source, warp, warpDir);
 end
 
 %% Warp functions
@@ -127,7 +133,7 @@ end
 
 %% Logistics
 
-function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, varargin)
+function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, warpDir, varargin)
 
     p = inputParser();
     p.addRequired('source', @isnumeric);
@@ -135,11 +141,12 @@ function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patc
     p.addRequired('patchSize', @isnumeric);
     p.addRequired('patchOverlap', @(x) isnumeric(x) | ischar(x));
     p.addRequired('infer_method');
+    p.addRequired('warpDir', @(x) ischar(x));
     p.addOptional('searchargs', {}, @iscell);
     p.addOptional('mrfargs', {}, @iscell);
     p.addParameter('local', 1, @isnumeric);
     p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
-    p.parse(source, target, patchSize, patchOverlap, infer_method, varargin{:});
+    p.parse(source, target, patchSize, patchOverlap, infer_method, warpDir, varargin{:});
 
     % extract param/Value pairs
     searchargs = p.Results.searchargs;

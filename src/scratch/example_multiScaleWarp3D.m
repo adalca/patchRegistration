@@ -10,6 +10,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
     nInnerReps = 2;
     warning off backtrace; % turn off backtrace for warnings.
     infer_method = @UGM_Infer_LBP;
+    warpDir = 'backward';
     
     % setup buckner path based on username
     [~, whoami] = system('whoami');
@@ -21,9 +22,9 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
         BUCKNER_PATH = 'D:\Dropbox (MIT)\Public\robert\buckner';
     end
     
-    W = 99;
-    H = 120;
-    D = 103;
+    W = 32;
+    H = 32;
+    D = 32;
     source = zeros(W, H, D);
     if exid == 1
          % Real example
@@ -41,7 +42,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(exid)
     
     % do multi scale registration
     [sourceWarped, displ] = ...
-        patchreg.multiscale(source, target, sourceSegm, targetSegm, patchSize, patchOverlap, nScales, nInnerReps, infer_method);
+        patchreg.multiscale(source, target, sourceSegm, targetSegm, patchSize, patchOverlap, nScales, nInnerReps, infer_method, warpDir);
     
     % display results
     if ndims(source) == 2 %#ok<ISMAT>
