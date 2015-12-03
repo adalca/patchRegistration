@@ -1,5 +1,8 @@
-function displ = multiscale(source, target, patchSize, gridSpacing, nScales, nInnerReps, savefilename, varargin)
+function displ = multiscale(source, target, params, opts, varargin)
+% 
 %
+% params: patchSize, searchSize, gridSpacing, nScales, nInnerReps
+% opts: infer_method, warpDir, <savefile>
 %
 % Rough algorithm:
 % Run patchlib.volknnsearch and lib2patches to get mrf unary potentials automatically. 
@@ -17,15 +20,15 @@ function displ = multiscale(source, target, patchSize, gridSpacing, nScales, nIn
     % e.g. 2.^linspace(log2(32), log2(256), 4)
     minSize = 16; % usually good to use 16.
     minScale = min(minSize, min([size(source), size(target)])/2);
-    srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), nScales)), size(source));
-    trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), nScales)), size(target));
+    srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(source));
+    trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(target));
 
     % initiate a zero displacement
     firstSize = cellfun(@(x) round(x(1)), srcSizes);
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
     % go through the multiple scales
-    for s = 1:nScales        
+    for s = 1:params.nScales        
         
         % resizing the original source and target images to s
         scSrcSize = srcSizes{s};
@@ -37,7 +40,7 @@ function displ = multiscale(source, target, patchSize, gridSpacing, nScales, nIn
         displ = resizeWarp(displ, scSrcSize);
         
         % warp several times
-        for t = 1:nInnerReps 
+        for t = 1:params.nInnerReps 
             
             % if verbose, print a bit of information
             if input.verbose
@@ -50,7 +53,7 @@ function displ = multiscale(source, target, patchSize, gridSpacing, nScales, nIn
 
             % find the new warp (displacements)
             sstic = tic();
-            localDispl = patchreg.singlescale(scSourceWarped, scTarget, patchSize, gridSpacing, ...
+            localDispl = patchreg.singlescale(scSourceWarped, scTarget, params, opts, ...
                 'currentdispl', displ, varargin{:});
             sstime = toc(sstic);
 
@@ -58,9 +61,7 @@ function displ = multiscale(source, target, patchSize, gridSpacing, nScales, nIn
             cdispl = composeWarps(displ, localDispl);
             
             % if save mode is on, save relevant teration information
-            if ~isempty(savefilename)
-                params = struct('patchSize', patchSize, 'gridSpacing', gridSpacing', ...
-                    'nScales', nScales, 'nInnerReps', nInnerReps); %#ok<NASGU>
+            if isfield(opts, 'savefile') && ~isempty(opts.savefile)
                 state = struct('scale', s, 'iter', t, 'scSrcSize', scSrcSize, ...
                     'scTargetSize', scTargetSize, 'runTime', sstime); %#ok<NASGU>
                 displVolumes = struct('displ', displ, 'localDispl', localDispl, ...
