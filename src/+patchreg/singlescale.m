@@ -48,7 +48,7 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
     switch inputs.warpreg
         case 'none'
             % Unregularized warp 
-            warp = pIdx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
+            warp = patchreg.idx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
             
         case 'mrf'
             % Regularization Method 1: mrf warp
@@ -63,15 +63,6 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
         otherwise
             error('warp regularization: unknown method');
     end
-    
-%     % visualize. 
-%     if ndims(source) == 2 %#ok<ISMAT>
-%         h = figure(77);
-%         view2D([unregwarp, warp, qwarp], ...
-%             'subgrid', [3, numel(warp)], ...
-%             'figureHandle', h, 'caxis', [-1, 1]); 
-%         colormap gray;
-%     end
     
     % warp - use MRF warp
     sourceWarped = volwarp(source, warp, warpDir);
@@ -88,7 +79,7 @@ function [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patch
             'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, 'infer_method', infer_method, mrfargs{:});
         
-     warp = pIdx2Warp(pi, srcSize, patchSize, patchOverlap, refgridsize);
+     warp = patchreg.idx2Warp(pi, srcSize, patchSize, patchOverlap, refgridsize);
 end
 
 function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, local, alpha)
@@ -108,36 +99,9 @@ function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgrids
     
     % the warp probably needs to be shifted in the same manner that it is for mrfwarp
     % since we want to match center points, not top-left points
-    % perhaps go from (-piver) --> pIdxNew and all pIdx2Warp?
+    % perhaps go from (-piver) --> pIdxNew and all patchreg.idx2Warp?
     piwarp = cellfunc(@(x) cropVolume(x, srcgridsize), piwarp);
     warp = disp2warp(piwarp, srcSize, patchSize, patchOverlap);
-end
-
-function warp = pIdx2Warp(pIdx, srcSize, patchSize, patchOverlap, refgridsize)
-
-    % compute the displacement on the grid
-    idx = patchlib.grid(srcSize, patchSize, patchOverlap);
-    griddisp = patchlib.corresp2disp(srcSize, refgridsize, pIdx, 'srcGridIdx', idx, 'reshape', true);
-        
-    warp = disp2warp(griddisp, srcSize, patchSize, patchOverlap);
-end
-
-function warp = disp2warp(griddisp, srcSize, patchSize, patchOverlap)
-    % interpolate to a full displacement 
-    % shift by (patchSize-1)/2 to put the displacement in the center of the patches
-    warp = patchlib.interpDisp(griddisp, patchSize, patchOverlap, srcSize, (patchSize - 1)/2); 
-    assert(all(cellfun(@(d) all(size(d) == srcSize), warp)));
-    
-    % correct any NANs in the displacements. 
-    % Usually these happen at the edges
-    nNANs = sum(cellfun(@(x) sum(isnan(x(:))), warp));
-    nElems = sum(cellfun(@(x) numel(x), warp));
-    if nNANs > 0
-        warning('patchreg.singlescale: Found %d (%3.2f%%) NANs. Inpainting.', nNANs, nNANs/nElems);
-        
-        % warning: setting the nans to 0 is not correct. Using inpainting.
-        warp = cellfunc(@inpaintn, warp);
-    end   
 end
 
 %% Logistics
