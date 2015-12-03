@@ -1,4 +1,4 @@
-function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, infer_method, warpDir, varargin)
+function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, srcPatchOverlap, varargin)
 % patch based discrete registration: single scale
 %
 % two main methods:
@@ -14,55 +14,64 @@ function [sourceWarped, warp, qp, pi] = singlescale(source, target, patchSize, s
 % Warning: are we assuming size(source) == size(target) here?
 
     % input parse
-    srcSize = size(source);
-    [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, srcPatchOverlap, infer_method, warpDir, varargin{:});
+    inputs = parseInputs(source, target, patchSize, srcPatchOverlap, varargin{:});
     refPatchOverlap = 'sliding';
+    srcSize = size(source);
     
     % get optimal patch movements via knnsearch and patchmrf.
-    % explanation: We're using volknnsearch simply because of existing implementaiton. In concept,
-    % we should use something like pdist2 without the knnsearch, since we set K = prod(patchSize).
-    % So the Knn search is overkill here, and likely slows us down, but is quick to implement given
-    % patchlib. 
-    % TODO: fix (use pdist2) upon completion. 
-    if local > 0
-        searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
-        if warpDir == 'backward'
+    %   We're using volknnsearch simply because of existing implementaiton. In concept, we should
+    %   use something like pdist2 without the knnsearch, since we set K = prod(patchSize). So the
+    %   Knn search is overkill here, and likely slows us down, but is quick to implement given
+    %   patchlib. TODO: fix (use pdist2) upon completion.
+    if inputs.local > 0
+        searchPatch = ones(1, ndims(source)) .* inputs.local .* 2 + 1;
+        if strcmp(warpDir, 'backward')
             [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
-            'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
+            'local', inputs.local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
+        
         else
             [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
                 patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
-                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, searchargs{:});
+                'local', inputs.local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
         end
+        
     else
         % unverified/explored.
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
-            'location', 0.01, 'K', 10, 'fillK', true, searchargs{:});
+            'location', 0.01, 'K', 10, 'fillK', true, inputs.searchargs{:});
     end
     
-    % Unregularized warp 
-    unregwarp = pIdx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
-    
-    % Regularization Method 1: mrf warp
-    [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
-        refgridsize, edgefn, mrfargs, infer_method);
-    
-    % Regularization Method 2: quilt warp.
-    if ndims(source) == 2
-        alpha = 5;
-        qwarp = quiltwarp(srcSize, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, local, alpha);
-    end 
-    
-    % visualize. 
-    if ndims(source) == 2 %#ok<ISMAT>
-        h = figure(77);
-        view2D([unregwarp, warp, qwarp], ...
-            'subgrid', [3, numel(warp)], ...
-            'figureHandle', h, 'caxis', [-1, 1]); 
-        colormap gray;
+    % transform patch movements to a (regularized) warp
+    % regularize in one of a few ways
+    switch inputs.warpreg
+        case 'none'
+            % Unregularized warp 
+            warp = pIdx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
+            
+        case 'mrf'
+            % Regularization Method 1: mrf warp
+            [warp, qp, pi] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
+                refgridsize, inputs.edgefn, inputs.mrfargs, infer_method);
+
+        case 'quilt'
+            % Regularization Method 2: quilt warp. (this may only have been implemented for 2d)
+            alpha = 5;
+            warp = quiltwarp(srcSize, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, inputs.local, alpha);
+            
+        otherwise
+            error('warp regularization: unknown method');
     end
+    
+%     % visualize. 
+%     if ndims(source) == 2 %#ok<ISMAT>
+%         h = figure(77);
+%         view2D([unregwarp, warp, qwarp], ...
+%             'subgrid', [3, numel(warp)], ...
+%             'figureHandle', h, 'caxis', [-1, 1]); 
+%         colormap gray;
+%     end
     
     % warp - use MRF warp
     sourceWarped = volwarp(source, warp, warpDir);
@@ -133,29 +142,27 @@ end
 
 %% Logistics
 
-function [local, searchargs, mrfargs, edgefn] = parseInputs(source, target, patchSize, patchOverlap, infer_method, warpDir, varargin)
+function inputs = parseInputs(source, target, patchSize, srcPatchOverlap, varargin)
 
     p = inputParser();
     p.addRequired('source', @isnumeric);
     p.addRequired('target', @isnumeric);
     p.addRequired('patchSize', @isnumeric);
-    p.addRequired('patchOverlap', @(x) isnumeric(x) | ischar(x));
-    p.addRequired('infer_method');
-    p.addRequired('warpDir', @(x) ischar(x));
-    p.addOptional('searchargs', {}, @iscell);
-    p.addOptional('mrfargs', {}, @iscell);
+    p.addRequired('srcPatchOverlap', @(x) isnumeric(x) | ischar(x));
+    
+    p.addParameter('searchargs', {}, @iscell);
+    p.addParameter('mrfargs', {}, @iscell);
+    
+    p.addParameter('warpDir', 'backward', @(x) ischar(x)); % 'backward' or 'forward'
+    p.addParameter('infer_method', @UGM_Infer_LBP, @(x) isa(x, 'function_handle'));
     p.addParameter('local', 1, @isnumeric);
     p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
-    p.parse(source, target, patchSize, patchOverlap, infer_method, warpDir, varargin{:});
+    p.parse(source, target, patchSize, srcPatchOverlap, varargin{:});
+    inputs = p.Results;
 
-    % extract param/Value pairs
-    searchargs = p.Results.searchargs;
-    mrfargs = p.Results.mrfargs;
-    local = p.Results.local;
-
-     % setup variables
+    % setup variables
     usemex = exist('pdist2mex', 'file') == 3;
-    edgefn = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
+    inputs.edgefn = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
 end
 
 function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
