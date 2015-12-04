@@ -61,7 +61,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     
     % transform patch movements to a (regularized) warp
     % regularize in one of a few ways
-    switch opts.warpreg
+    switch opts.warpReg
         case 'none'
             % Unregularized warp 
             warp = patchreg.idx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
@@ -93,7 +93,7 @@ function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, p
             'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, 'infer_method', inferMethod, mrfargs{:});
         
-     warp = patchreg.idx2Warp(quiltedpIdx, srcSize, patchSize, patchOverlap, refgridsize);
+     warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, patchOverlap, refgridsize);
 end
 
 function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, searchSize, alpha)
@@ -114,7 +114,7 @@ function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgrids
     % since we want to match center points, not top-left points
     % perhaps go from (-piver) --> pIdxNew and all patchreg.idx2Warp?
     piwarp = cellfunc(@(x) cropVolume(x, srcgridsize), piwarp);
-    warp = disp2warp(piwarp, srcSize, patchSize, patchOverlap);
+    warp = patchreg.disp2warp(piwarp, srcSize, patchSize, patchOverlap);
 end
 
 %% Logistics

@@ -3,16 +3,13 @@ function displ = multiscale(source, target, params, opts, varargin)
 %
 % displ = multiscale(source, target, params, opts)
 %   params: struct with: patchSize, searchSize, gridSpacing, nScales, nInnerReps
-%   opts: struct with: inferMethod, warpDir, warpReg, <savefile>
+%   opts: struct with: inferMethod, warpDir, warpReg, verbose, <savefile>
 %
 % displ = multiscale(source, target, params, opts, varargin) see singlescale(...)
 %
 % inferMethod offers the possibility to choose inference methods: LoopyBP, MeanField, Fast PD
 %
 % TODO: better documentation :)
-
-    % input checking
-    assert(all(gridSpacing > 0));
 
     % pre-compute the source and target sizes at each scale.
     % e.g. 2.^linspace(log2(32), log2(256), 4)
@@ -29,9 +26,9 @@ function displ = multiscale(source, target, params, opts, varargin)
     for s = 1:params.nScales        
         
         % resizing the original source and target images to s
-        scSrcSize = srcSizes{s};
+        scSrcSize = cellfun(@(x) x(s), srcSizes);
         scSource = volresize(source, scSrcSize);
-        scTargetSize = trgSizes{s};
+        scTargetSize = cellfun(@(x) x(s), trgSizes);
         scTarget = volresize(target, scTargetSize);
         
         % resize the warp distances to the current scale size
@@ -41,13 +38,13 @@ function displ = multiscale(source, target, params, opts, varargin)
         for t = 1:params.nInnerReps 
             
             % if verbose, print a bit of information
-            if input.verbose
+            if opts.verbose
                fprintf('multiscale: running scale %d iteration %d with size %s\n', s, t, ...
                    sprintf('%d ', scSrcSize));
             end
             
             % warp the source to match the use the current displacement
-            scSourceWarped = volwarp(scSource, displ, warpDir);
+            scSourceWarped = volwarp(scSource, displ, opts.warpDir);
 
             % find the new warp (displacements)
             sstic = tic();
@@ -66,7 +63,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                     'cdispl', cdispl); %#ok<NASGU>
                 volumes = struct('scSource', scSource, 'scTarget', scTarget, ...
                     'scSourceWarped', scSourceWarped); %#ok<NASGU>
-                filename = sprintf(savefilename, s, t);
+                filename = sprintf(opts.savefile, s, t);
                 save(filename, 'params', 'state', 'displVolumes', 'volumes');
             end 
             

@@ -7,6 +7,7 @@
 
 % get username
 [~, whoami] = system('whoami');
+whoami = strrep(whoami, '\', '/');
 spl = strsplit(whoami, '/');
 usrname = spl{end}; 
 

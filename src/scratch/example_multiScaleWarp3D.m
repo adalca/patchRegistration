@@ -10,19 +10,21 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     params.searchSize = [1, 1, 1] * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.nScales = 5;
     params.nInnerReps = 2;
-    opts.infer_method = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
+    opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     opts.warpDir = 'backward'; % 'backward' or 'forward'
+    opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
+    opts.verbose = true;
     
     % max data size along largest dimension
-    MAX_VOL_SIZE = 48;
+    MAX_VOL_SIZE = 32;
 
     % files. TODO: should switch to registering to atlas
-    sourceFile = sprintf(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz'));
-    targetFile = sprintf(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61.nii.gz'));
+    sourceFile = fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz');
+    targetFile = fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61.nii.gz');
     
     % segmentation files. Only really necessary for some quick visualization at the end.
-    sourceSegFile = sprintf(fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61_seg.nii.gz'));
-    targetSegFile = sprintf(fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61_seg.nii.gz'));
+    sourceSegFile = fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61_seg.nii.gz');
+    targetSegFile = fullfile(BUCKNER_PATH, 'buckner03_brain_affinereg_to_b61_seg.nii.gz');
     
     %% Prepare run
     % prepare source
@@ -38,7 +40,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     target = padarray(volresize(double(niiTarget.img)/255, newSize), params.patchSize, 'both');
     
     % prepare save path
-    dirName = sprintf('%f_gridSpacing%d_%d_%d', now, gridSpacing);
+    dirName = sprintf('%f_gridSpacing%d_%d_%d', now, params.gridSpacing);
     mkdir(OUTPUT_PATH, dirName);
     opts.savefile = sprintf('%s%s/%s', OUTPUT_PATH, dirName, '%d_%d.mat');
     
