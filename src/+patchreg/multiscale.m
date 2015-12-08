@@ -59,12 +59,12 @@ function displ = multiscale(source, target, params, opts, varargin)
             if isfield(opts, 'savefile') && ~isempty(opts.savefile)
                 state = struct('scale', s, 'iter', t, 'scSrcSize', scSrcSize, ...
                     'scTargetSize', scTargetSize, 'runTime', sstime); %#ok<NASGU>
-                displVolumes = struct('displ', displ, 'localDispl', localDispl, ...
-                    'cdispl', cdispl); %#ok<NASGU>
+                displVolumes = struct('displ', {displ}, 'localDispl', {localDispl}, ...
+                    'cdispl', {cdispl}); %#ok<NASGU>
                 volumes = struct('scSource', scSource, 'scTarget', scTarget, ...
                     'scSourceWarped', scSourceWarped); %#ok<NASGU>
                 filename = sprintf(opts.savefile, s, t);
-                save(filename, 'params', 'state', 'displVolumes', 'volumes');
+                save(filename, 'params', 'opts', 'state', 'displVolumes', 'volumes');
             end 
             
             % final warp for this iteration is the composed warp
