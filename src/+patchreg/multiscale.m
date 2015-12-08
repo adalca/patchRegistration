@@ -23,7 +23,7 @@ function displ = multiscale(source, target, params, opts, varargin)
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
     % all sizes are allowed to be nScales sized.
-    rfn = @(p) repmat(p, [params.nScales, 1])
+    rfn = @(p) repmat(p, [params.nScales, 1]);
     if size(params.patchSize, 1) == 1, params.patchSize = rfn(params.patchSize); end
     if size(params.gridSpacing, 1) == 1, params.gridSpacing = rfn(params.gridSpacing); end
     if size(params.searchSize, 1) == 1, params.searchSize = rfn(params.searchSize); end
