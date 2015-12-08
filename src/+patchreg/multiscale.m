@@ -3,7 +3,7 @@ function displ = multiscale(source, target, params, opts, varargin)
 %
 % displ = multiscale(source, target, params, opts)
 %   params: struct with: patchSize, searchSize, gridSpacing, nScales, nInnerReps
-%   opts: struct with: inferMethod, warpDir, warpReg, verbose, <savefile>
+%   opts: struct with: inferMethod, warpDir, warpReg, verbose, distMethod, <savefile>
 %
 % displ = multiscale(source, target, params, opts, varargin) see singlescale(...)
 %

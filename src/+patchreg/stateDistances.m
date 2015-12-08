@@ -1,4 +1,4 @@
-function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(source, target, patchSize, patchOverlap, searchSize, varargin)
+function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(source, target, patchSize, patchOverlap, searchSize, location, varargin)
 % As an easy start, we can assume the reference/target grid is dense ('sliding'). It would be nicer
 % to change this in the future, but it could be a good start.
 %
@@ -19,7 +19,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
 %       to be in a consistent order for all locations, even edge ones. At the edges, for unavailable
 %       patches, e.g. for computation at the edges of the volume, set distance of infinity (I think)
 %   also fill in patches array in a consistent matter.
-
+    
     [srcIdx, ~, srcgridsize, ~] = patchlib.grid(size(source), patchSize, patchOverlap);
     [refIdx, ~, refgridsize, ~] = patchlib.grid(size(target), patchSize);
  
@@ -30,27 +30,30 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
     refLib = patchlib.vol2lib(target, patchSize);
     
     K = prod(patchSize);
-    pDst = nan(size(srcLib, 1), K);
-    pIdx = nan(size(srcLib, 1), K);
+    pDst = Inf(size(srcLib, 1), K);
+    pIdx = ones(size(srcLib, 1), K); % Should be investigated. ones is a hack
     patches = nan(size(srcLib, 1), K, prod(searchSize));
     local = (searchSize(1) - 1)/2;
     srcgridsub = ind2subvec(size(source), srcIdx(:));
+    refgridsub = ind2subvec(size(target), refIdx(:));
     
     % for each point in the source grid
     for i = 1:size(srcLib, 1)
         subIdx = srcgridsub(i, :);
         range = {};
         for j = 1:ndims(source)
-            range{j} = max(subIdx(j)-local, 1):min(subIdx(j)+local, size(refIdx, j)-patchOverlap(j));
+            range{j} = max(subIdx(j)-local, 1):min(subIdx(j)+local, refgridsize(j));
+            assert(~isempty(range{j}));
         end
         refNeighborIdx = ind2ind(size(target), refgridsize, refIdx(range{:}));
         patches(i, 1:size(refLib(refNeighborIdx(:), :), 1), :) = reshape(refLib(refNeighborIdx(:), :), [1 size(refLib(refNeighborIdx(:), :))]);
                         
-        % do a pdist2 calculation among the patches 
+        % do a pdist2 calculation among the patches and among the neighbors
         d = pdist2(srcLib(i, :), refLib(refNeighborIdx(:), :));
-
+        dNeigh = location * pdist2(subIdx, refgridsub(refNeighborIdx(:), :));
+        
         % note we don't use 1:K, instead we use 1:numel(p) since we might allow less than K matches
-        pDst(i, 1:size(refLib(refNeighborIdx(:), :), 1)) = d;   
+        pDst(i, 1:size(refLib(refNeighborIdx(:), :), 1)) = d + dNeigh;   
         pIdx(i, 1:size(refLib(refNeighborIdx(:), :), 1)) = refNeighborIdx(:);
     end
 end

@@ -24,6 +24,8 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
 %       + large-scale search (here, can *add* diffeomorphism constraint to edgefun)
 %   - Move out hardcoded parameters (e.g. locations)
 %   - shoudl somehow make symmetric the patch search? Jointly they should find e/o ?
+%   - pIdx is initialized with ones in stateDistances. Should investigate
+%   because this is a hack
 
     % parse inputs
     narginchk(4, inf);
@@ -42,16 +44,21 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     if local > 0
         searchPatch = ones(1, ndims(source)) .* local .* 2 + 1;
         if strcmp(opts.warpDir, 'backward')
-%             [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-%                 patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
-%                 'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
-            [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch);
-        
+            if strcmp(opts.distanceMethod, 'volknnsearch')
+                [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
+                patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
+                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
+            else
+                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location);
+            end
         else
-%             [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-%                 patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
-%                 'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
-            [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch);
+            if strcmp(opts.distanceMethod, 'volknnsearch')
+                [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
+                patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
+                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
+            else
+                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location);
+            end
         end
         
     else
