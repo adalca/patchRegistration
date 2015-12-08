@@ -27,12 +27,13 @@ function [sourceWarped, displ] = register(paths, params, opts)
     sourceWarped = volwarp(source, displ, opts.warpDir);
     
     %% save segmentations if necessary
+    volumes.source = source;
+    volumes.target = target;
     if isfield(paths, 'sourceSegFile') && isfield(paths, 'targetSegFile')
         sourceSeg = padarray(volresize(nii2vol(paths.sourceSegFile), newSrcSize, 'nearest'), params.volPad, 'both');
         targetSeg = padarray(volresize(nii2vol(paths.targetSegFile), newTarSize, 'nearest'), params.volPad, 'both');
-        volumes = struct('sourceSeg', sourceSeg, 'targetSeg', targetSeg); %#ok<NASGU>
-    else
-        volumes = struct(); %#ok<NASGU>
+        volumes.sourceSeg = sourceSeg;
+        volumes.targetSeg = targetSeg;
     end
     save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ');
     

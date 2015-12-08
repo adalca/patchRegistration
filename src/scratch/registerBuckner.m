@@ -26,7 +26,7 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
     
     % segmentation files <optional>
-    paths.sourceSegFile = fullfile(BUCKNER_PATH, subjid, [subjid, 'buckner01_brain_iso_2_ds5_us5_size_reg_seg.nii.gz']);
+    paths.sourceSegFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg_seg.nii.gz']);
     paths.targetSegFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_seg_proc.nii.gz');
     
     % output path
