@@ -6,7 +6,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     
     % parameters
     params.patchSize = [1, 1, 1] * 3; % patch size for comparing patches.
-    params.gridSpacing = [1, 1, 1] * 1; % grid spacing
+    params.gridSpacing = [1, 1, 1] * 11; % grid spacing
     params.searchSize = [1, 1, 1] * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.nScales = 5;
     params.nInnerReps = 2;
@@ -16,7 +16,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     opts.verbose = true;
     
     % max data size along largest dimension
-    MAX_VOL_SIZE = 94;
+    MAX_VOL_SIZE = 58;
 
     % files. TODO: should switch to registering to atlas
     sourceFile = fullfile(BUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz');
@@ -65,14 +65,18 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     
     elseif ndims(source) == 3
         % prepare segmentations
-        sourceSegm = padarray(volresize(nii2vol(sourceSegFile), newSrcSize, 'nearest'), params.patchSize, 'both');
-        targetSegm = padarray(volresize(nii2vol(targetSegFile), newTarSize, 'nearest'), params.patchSize, 'both');
+        sourceSeg = padarray(volresize(nii2vol(sourceSegFile), newSrcSize, 'nearest'), params.patchSize, 'both');
+        targetSeg = padarray(volresize(nii2vol(targetSegFile), newTarSize, 'nearest'), params.patchSize, 'both');
 
-        sourceSegmWarped = volwarp(sourceSegm, displ, opts.warpDir, 'interpmethod', 'nearest');
+        sourceSegmWarped = volwarp(sourceSeg, displ, opts.warpDir, 'interpmethod', 'nearest');
         
         % visualize
         view3Dopt(source, target, sourceWarped, ...
-            sourceSegm, targetSegm, sourceSegmWarped, ...
+            sourceSeg, targetSeg, sourceSegmWarped, ...
             displ{:});
     end
+    
+    % save segmentations 
+    volumes = struct('sourceSeg', sourceSeg, 'targetSeg', targetSeg);
+    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ');
     
