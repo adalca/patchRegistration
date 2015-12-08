@@ -41,9 +41,9 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         subIdx = srcgridsub(i, :);
         range = {};
         for j = 1:ndims(source)
-            range{j} = max(subIdx(j)-local, 1):min(subIdx(j)+local, size(refIdx, j)-patchOverlap(j));
+            range{j} = max(subIdx(j)-local, 1):min(subIdx(j)+local, size(refIdx, j)-patchOverlap();
         end
-        refNeighborIdx = ind2ind(size(target), refgridsize, refIdx(range{:}));
+        refNeighborIdx = refIdx(range{:});
         patches(i, 1:size(refLib(refNeighborIdx(:), :), 1), :) = reshape(refLib(refNeighborIdx(:), :), [1 size(refLib(refNeighborIdx(:), :))]);
                         
         % do a pdist2 calculation among the patches 
