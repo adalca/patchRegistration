@@ -1,4 +1,4 @@
-function [sourceWarped, displ] = register(paths, params, opts)
+function [sourceWarped, displ] = register(paths, params, opts, varargin)
 % carry out patch-based discrete registration
 
     %% Prepare run
@@ -21,7 +21,7 @@ function [sourceWarped, displ] = register(paths, params, opts)
     
     %% Patch Registration
     % do multi scale registration
-    displ = patchreg.multiscale(source, target, params, opts);
+    displ = patchreg.multiscale(source, target, params, opts, varargin{:});
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
