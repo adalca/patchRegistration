@@ -10,16 +10,16 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 3, 5]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-     
+    mrfargs = {'lambda_node', 1, 'lambda_edge', 1e-9}; % TODO: fix how this gets passed in.
     
     % options
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     opts.warpDir = 'backward'; % 'backward' or 'forward'
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
-    opts.verbose = 2; % 1 for simple, 2 for complex/debug
+    opts.verbose = 1; % 1 for simple, 2 for complex/debug
     opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
-    opts.location = 0.005;
-    opts.maxVolSize = 100; % max data size along largest dimension
+    opts.location = 0.01;
+    opts.maxVolSize = 48; % max data size along largest dimension
     
     params.volPad = o3 * 7 + round(opts.maxVolSize * 0.1); % this is mainly needed due nan-filling-in at edges. :(.
 
@@ -35,4 +35,4 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     paths.output = OUTPUT_PATH;
     
     %% Carry out the registration
-    register(paths, params, opts)    
+    register(paths, params, opts, 'mrfargs', mrfargs)    
