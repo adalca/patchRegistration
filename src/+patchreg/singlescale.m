@@ -47,15 +47,16 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             if strcmp(opts.distanceMethod, 'volknnsearch')
                 [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
                 patchlib.volknnsearch(target, source, patchSize, srcPatchOverlap, refPatchOverlap, ...
-                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
+                'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
-                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location);
+                [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
+                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location);
             end
         else
             if strcmp(opts.distanceMethod, 'volknnsearch')
                 [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
                 patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
-                'local', local, 'location', 0.01, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
+                'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
                 [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location);
             end
@@ -65,7 +66,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
         % unverified/explored.
         [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
             patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
-            'location', 0.01, 'K', 10, 'fillK', true, inputs.searchargs{:});
+            'location', opts.location, 'K', 10, 'fillK', true, inputs.searchargs{:});
     end
     
     % transform patch movements to a (regularized) warp
@@ -73,13 +74,15 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     switch opts.warpReg
         case 'none'
             % Unregularized warp 
-            warp = patchreg.idx2Warp(pIdx(:, 1), srcSize, patchSize, srcPatchOverlap, refgridsize);
+            [~, mi] = min(pDst, [], 2);
+            idx = sub2ind(size(pIdx), (1:size(pIdx, 1))', mi);
+            [warp, gridwarp] = patchreg.idx2warp(pIdx(idx), srcSize, patchSize, srcPatchOverlap, refgridsize);
             
         case 'mrf'
             % Regularization Method 1: mrf warp
             [warp, quiltedPatches, quiltedpIdx] = ...
                 mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
-                refgridsize, inputs.edgefn, opts.inferMethod, inputs.mrfargs);
+                refgridsize, inputs.edgefn, opts.inferMethod, [inputs.mrfargs, 'srcSize', srcSize]);
 
         case 'quilt'
             % Regularization Method 2: quilt warp. (this may only have been implemented for 2d)
@@ -99,7 +102,7 @@ function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, p
     % patches are copies of the displacements? TODO: do study.
     [quiltedPatches, ~, ~, ~, quiltedpIdx] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1, 'pIdx', pIdx, ...
+            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1/100, 'pIdx', pIdx, ...
             'refgridsize', refgridsize, 'infer_method', inferMethod, mrfargs{:});
         
      warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, patchOverlap, refgridsize);
@@ -136,6 +139,7 @@ function inputs = parseInputs(source, target, params, opts, varargin)
         isfield(x, 'patchSize') && numel(x.patchSize) == nDims && all(isodd(x.patchSize)) && ...
         isfield(x, 'gridSpacing') && numel(x.gridSpacing) == nDims && all(x.gridSpacing > 0) && ...
         isfield(x, 'searchSize') && numel(x.searchSize) == nDims && all(isodd(x.searchSize));
+    
     checkopts = @(x) isstruct(x) && ...
         isfield(x, 'inferMethod') && isa(x.inferMethod, 'function_handle') && ...
         isfield(x, 'warpDir') && ismember(x.warpDir, {'backward', 'forward'}) && ...
@@ -160,10 +164,12 @@ function inputs = parseInputs(source, target, params, opts, varargin)
 end
 
 function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
-    dvFact = 100;
-    dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
+    dvFact = 1;
     
-    % special cases save a lot of time
+    % comppute the displacement from the current location for each location
+    % Note: some of this computation is extra since it's done more than once for the same location.
+    %
+    % special cases save a lot of runtime
     if numel(a1.loc) == 3
         displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2), a1.loc(3)) ./ dvFact, currentdispl);
         displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2), a2.loc(3)) ./ dvFact, currentdispl);
@@ -179,5 +185,10 @@ function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
         displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
     end
     
-    dst = dst + norm(displ1 - displ2);
+    % get the overall displacement
+    a1.disp = bsxfun(@plus, a1.disp, displ1);
+    a2.disp = bsxfun(@plus, a2.disp, displ2);
+    
+    % compute the distance
+    dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
 end
