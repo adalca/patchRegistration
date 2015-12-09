@@ -22,6 +22,12 @@ function displ = multiscale(source, target, params, opts, varargin)
     firstSize = cellfun(@(x) round(x(1)), srcSizes);
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
     
+    % all sizes are allowed to be nScales sized.
+    rfn = @(p) repmat(p, [params.nScales, 1]);
+    if size(params.patchSize, 1) == 1, params.patchSize = rfn(params.patchSize); end
+    if size(params.gridSpacing, 1) == 1, params.gridSpacing = rfn(params.gridSpacing); end
+    if size(params.searchSize, 1) == 1, params.searchSize = rfn(params.searchSize); end
+    
     % go through the multiple scales
     for s = 1:params.nScales        
         
@@ -48,7 +54,11 @@ function displ = multiscale(source, target, params, opts, varargin)
 
             % find the new warp (displacements)
             sstic = tic();
-            localDispl = patchreg.singlescale(scSourceWarped, scTarget, params, opts, ...
+            locparams = params;
+            locparams.patchSize = locparams.patchSize(s, :);
+            locparams.gridSpacing = locparams.gridSpacing(s, :);
+            locparams.searchSize = locparams.searchSize(s, :);
+            localDispl = patchreg.singlescale(scSourceWarped, scTarget, locparams, opts, ...
                 'currentdispl', displ, varargin{:});
             sstime = toc(sstic);
 

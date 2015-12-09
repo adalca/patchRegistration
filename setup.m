@@ -16,12 +16,13 @@ if ispc % windows paths
     OUTPUT_PATH = 'D:/Dropbox (MIT)/Research/patchRegistration/output/';
     if strncmp(usrname, 'abobu', 5) 
         BUCKNER_PATH = 'Windows/path/to/data';
+        BUCKNER_ATLAS_PATH = '';
         
     else
         assert(strncmp(usrname, 'adalca', 6) )
-        BUCKNER_PATH = 'D:/Dropbox (MIT)/Public/robert/buckner';
-        % should switch to 'D:\Research\patchSynthesis\data\buckner', but need seg
-        BUCKNER_ATLAS_PATH = 'D:\Research\data\buckner\atlases\';
+        PREBUCKNER_PATH = 'D:/Dropbox (MIT)/Public/robert/buckner';
+        BUCKNER_PATH = 'D:\Dropbox (MIT)\Research\patchSynthesis\data\buckner\proc';
+        BUCKNER_ATLAS_PATH = 'D:\Dropbox (MIT)\Research\patchSynthesis\data\buckner\atlases\';
         TOOLS_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\toolboxes';
         EXTLIB_PATH = 'C:\Users\adalca\Dropbox (Personal)\MATLAB\external_toolboxes';
     end
@@ -29,12 +30,15 @@ if ispc % windows paths
 else % unix/mac paths
     OUTPUT_PATH = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
     if strncmp(usrname, 'abobu', 5)
-        BUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
+        PREBUCKNER_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox/buckner/';
+        BUCKNER_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc/';
+        BUCKNER_ATLAS_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/atlases/';
         TOOLS_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox';
         EXTLIB_PATH = '/afs/csail.mit.edu/u/a/abobu/toolbox';
     else
         assert(strncmp(usrname, 'adalca', 6) )
         BUCKNER_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc';
+        BUCKNER_ATLAS_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/atlases/';
     end
 end
 
