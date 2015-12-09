@@ -10,18 +10,20 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 3, 5]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-    mrfargs = {'lambda_node', 1, 'lambda_edge', 1e-9}; % TODO: fix how this gets passed in.
+    
+    params.mrf.lambda_node = 0.5;
+    params.mrf.lambda_edge = 0.001; 
+    params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     
     % options
-    opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     opts.warpDir = 'backward'; % 'backward' or 'forward'
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
     opts.verbose = 1; % 1 for simple, 2 for complex/debug
     opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
     opts.location = 0.01;
-    opts.maxVolSize = 48; % max data size along largest dimension
+    opts.maxVolSize = 58; % max data size along largest dimension
     
-    params.volPad = o3 * 7 + round(opts.maxVolSize * 0.1); % this is mainly needed due nan-filling-in at edges. :(.
+    params.volPad = o3 * 7; % this is mainly needed due nan-filling-in at edges. :(.
 
     % files
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
@@ -35,4 +37,4 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     paths.output = OUTPUT_PATH;
     
     %% Carry out the registration
-    register(paths, params, opts, 'mrfargs', mrfargs)    
+    register(paths, params, opts)    

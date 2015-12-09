@@ -80,9 +80,8 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             
         case 'mrf'
             % Regularization Method 1: mrf warp
-            [warp, quiltedPatches, quiltedpIdx] = ...
-                mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, ...
-                refgridsize, inputs.edgefn, opts.inferMethod, [inputs.mrfargs, 'srcSize', srcSize]);
+            [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, ...
+                patchSize, srcPatchOverlap, srcgridsize, refgridsize, inputs.mrf);
 
         case 'quilt'
             % Regularization Method 2: quilt warp. (this may only have been implemented for 2d)
@@ -96,16 +95,16 @@ end
 
 %% Warp functions
 
-function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, patchOverlap, ...
-    srcgridsize, refgridsize, edgefn, inferMethod, mrfargs)
+function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, ...
+    srcgridsize, refgridsize, mrfparams)
  % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
     % patches are copies of the displacements? TODO: do study.
+    mrfargs = struct2cellWithNames(mrfparams);
     [quiltedPatches, ~, ~, ~, quiltedpIdx] = ...
-            patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, patchOverlap, ...
-            'edgeDst', edgefn, 'lambda_node', 1, 'lambda_edge', 1/100, 'pIdx', pIdx, ...
-            'refgridsize', refgridsize, 'infer_method', inferMethod, mrfargs{:});
+            patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, srcPatchOverlap, ...
+            'pIdx', pIdx, 'refgridsize', refgridsize, 'srcSize', srcSize, mrfargs{:});
         
-     warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, patchOverlap, refgridsize);
+     warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, srcPatchOverlap, refgridsize);
 end
 
 function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, searchSize, alpha)
@@ -141,9 +140,9 @@ function inputs = parseInputs(source, target, params, opts, varargin)
         isfield(x, 'searchSize') && numel(x.searchSize) == nDims && all(isodd(x.searchSize));
     
     checkopts = @(x) isstruct(x) && ...
-        isfield(x, 'inferMethod') && isa(x.inferMethod, 'function_handle') && ...
         isfield(x, 'warpDir') && ismember(x.warpDir, {'backward', 'forward'}) && ...
         isfield(x, 'warpReg') && ismember(x.warpReg, {'none', 'mrf', 'quilt'});
+    % isfield(x, 'inferMethod') && isa(x.inferMethod, 'function_handle') && ...
     
     p = inputParser();
     p.addRequired('source', @isnumeric);
@@ -153,14 +152,19 @@ function inputs = parseInputs(source, target, params, opts, varargin)
     
     p.addParameter('currentdispl', repmat({source*0}, [1, ndims(source)]), @iscell);
     p.addParameter('searchargs', {}, @iscell);
-    p.addParameter('mrfargs', {}, @iscell);
     
     p.parse(source, target, params, opts, varargin{:});
     inputs = p.Results;
     
+    if isfield(params, 'mrf')
+        inputs.mrf = params.mrf;
+    else
+        inputs.mrf = struct();
+    end
+    
     % setup edge function for mrfs.
     usemex = exist('pdist2mex', 'file') == 3;
-    inputs.edgefn = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
+    inputs.mrf.edgeDst = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
 end
 
 function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
