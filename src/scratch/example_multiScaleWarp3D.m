@@ -11,7 +11,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     params.nScales = 4;
     params.nInnerReps = 2;
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
-    opts.warpDir = 'backward'; % 'backward' or 'forward'
+    opts.warpDir = 'forward'; % 'backward' or 'forward'
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
     opts.verbose = true;
     opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
@@ -55,7 +55,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
-    targetWarped = volwarp(target, displ);
+    targetWarped = volwarp(target, displ, 'backward');
     
     % TODO: try to do quilt instead of warp. Soemthing like:
     % [~, ~, srcgridsize] = patchlib.grid(size(source), patchSize, patchOverlap);
@@ -80,6 +80,7 @@ function [sourceWarped, displ] = example_multiScaleWarp3D(OUTPUT_PATH, BUCKNER_P
     end
     
     % save segmentations 
+    nonsegVolumes = struct('source', source, 'target', target, 'sourceWarped', sourceWarped, 'targetWarped', targetWarped);
     volumes = struct('sourceSeg', sourceSeg, 'targetSeg', targetSeg);
-    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ');
+    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'nonsegVolumes');
     
