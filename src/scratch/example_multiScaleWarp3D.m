@@ -13,7 +13,7 @@ function example_multiScaleWarp3D(PREBUCKNER_PATH, OUTPUT_PATH)
     params.volPad = [5, 5, 5];     
     
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
-    opts.warpDir = 'backward'; % 'backward' or 'forward'
+    opts.warpDir = 'forward'; % 'backward' or 'forward'
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
     opts.verbose = 2; % 1 for simple, 2 for complex/debug
     opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
