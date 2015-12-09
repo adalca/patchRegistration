@@ -14,12 +14,14 @@ end
 IDs = {'736289.773576_gridSpacing3_3_3', '736289.777921_gridSpacing2_2_2', '736289.079323_gridSpacing1_1_1'};
 IDs = {'736290.096482_gridSpacing3_3_3'};
 IDs = {'736302.738655_gridSpacing3_3_3', '736303.072168_gridSpacing5_5_5', '736302.580069_gridSpacing9_9_9'};
-IDs = {'736305.896896_gridSpacing5_5_5', '736305.900467_gridSpacing7_7_7', '736305.902631_gridSpacing3_3_3', '736305.936354_gridSpacing11_11_11'};
+IDs = {'736305.902631_gridSpacing3_3_3', '736305.896896_gridSpacing5_5_5', '736305.900467_gridSpacing7_7_7', '736305.936354_gridSpacing11_11_11'};
+IDs = {'736305.896896_gridSpacing5_5_5', '736305.963139_gridSpacing5_5_5'};
+
 
 %% get parameters 
 % obtain parameters using from the first file in the first id.
 d = sys.fulldir(fullfile(MATPATH, IDs{1}, '*.mat'));
-q = load(d(1).name);
+q = load(d(2).name);
 nScales = q.params.nScales;
 nInnerReps = q.params.nInnerReps;
     
@@ -58,12 +60,15 @@ nInnerReps = q.params.nInnerReps;
 times = zeros(numel(IDs), nScales, nInnerReps);
 norms = cell(numel(IDs), nScales, nInnerReps);
 dices = cell(numel(IDs), nScales, nInnerReps);
+dicelabels = cell(numel(IDs), nScales, nInnerReps);
 data = cell(numel(IDs), nScales, nInnerReps);
 normLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
 normScaledLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
+
 for n = 1:numel(IDs)
     ID = IDs{n};
     n00 = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
+    alldicelabels = unique([n00.volumes.sourceSeg(:); n00.volumes.targetSeg(:)]);
     
     for s = 1:nScales
         for i = 1:nInnerReps
@@ -86,11 +91,13 @@ for n = 1:numel(IDs)
             normScaledLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
     
             % compute displ
-            data{n,s,i}.opts.warpDirn = 'backward';
+            if ~isfield(data{n,s,i}, 'opts'), 
+                data{n,s,i}.opts.warpDir = 'backward';
+            end
             scSrcSeg = volresize(n00.volumes.sourceSeg, data{n,s,i}.state.scSrcSize, 'nearest');
             scTarSeg = volresize(n00.volumes.targetSeg, data{n,s,i}.state.scTargetSize, 'nearest');
-            scSrcSegWarped = volwarp(scSrcSeg, data{n,s,i}.displVolumes.cdispl, data{n,s,i}.opts.warpDirn, 'interpmethod', 'nearest');
-            dices{n, s, i} = dice(scSrcSegWarped, scTarSeg);
+            scSrcSegWarped = volwarp(scSrcSeg, data{n,s,i}.displVolumes.cdispl, data{n,s,i}.opts.warpDir, 'interpmethod', 'nearest');
+            [dices{n, s, i}, dicelabels{n, s, i}] = dice(scSrcSegWarped, scTarSeg, alldicelabels);
 
         end
     end
