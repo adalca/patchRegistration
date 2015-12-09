@@ -1,4 +1,4 @@
-function warp = idx2warp(pIdx, srcSize, patchSize, srcPatchOverlap, refgridsize)
+function [warp, griddisp] = idx2warp(pIdx, srcSize, patchSize, srcPatchOverlap, refgridsize)
 % IDX2WARP translate (reference) index locations to a full-volume warp
 %   warp = idx2Warp(pIdx, srcSize, patchSize, srcPatchOverlap, refGridSize) translate reference
 %   index locations (pIdx) to a full src-sized volume warp. pIdx is nLoc x 1.
