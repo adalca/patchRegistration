@@ -10,7 +10,7 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 3, 3]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-    params.volPad = 5;     
+    params.volPad = o3 * 7;     
     
     % options
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF

@@ -10,7 +10,7 @@ function example_multiScaleWarp3D(PREBUCKNER_PATH, OUTPUT_PATH)
     params.searchSize = [1, 1, 1] * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.nScales = 4;
     params.nInnerReps = 2;
-    params.volPad = 5;     
+    params.volPad = [5, 5, 5];     
     
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     opts.warpDir = 'backward'; % 'backward' or 'forward'
