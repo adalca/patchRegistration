@@ -16,6 +16,8 @@ IDs = {'736290.096482_gridSpacing3_3_3'};
 IDs = {'736302.738655_gridSpacing3_3_3', '736303.072168_gridSpacing5_5_5', '736302.580069_gridSpacing9_9_9'};
 IDs = {'736305.902631_gridSpacing3_3_3', '736305.896896_gridSpacing5_5_5', '736305.900467_gridSpacing7_7_7', '736305.936354_gridSpacing11_11_11'};
 IDs = {'736305.896896_gridSpacing5_5_5', '736305.963139_gridSpacing5_5_5'};
+IDs = {'736306.814598', '736306.822436'};
+IDs = {'736306.827685', '736306.837518'};
 
 
 %% get parameters 
@@ -91,9 +93,6 @@ for n = 1:numel(IDs)
             normScaledLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
     
             % compute displ
-            if ~isfield(data{n,s,i}, 'opts'), 
-                data{n,s,i}.opts.warpDir = 'backward';
-            end
             scSrcSeg = volresize(n00.volumes.sourceSeg, data{n,s,i}.state.scSrcSize, 'nearest');
             scTarSeg = volresize(n00.volumes.targetSeg, data{n,s,i}.state.scTargetSize, 'nearest');
             scSrcSegWarped = volwarp(scSrcSeg, data{n,s,i}.displVolumes.cdispl, data{n,s,i}.opts.warpDir, 'interpmethod', 'nearest');

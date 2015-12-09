@@ -22,7 +22,7 @@ function finalW = composeWarps(warp1, warp2)
     % Usually these happen at the edges due to silly interpolations.
     nNANs = sum(cellfun(@(x) sum(isnan(x(:))), deltaW));
     if nNANs > 0
-        warning('Found %d NANs. Transforming them to 0s', nNANs);
+        warning('ComposeWarps: found %d NANs. Transforming them to 0s', nNANs);
         for i = 1:numel(deltaW), 
             deltaW{i}(isnan(deltaW{i})) = 0; 
         end

@@ -163,9 +163,19 @@ function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
     dvFact = 100;
     dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
     
-    loc1 = mat2cellsplit(a1.loc);
-    loc2 = mat2cellsplit(a2.loc);
-    displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
-    displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
+    % special cases save a lot of time
+    if numel(a1.loc) == 3
+        displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2), a1.loc(3)) ./ dvFact, currentdispl);
+        displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2), a2.loc(3)) ./ dvFact, currentdispl);
+    elseif numel(a1.loc) == 2
+        displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2)) ./ dvFact, currentdispl);
+        displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2)) ./ dvFact, currentdispl);
+    else
+        loc1 = mat2cellsplit(a1.loc);
+        loc2 = mat2cellsplit(a2.loc);
+        displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
+        displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
+    end
+    
     dst = dst + norm(displ1 - displ2);
 end

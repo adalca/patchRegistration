@@ -7,10 +7,10 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     % parameters
     params.patchSize = o3 * 3; % patch size for comparing patches.
     params.searchSize = o3 * 3; % search region size. Note: >> local = (searchSize-1)/2.
-    params.gridSpacing = bsxfun(@times, o3, [1, 2, 3, 3]'); % define grid spacing by scale
+    params.gridSpacing = bsxfun(@times, o3, [1, 2, 3, 5]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-    params.volPad = o3 * 7;     
+     
     
     % options
     opts.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
@@ -18,8 +18,10 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
     opts.verbose = 2; % 1 for simple, 2 for complex/debug
     opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
-    opts.location = 0.01;
-    opts.maxVolSize = 58; % max data size along largest dimension
+    opts.location = 0.005;
+    opts.maxVolSize = 100; % max data size along largest dimension
+    
+    params.volPad = o3 * 7 + round(opts.maxVolSize * 0.1); % this is mainly needed due nan-filling-in at edges. :(.
 
     % files
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);

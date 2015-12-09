@@ -35,7 +35,7 @@ function [sourceWarped, displ] = register(paths, params, opts)
         volumes.sourceSeg = sourceSeg;
         volumes.targetSeg = targetSeg;
     end
-    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ');
+    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'params', 'opts');
     
     %% Immediate Output Visualization
     if opts.verbose > 0

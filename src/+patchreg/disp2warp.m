@@ -18,7 +18,7 @@ function warp = disp2warp(griddisp, srcSize, patchSize, srcPatchOverlap)
     nElems = sum(cellfun(@(x) numel(x), warp));
     if nNANs > 0
         q = dbstack();
-        warning('%s: Found %d (%3.2f%%) NANs. Inpainting.', q(1).name, nNANs, nNANs/nElems);
+        warning('%s: Found %d (%3.2f%%) NANs. Inpainting.', q(1).name, nNANs, nNANs/nElems * 100);
         
         % warning: setting the nans to 0 is not correct. Using inpainting.
         warp = cellfunc(@inpaintn, warp);
