@@ -50,7 +50,18 @@ function displ = multiscale(source, target, params, opts, varargin)
             end
             
             % warp the source to match the use the current displacement
-            scSourceWarped = volwarp(scSource, displ, opts.warpDir);
+            if strcmp(opts.warpRes, 'atscale')
+                scSourceWarped = volwarp(scSource, displ, opts.warpDir);
+            
+            else
+                assert(strcmp(opts.warpRes, 'full'));
+                sys.warnif(strcmp(opts.warpDir, 'forward'), ...
+                    'Warning: forward full volwarp at each iteration is costly');
+                
+                wd = resizeWarp(displ, size(source));
+                sourceWarped = volwarp(source, wd, opts.warpDir);
+                scSourceWarped = volresize(sourceWarped, scSrcSize);
+            end
 
             % find the new warp (displacements)
             sstic = tic();
