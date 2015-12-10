@@ -19,6 +19,8 @@ IDs = {'736305.896896_gridSpacing5_5_5', '736305.963139_gridSpacing5_5_5'};
 IDs = {'736306.814598', '736306.822436'};
 IDs = {'736306.827685', '736306.837518'};
 IDs = {'736307.753497', '736307.761347', '736307.769803', '736307.774934', '736307.778891'};
+IDs = {'736307.834847', '736307.887335'};
+IDs = {'736307.906560'};
 
 %% get parameters 
 % obtain parameters using from the first file in the first id.
@@ -26,37 +28,6 @@ d = sys.fulldir(fullfile(MATPATH, IDs{1}, '*.mat'));
 q = load(d(2).name);
 nScales = q.params.nScales;
 nInnerReps = q.params.nInnerReps;
-    
-%% TODO: I (Adrian) have now broken this. 
-% Before, we used to compute all kinds of normalizations and volume warps *inside* the registration
-% code. Instead, here we just assume we have the bare minimum dumped from the registration code, and
-% we compute what is necessary here. This allows the code to be more modular and cleaner.
-
-% debug
-% scaledLocalDispl = resizeWarp(localDispl, size(source)); 
-% normLocalDispl = cellfun(@(x) norm(x(:))/numel(x), localDispl);
-% normScaledLocalDispl = cellfun(@(x) norm(x(:))/numel(x), scaledLocalDispl);
-% normCurrentDispl = cellfun(@(x) norm(x(:))/numel(x), displ);
-% 
-% local = 1;
-% searchPatch = ones(1, ndims(scSourceWarped)) .* local .* 2 + 1;
-% sourceWarpedSegm = volwarp(scSourceSegm, displ, warpDir, 'interpmethod', 'nearest');
-% diceCoeff = dice(sourceWarpedSegm, scTargetSegm);
-% 
-% normDispl = struct('local', normLocalDispl, 'scaledLocal', normScaledLocalDispl, 'current', normCurrentDispl);  
-% volumes = struct('source', scSource, 'target', scTarget, 'sourceSegm', scSourceSegm, 'targetSegm', scTargetSegm, 'localDispl', {localDispl}, 'scaledLocalDispl', {scaledLocalDispl}, 'currentDispl', {displ});
-% parameters = struct('patchSize', patchSize, 'searchPatch', searchPatch, 'patchOverlap', patchOverlap, 'nScales', nScales, 'nInnerReps', nInnerReps, 'inferMethod', infer_method, 'lambdaNode', 1, 'lambdaEdge', 1, 'inferenceThreshold', 10^-4);
-% 
-% % save things
-% outputName = sprintf('%d_%d.mat', s, t);
-% save([savePath outputName], 'volumes', 'tics', 'normDispl', 'diceCoeff', 'parameters');
-% 
-% % The following computations should be moved to analysis, not registration...
-% % compute segmentation volumes but perhaps this is not necessary, but rather should be done only
-% % when evaluating?
-% scTargetSegm = volresize(debug.volumes.targetSegm, srcSize, 'nearest');
-% scSourceSegm = volresize(debug.volumes.sourceSegm, trgSize, 'nearest');
-
 
 %% gather data
 times = zeros(numel(IDs), nScales, nInnerReps);
@@ -67,10 +38,11 @@ data = cell(numel(IDs), nScales, nInnerReps);
 normLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
 normScaledLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
 
+n00 = cell(1, numel(IDs));
 for n = 1:numel(IDs)
     ID = IDs{n};
-    n00 = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
-    alldicelabels = unique([n00.volumes.sourceSeg(:); n00.volumes.targetSeg(:)]);
+    n00{n} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
+    alldicelabels = unique([n00{n}.volumes.sourceSeg(:); n00{n}.volumes.targetSeg(:)]);
     
     for s = 1:nScales
         for i = 1:nInnerReps
@@ -93,11 +65,9 @@ for n = 1:numel(IDs)
             normScaledLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
     
             % compute displ
-            scSrcSeg = volresize(n00.volumes.sourceSeg, data{n,s,i}.state.scSrcSize, 'nearest');
-            scTarSeg = volresize(n00.volumes.targetSeg, data{n,s,i}.state.scTargetSize, 'nearest');
-            scSrcSegWarped = volwarp(scSrcSeg, data{n,s,i}.displVolumes.cdispl, data{n,s,i}.opts.warpDir, 'interpmethod', 'nearest');
-            [dices{n, s, i}, dicelabels{n, s, i}] = dice(scSrcSegWarped, scTarSeg, alldicelabels);
-
+            wd = resizeWarp(data{n,s,i}.displVolumes.cdispl, size(n00{n}.volumes.source));
+            srcSegWarped = volwarp(n00{n}.volumes.sourceSeg, wd, n00{n}.opts.warpDir, 'interpmethod', 'nearest');
+            [dices{n, s, i}, dicelabels{n, s, i}] = dice(srcSegWarped, n00{n}.volumes.targetSeg, alldicelabels);
         end
     end
 end
@@ -156,7 +126,9 @@ for n = 1:numel(IDs)
         
         for i = 1:nInnerReps
             idx = (s-1)*nInnerReps + i;
-            scalemeandice{idx} = dices{n, s, i};
+            scalemeandice{idx} = dices{n, s, i}(dicelabels{n, s, i} == 4 | dicelabels{n, s, i} == 43);
+            scalemeandice{idx} = dices{n, s, i}(dicelabels{n, s, i} == 17 | dicelabels{n, s, i} == 53);
+%             scalemeandice{idx} = dices{n, s, i};
             grp{idx} = (idx) * ones(1, numel(scalemeandice{idx}));
         end
     end

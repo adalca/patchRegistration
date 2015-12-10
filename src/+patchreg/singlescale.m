@@ -80,6 +80,17 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             
         case 'mrf'
             % Regularization Method 1: mrf warp
+            
+            srcgridsub = cellfunc(@(x) x(:), patchlib.grid(srcSize, patchSize, srcPatchOverlap, 'sub'));
+            srcgridsub = bsxfun(@plus, cat(2, srcgridsub{:}), (patchSize - 1) / 2); % need to use th emiddle of the
+            srcgrididx = subvec2ind(srcSize, srcgridsub);
+            
+            warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
+            x = cellfunc(@(x) x(:), warpedwarp);
+            sub = cat(2, x{:});
+
+            
+            inputs.mrf.existingDisp = sub(srcgrididx(:), :);
             [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, ...
                 patchSize, srcPatchOverlap, srcgridsize, refgridsize, inputs.mrf);
 
@@ -163,36 +174,49 @@ function inputs = parseInputs(source, target, params, opts, varargin)
     end
     
     % setup edge function for mrfs.
-    usemex = exist('pdist2mex', 'file') == 3;
-    inputs.mrf.edgeDst = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
+    % usemex = exist('pdist2mex', 'file') == 3;
+    %inputs.mrf.edgeDst = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
+    %inputs.mrf.edgeDst = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, 1, usemex); 
+    inputs.mrf.edgeDst = @correspdst;
 end
 
-function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
-    dvFact = 1;
-    
-    % comppute the displacement from the current location for each location
-    % Note: some of this computation is extra since it's done more than once for the same location.
-    %
-    % special cases save a lot of runtime
-    if numel(a1.loc) == 3
-        displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2), a1.loc(3)) ./ dvFact, currentdispl);
-        displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2), a2.loc(3)) ./ dvFact, currentdispl);
-        
-    elseif numel(a1.loc) == 2
-        displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2)) ./ dvFact, currentdispl);
-        displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2)) ./ dvFact, currentdispl);
-        
-    else
-        loc1 = mat2cellsplit(a1.loc);
-        loc2 = mat2cellsplit(a2.loc);
-        displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
-        displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
-    end
-    
-    % get the overall displacement
-    a1.disp = bsxfun(@plus, a1.disp, displ1);
-    a2.disp = bsxfun(@plus, a2.disp, displ2);
-    
-    % compute the distance
-    dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
+function dst = correspdst(pstr1, pstr2, ~, ~)
+% this is a copy of patchlib.correspdst but uses pdist2mex directly and eliminates dvFact. For some
+% reason, having a lambda functions that set these and called patchlib.correspdst took a lot of
+% built-in time.
+
+    X = pstr1.disp;
+    Y = pstr2.disp;
+    dst = pdist2mex(X', Y', 'euc', [], [], []);
 end
+
+
+% function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
+%     dvFact = 1;
+%     
+%     % comppute the displacement from the current location for each location
+%     % Note: some of this computation is extra since it's done more than once for the same location.
+%     %
+%     % special cases save a lot of runtime
+%     if numel(a1.loc) == 3
+%         displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2), a1.loc(3)) ./ dvFact, currentdispl);
+%         displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2), a2.loc(3)) ./ dvFact, currentdispl);
+%         
+%     elseif numel(a1.loc) == 2
+%         displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2)) ./ dvFact, currentdispl);
+%         displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2)) ./ dvFact, currentdispl);
+%         
+%     else
+%         loc1 = mat2cellsplit(a1.loc);
+%         loc2 = mat2cellsplit(a2.loc);
+%         displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
+%         displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
+%     end
+%     
+%     % get the overall displacement
+%     a1.disp = bsxfun(@plus, a1.disp, displ1);
+%     a2.disp = bsxfun(@plus, a2.disp, displ2);
+%     
+%     % compute the distance
+%     dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
+% end
