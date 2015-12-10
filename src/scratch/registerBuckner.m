@@ -11,30 +11,32 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
     
-    params.mrf.lambda_node = 0.5;
-    params.mrf.lambda_edge = 0.001; 
-    params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
-    
-    % options
-    opts.warpDir = 'backward'; % 'backward' or 'forward'
-    opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
-    opts.verbose = 1; % 1 for simple, 2 for complex/debug
-    opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
-    opts.location = 0.01;
-    opts.maxVolSize = 58; % max data size along largest dimension
-    
-    params.volPad = o3 * 7; % this is mainly needed due nan-filling-in at edges. :(.
+    for lambda_edge_exp = -4:1:0
+        params.mrf.lambda_node = 0.5;
+        params.mrf.lambda_edge = 10^lambda_edge_exp; 
+        params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
 
-    % files
-    paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
-    paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
-    
-    % segmentation files <optional>
-    paths.sourceSegFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg_seg.nii.gz']);
-    paths.targetSegFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_seg_proc.nii.gz');
-    
-    % output path
-    paths.output = OUTPUT_PATH;
-    
-    %% Carry out the registration
-    register(paths, params, opts)    
+        % options
+        opts.warpDir = 'backward'; % 'backward' or 'forward'
+        opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
+        opts.verbose = 1; % 1 for simple, 2 for complex/debug
+        opts.distanceMethod = 'stateDist'; % 'stateDist' or 'volknnsearch'
+        opts.location = 0.01;
+        opts.maxVolSize = 58; % max data size along largest dimension
+
+        params.volPad = o3 * 7; % this is mainly needed due nan-filling-in at edges. :(.
+
+        % files
+        paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
+        paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
+
+        % segmentation files <optional>
+        paths.sourceSegFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg_seg.nii.gz']);
+        paths.targetSegFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_seg_proc.nii.gz');
+
+        % output path
+        paths.output = OUTPUT_PATH;
+
+        %% Carry out the registration
+        register(paths, params, opts)    
+    end

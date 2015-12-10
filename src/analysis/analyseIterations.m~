@@ -166,6 +166,25 @@ for n = 1:numel(IDs)
     
 end
 
+figure(); hold on;
+for n = 1:numel(IDs)
+    ID = IDs{n};
+    title(sprintf('DICE with {\lambda_{edge}}')); hold on;
+    clear scalemeandice grp;
+        
+    for s = 1:nScales
+        for i = 1:nInnerReps
+            idx = (s-1)*nInnerReps + i;
+            scalemeandice{idx} = dices{n, s, i};
+            grp{idx} = (idx) * ones(1, numel(scalemeandice{idx}));
+        end
+    end
+    scalemeandice = cat(2, scalemeandice{:});
+    grp = cat(2, grp{:});
+    boxplot(scalemeandice, grp); hold on;
+    
+end
+
 
 %% Old Visualization code from patchreg.multiscale
 
