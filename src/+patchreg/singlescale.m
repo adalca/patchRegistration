@@ -80,17 +80,25 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             
         case 'mrf'
             % Regularization Method 1: mrf warp
-            
-            srcgridsub = cellfunc(@(x) x(:), patchlib.grid(srcSize, patchSize, srcPatchOverlap, 'sub'));
-            srcgridsub = bsxfun(@plus, cat(2, srcgridsub{:}), (patchSize - 1) / 2); % need to use th emiddle of the
-            srcgrididx = subvec2ind(srcSize, srcgridsub);
-            
-            warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
-            x = cellfunc(@(x) x(:), warpedwarp);
-            sub = cat(2, x{:});
+            if ~opts.localSpatialPot
+                srcgridsub = cellfunc(@(x) x(:), patchlib.grid(srcSize, patchSize, srcPatchOverlap, 'sub'));
+                srcgridsub = bsxfun(@plus, cat(2, srcgridsub{:}), (patchSize - 1) / 2); % use the middle of the patches
+                srcgrididx = subvec2ind(srcSize, srcgridsub);
 
+                % method 1
+                warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward'), inputs.currentdispl); % take previous warp into 
+                x = cellfunc(@(x) x(srcgrididx(:)), warpedwarp);
+                
+                % method 2 --- faster, but currently aren't doing proper interpn, though
+                % warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
+                % x = cellfunc(@(x) x(:), warpedwarp);
+                
+                selsub = cat(2, x{:});
+                assert(isclean(selsub));
+
+                inputs.mrf.existingDisp = selsub;
+            end
             
-            inputs.mrf.existingDisp = sub(srcgrididx(:), :);
             [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, ...
                 patchSize, srcPatchOverlap, srcgridsize, refgridsize, inputs.mrf);
 
@@ -111,7 +119,7 @@ function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, p
  % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
     % patches are copies of the displacements? TODO: do study.
     mrfargs = struct2cellWithNames(mrfparams);
-    [quiltedPatches, ~, ~, ~, quiltedpIdx] = ...
+    [quiltedPatches, bel, pot, ~, quiltedpIdx] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, srcPatchOverlap, ...
             'pIdx', pIdx, 'refgridsize', refgridsize, 'srcSize', srcSize, mrfargs{:});
         
