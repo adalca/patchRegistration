@@ -86,10 +86,14 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 srcgrididx = subvec2ind(srcSize, srcgridsub);
 
                 % method 1
-                warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward'), inputs.currentdispl); % take previous warp into 
+                if strcmp(opts.warpDir, 'forward')
+                    warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward'), inputs.currentdispl); % take previous warp into 
+                else
+                    warpedwarp = inputs.currentdispl;
+                end
                 x = cellfunc(@(x) x(srcgrididx(:)), warpedwarp);
                 
-                % method 2 --- faster, but currently aren't doing proper interpn, though
+                % method 2 for 'forward' --- faster, but currently aren't doing proper interpn, though
                 % warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
                 % x = cellfunc(@(x) x(:), warpedwarp);
                 
