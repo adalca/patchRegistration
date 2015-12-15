@@ -58,7 +58,11 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         patches(i, 1:nNeighbors, :) = reshape(neighborPatches, [1, nNeighbors, P]);
                         
         % patch intensity distance of current patch to neighbors
-        d = pdist2(srcLib(i, :), neighborPatches);
+        % normal pdist2:
+        % d = pdist2(srcLib(i, :), neighborPatches);
+        % relative pdist2:
+        avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
+        d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';        
         
         % compute spatial distance of current location to neighbors
         dNeigh = locweight * pdist2(subIdx, refgridsub(refNeighborIdx, :));
