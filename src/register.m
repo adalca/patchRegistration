@@ -1,5 +1,6 @@
 function [sourceWarped, displ] = register(paths, params, opts, varargin)
-% carry out patch-based discrete registration
+% patch-based discrete registration
+% TODO: use cubic interpolation? see if there is a difference?
 
     %% Prepare run
     % prepare source
@@ -14,11 +15,6 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     newTarSize = round(size(niiTarget.img) ./ szRatio);
     target = padarray(volresize(double(niiTarget.img), newTarSize), params.volPad, 'both');
     
-    % prepare save path
-    dirName = sprintf('%f', now);
-    mkdir(paths.output, dirName);
-    opts.savefile = sprintf('%s%s/%s', paths.output, dirName, '%d_%d.mat');
-    
     %% Patch Registration
     % do multi scale registration
     displ = patchreg.multiscale(source, target, params, opts, varargin{:});
@@ -26,18 +22,16 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
     
-    %% save segmentations if necessary
-    volumes.source = source;
-    volumes.target = target;
-    if isfield(paths, 'sourceSegFile') && isfield(paths, 'targetSegFile')
-        sourceSeg = padarray(volresize(nii2vol(paths.sourceSegFile), newSrcSize, 'nearest'), params.volPad, 'both');
-        targetSeg = padarray(volresize(nii2vol(paths.targetSegFile), newTarSize, 'nearest'), params.volPad, 'both');
-        volumes.sourceSeg = sourceSeg;
-        volumes.targetSeg = targetSeg;
+    %% save final displacement and original volumes
+    if isfield(opts, 'savefile') && ~isempty(opts.savefile)
+        volumes.source = source;
+        volumes.sourceWarped = sourceWarped;
+        volumes.target = target; %#ok<STRNU>
+        save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'params', 'opts', 'paths');
     end
-    save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'params', 'opts');
     
     %% Immediate Output Visualization
+    % TODO: take this out and put it in a separate visualization function
     if opts.verbose > 0
         % This is just some quick visualization. Analysis should be done separately
         displvols = {source, target, sourceWarped}; % volumes to display

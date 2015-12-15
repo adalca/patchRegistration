@@ -49,7 +49,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                    sprintf('%d ', scSrcSize));
             end
             
-            % warp the source to match the use the current displacement
+            % warp the source to match the size of the current displacement
             if strcmp(opts.warpRes, 'atscale')
                 scSourceWarped = volwarp(scSource, displ, opts.warpDir);
             

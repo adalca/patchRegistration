@@ -4,8 +4,8 @@ function [warp, griddisp] = idx2warp(pIdx, srcSize, patchSize, srcPatchOverlap, 
 %   index locations (pIdx) to a full src-sized volume warp. pIdx is nLoc x 1.
 
     % compute the displacement on the grid
-    idx = patchlib.grid(srcSize, patchSize, srcPatchOverlap);
-    griddisp = patchlib.corresp2disp(srcSize, refgridsize, pIdx, 'srcGridIdx', idx, 'reshape', true);
+    srcgrididx = patchlib.grid(srcSize, patchSize, srcPatchOverlap);
+    griddisp = patchlib.corresp2disp(srcSize, refgridsize, pIdx, 'srcGridIdx', srcgrididx, 'reshape', true);
         
     warp = patchreg.disp2warp(griddisp, srcSize, patchSize, srcPatchOverlap);
 end

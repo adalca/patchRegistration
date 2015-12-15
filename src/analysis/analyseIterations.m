@@ -20,7 +20,9 @@ IDs = {'736306.814598', '736306.822436'};
 IDs = {'736306.827685', '736306.837518'};
 IDs = {'736307.753497', '736307.761347', '736307.769803', '736307.774934', '736307.778891'};
 IDs = {'736307.834847', '736307.887335'};
-IDs = {'736307.906560'};
+IDs = {'736308.385976'};%, 
+IDs = {'736308.479164'};
+IDs = {'736308.665375', '736308.793910'}
 
 %% get parameters 
 % obtain parameters using from the first file in the first id.
@@ -43,6 +45,7 @@ for n = 1:numel(IDs)
     ID = IDs{n};
     n00{n} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
     alldicelabels = unique([n00{n}.volumes.sourceSeg(:); n00{n}.volumes.targetSeg(:)]);
+    [dices{n, nScales+1, 1}, dicelabels{n, nScales+1, 1}] = dice(n00{n}.volumes.sourceSeg, n00{n}.volumes.targetSeg, alldicelabels);
     
     for s = 1:nScales
         for i = 1:nInnerReps
@@ -112,31 +115,9 @@ end
 legend(IDs);
 
 %%
-figure(23); hold on;
-for n = 1:numel(IDs)
-    ID = IDs{n};
-    subplot(numel(IDs), 1, n); title(sprintf('DICE %s', ID)); hold on;
-    clear scalemeandice grp;
-        
-    for s = 1:nScales
-        % plot DICE
-        % unclear what to do yet - dice for which label? doing mean for now, but that's pretty limited.
-        % perhaps do boxplot of all dice?
-%         subplot(1, 3, 4); ax = gca; ax.ColorOrderIndex = 1; 
-        
-        for i = 1:nInnerReps
-            idx = (s-1)*nInnerReps + i;
-            scalemeandice{idx} = dices{n, s, i}(dicelabels{n, s, i} == 4 | dicelabels{n, s, i} == 43);
-            scalemeandice{idx} = dices{n, s, i}(dicelabels{n, s, i} == 17 | dicelabels{n, s, i} == 53);
-%             scalemeandice{idx} = dices{n, s, i};
-            grp{idx} = (idx) * ones(1, numel(scalemeandice{idx}));
-        end
-    end
-    scalemeandice = cat(2, scalemeandice{:});
-    grp = cat(2, grp{:});
-    boxplot(scalemeandice, grp); hold on;
-    
-end
+plotDICEsubplots(IDs, n00, dices, dicelabels, 23); % all labels
+plotDICEsubplots(IDs, n00, dices, dicelabels, 24, [4, 43]) % ventricles
+plotDICEsubplots(IDs, n00, dices, dicelabels, 25, [17, 53]) % hippocampus
 
 
 %% Old Visualization code from patchreg.multiscale
