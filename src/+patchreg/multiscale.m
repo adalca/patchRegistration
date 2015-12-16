@@ -74,7 +74,12 @@ function displ = multiscale(source, target, params, opts, varargin)
             sstime = toc(sstic);
 
             % compose previous warp with newfound warp
-            cdispl = composeWarps(displ, localDispl);
+            if strcmp(opts.warpDir, 'forward')
+                cdispl = composeWarps(displ, localDispl);
+            else
+                % warps are both in target ref frame, so we can just add them
+                cdispl = cellfunc(@(d,l) d + l, displ, localDispl);
+            end
             
             % if save mode is on, save relevant teration information
             if isfield(opts, 'savefile') && ~isempty(opts.savefile)
