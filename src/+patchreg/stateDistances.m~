@@ -61,15 +61,14 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         % normal pdist2:
         switch distanceMetric
             case 'euclidean'
-                d = pdist2(srcLib(i, :), neighborPatches);
-                
+            d = pdist2(srcLib(i, :), neighborPatches);
+        
             case 'seuclidean'
-                % relative pdist2:
-                avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
-                d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';
+            % relative pdist2:
+        avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
+        d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';        
             otherwise
-                error('unknown distance metric');
-        end
+                error('unknow
         
         % compute spatial distance of current location to neighbors
         dNeigh = locweight * pdist2(subIdx, refgridsub(refNeighborIdx, :));

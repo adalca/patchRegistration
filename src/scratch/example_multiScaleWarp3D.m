@@ -20,7 +20,7 @@ function example_multiScaleWarp3D(PREBUCKNER_PATH, OUTPUT_PATH)
     opts.location = 0.01;
     
     % max data size along largest dimension
-    opts.maxVolSize = 58;
+    opts.maxVolSize = 70;
 
     % files. TODO: should switch to registering to atlas
     paths.sourceFile = fullfile(PREBUCKNER_PATH, 'buckner02_brain_affinereg_to_b61.nii.gz');

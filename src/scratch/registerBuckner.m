@@ -10,9 +10,15 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 2]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
+<<<<<<< HEAD
     
     params.mrf.lambda_node = 0.05; %5;
     params.mrf.lambda_edge = 0.2; 
+=======
+
+    params.mrf.lambda_node = 0.1; %5;
+    params.mrf.lambda_edge = 0.1; 
+>>>>>>> 7726a85e8607cac2704a4bd9da819d9ef1460560
     params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     
     % options
@@ -24,6 +30,7 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     opts.location = 0.001;
     opts.maxVolSize = 80; % max data size along largest dimension
     opts.localSpatialPot = false; % TODO: move to mrf params
+    opts.distance = 'euclidean'; % 'euclidean' or 'seuclidean'
     
     params.volPad = o3 * 5; % this is mainly needed due nan-filling-in at edges. :(.
 

@@ -50,7 +50,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
                 [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
-                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location);
+                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance);
             end
         else
             if strcmp(opts.distanceMethod, 'volknnsearch')
@@ -58,7 +58,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
                 'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
-                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location);
+                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance);
             end
         end
         
