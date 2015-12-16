@@ -16,7 +16,7 @@ function registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, subjid)
     params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
     
     % options
-    opts.warpDir = 'backward'; % 'backward' or 'forward'
+    opts.warpDir = 'forward'; % 'backward' or 'forward'
     opts.warpReg = 'mrf'; % 'none' or 'mrf' or 'quilt'
     opts.warpRes = 'full'; % 'full' or 'atscale'
     opts.verbose = 1; % 1 for simple, 2 for complex/debug

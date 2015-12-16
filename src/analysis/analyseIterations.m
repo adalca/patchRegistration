@@ -20,7 +20,8 @@ IDs = {'736306.814598', '736306.822436'};
 IDs = {'736307.834847', '736307.887335'};
 IDs = {'736308.385976'};%, 
 IDs = {'736308.479164'};
-IDs = {'736308.665375', '736308.793910'}
+IDs = {'736308.665375', '736308.793910', '736308.870078', '736308.913306', '736309.066733', '736309.109087'};
+IDs = {'buckner21_736313.632185', 'buckner01_736313.644915'};
 
 
 %% get parameters 
@@ -55,9 +56,6 @@ for n = 1:numel(IDs)
             times(n, s, i) = data{n, s, i}.state.runTime;
             norms{n, s, i} = data{n, s, i}.displVolumes.localDispl;
 
-
-            %  = data{n, s, i}.diceCoeff;
-            
             % compute point-wise norms for localDispl and scaledLocalDispl
             dsquared = cellfunc(@(x) x.^ 2, data{n, s, i}.displVolumes.localDispl);
             normLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
@@ -73,6 +71,21 @@ for n = 1:numel(IDs)
         end
     end
 end
+
+%%
+% v = [];
+% for s = 1:nScales
+%     for i = 1:nInnerReps
+%         % rescale warp
+%         w = resizeWarp(data{n, s, i}.displVolumes.cdispl, size(n00{n}.volumes.source));
+%         v{i, s} = volwarp(n00{n}.volumes.source, w, n00{n}.opts.warpDir);
+%         smallv{i, s} = volresize(data{n,s,i}.volumes.scSourceWarped, size(n00{n}.volumes.source), 'nearest');
+%     end
+%     view3Dopt([n00{n}.volumes.source; v(:, s); smallv(:, s); w(:)]);
+%     pause();
+%     caf;
+% end
+% view3Dopt([n00{n}.volumes.source, v(:)']);
 
 %% visualize
 
