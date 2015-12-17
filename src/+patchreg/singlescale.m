@@ -80,36 +80,40 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             
         case 'mrf'
             % Regularization Method 1: mrf warp
+            
+            % extract existing warp
             if ~opts.localSpatialPot
-                srcgridsub = cellfunc(@(x) x(:), patchlib.grid(srcSize, patchSize, srcPatchOverlap, 'sub'));
-                srcgridsub = bsxfun(@plus, cat(2, srcgridsub{:}), (patchSize - 1) / 2); % use the middle of the patches
-                srcgrididx = subvec2ind(srcSize, srcgridsub);
+                
+                % get linear indexes of the centers of the search
+                % here, we need to use patchSize since we're 
+                srcgrididx = patchlib.grid(srcSize, patchSize, srcPatchOverlap);
+                srcgrididx = shiftind(srcSize, srcgrididx, (patchSize - 1) / 2);
 
-                % method 1
                 if strcmp(opts.warpDir, 'forward')
+                    % method 1
                     warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward'), inputs.currentdispl); % take previous warp into 
+                    
+                    % method 2 for 'forward' --- faster, but currently aren't doing proper interpn, though
+                    % warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
+                    % x = cellfunc(@(x) x(:), warpedwarp);
                 else
+                    
                     warpedwarp = inputs.currentdispl;
                 end
-                x = cellfunc(@(x) x(srcgrididx(:)), warpedwarp);
+                warpedwarpsel = cellfunc(@(x) x(srcgrididx(:)), warpedwarp);
                 
-                % method 2 for 'forward' --- faster, but currently aren't doing proper interpn, though
-                % warpedwarp = cellfunc(@(x) volwarp(x, inputs.currentdispl, 'forward', 'selidxout', srcgrididx), inputs.currentdispl); % take previous warp into 
-                % x = cellfunc(@(x) x(:), warpedwarp);
-                
-                selsub = cat(2, x{:});
-                assert(isclean(selsub));
-
-                inputs.mrf.existingDisp = selsub;
+                inputs.mrf.existingDisp = cat(2, warpedwarpsel{:});
+                assert(isclean(inputs.mrf.existingDisp));
             end
             
+            % run mrf regualization
             [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, ...
                 patchSize, srcPatchOverlap, srcgridsize, refgridsize, inputs.mrf);
 
         case 'quilt'
             % Regularization Method 2: quilt warp. (this may only have been implemented for 2d)
             alpha = 5;
-            warp = quiltwarp(srcSize, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, params.searchSize, alpha);
+            warp = quiltwarp(srcSize, pDst, pIdx, patchSize, srcPatchOverlap, srcgridsize, params.searchSize, alpha, opts.distanceMethod);
             
         otherwise
             error('warp regularization: unknown method');
@@ -126,21 +130,23 @@ function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, p
     [quiltedPatches, bel, pot, ~, quiltedpIdx] = ...
             patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, srcPatchOverlap, ...
             'pIdx', pIdx, 'refgridsize', refgridsize, 'srcSize', srcSize, mrfargs{:});
-        
+     
+    % TODO: note: the grid displacement is moved to center of volume in disp2warp. This is a bit
+    % messy, maybe clean up here?
      warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, srcPatchOverlap, refgridsize);
 end
 
-function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, searchSize, alpha)
+function warp = quiltwarp(srcSize, pDst, pIdx, patchSize, patchOverlap, srcgridsize, searchSize, alpha, dstmethod)
+% this needs to be looked at.
 
     % first try for second method:
-    dispPatchSize = ones(1, numel(patchSize)) * searchSize;
-    [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, srcgridsize, dispPatchSize);
+    [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, srcgridsize, searchSize);
     nodePot = exp(-alpha * pDstOrd); 
     nodePot = bsxfun(@times, nodePot, 1./sum(nodePot, 2));    
     
-    piver = stateDispQuilt(nodePot, dispPatchSize, patchOverlap, srcgridsize);
+    piver = stateDispQuilt(nodePot, searchSize, patchOverlap, srcgridsize);
     
-    pisub = bsxfun(@minus, ind2subvec(dispPatchSize, piver(:)), ceil(dispPatchSize/2));
+    pisub = bsxfun(@minus, ind2subvec(searchSize, piver(:)), ceil(searchSize/2));
     pisub = -pisub; % since we're doing the warp in the other direction.
     piwarp = cellfunc(@(x) reshape(x, srcSize), dimsplit(2, pisub));
     
@@ -186,49 +192,18 @@ function inputs = parseInputs(source, target, params, opts, varargin)
     end
     
     % setup edge function for mrfs.
-    % usemex = exist('pdist2mex', 'file') == 3;
-    %inputs.mrf.edgeDst = @(a1,a2,a3,a4) edgefunc(a1, a2, a3, a4, p.Results.currentdispl, usemex); 
-    %inputs.mrf.edgeDst = @(a1,a2,a3,a4) patchlib.correspdst(a1, a2, a3, a4, 1, usemex); 
     inputs.mrf.edgeDst = @correspdst;
 end
 
+%% edge distance function
 function dst = correspdst(pstr1, pstr2, ~, ~)
 % this is a copy of patchlib.correspdst but uses pdist2mex directly and eliminates dvFact. For some
 % reason, having a lambda functions that set these and called patchlib.correspdst took a lot of
 % built-in time.
+% assumes we have the pdist2mex function, which allows for very fast computation
+%   usemex = exist('pdist2mex', 'file') == 3;
 
     X = pstr1.disp;
     Y = pstr2.disp;
     dst = pdist2mex(X', Y', 'euc', [], [], []);
 end
-
-
-% function dst = edgefunc(a1, a2, a3, a4, currentdispl, usemex)
-%     dvFact = 1;
-%     
-%     % comppute the displacement from the current location for each location
-%     % Note: some of this computation is extra since it's done more than once for the same location.
-%     %
-%     % special cases save a lot of runtime
-%     if numel(a1.loc) == 3
-%         displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2), a1.loc(3)) ./ dvFact, currentdispl);
-%         displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2), a2.loc(3)) ./ dvFact, currentdispl);
-%         
-%     elseif numel(a1.loc) == 2
-%         displ1 = cellfun(@(x) x(a1.loc(1), a1.loc(2)) ./ dvFact, currentdispl);
-%         displ2 = cellfun(@(x) x(a2.loc(1), a2.loc(2)) ./ dvFact, currentdispl);
-%         
-%     else
-%         loc1 = mat2cellsplit(a1.loc);
-%         loc2 = mat2cellsplit(a2.loc);
-%         displ1 = cellfun(@(x) x(loc1{:}) ./ dvFact, currentdispl);
-%         displ2 = cellfun(@(x) x(loc2{:}) ./ dvFact, currentdispl);
-%     end
-%     
-%     % get the overall displacement
-%     a1.disp = bsxfun(@plus, a1.disp, displ1);
-%     a2.disp = bsxfun(@plus, a2.disp, displ2);
-%     
-%     % compute the distance
-%     dst = patchlib.correspdst(a1, a2, a3, a4, dvFact, usemex); 
-% end
