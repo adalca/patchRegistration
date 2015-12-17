@@ -11,19 +11,12 @@ if ispc
 else
     MATPATH = '/data/vision/polina/scratch/abobu/patchRegistration/output/';
 end
-IDs = {'736289.773576_gridSpacing3_3_3', '736289.777921_gridSpacing2_2_2', '736289.079323_gridSpacing1_1_1'};
-IDs = {'736290.096482_gridSpacing3_3_3'};
-IDs = {'736302.738655_gridSpacing3_3_3', '736303.072168_gridSpacing5_5_5', '736302.580069_gridSpacing9_9_9'};
-IDs = {'736305.902631_gridSpacing3_3_3', '736305.896896_gridSpacing5_5_5', '736305.900467_gridSpacing7_7_7', '736305.936354_gridSpacing11_11_11'};
-IDs = {'736305.896896_gridSpacing5_5_5', '736305.963139_gridSpacing5_5_5'};
-IDs = {'736306.814598', '736306.822436'};
-IDs = {'736306.827685', '736306.837518'};
-IDs = {'736307.753497', '736307.761347', '736307.769803', '736307.774934', '736307.778891'};
-IDs = {'736307.834847', '736307.887335'};
-IDs = {'736308.385976'};%, 
-IDs = {'736308.479164'};
-IDs = {'736308.665375', '736308.793910', '736308.870078', '736308.913306', '736309.066733', '736309.109087'};
-IDs = {'buckner21_736313.632185', 'buckner01_736313.644915'};
+IDs = {'buckner21_736314.108727', 'buckner21_736314.408502', 'buckner21_736314.547912', 'buckner21_736314.645597' ,'buckner21_736314.670990_LE0.01_LN5.00_gs1_2_2_3__ireps2'}
+IDs = {'buckner21_736314.697553_LE0.05_LN5.00_gs1_2_2_3_3_3__ireps2', 'buckner03_736314.955567_LE0.05_LN5.00_gs1_2_2_3_3_3__ireps2'};
+d = dir('D:\Dropbox (MIT)\Research\patchRegistration\output\*_LE0.05_LN5.00_gs1_2_2_3_3_3*');
+IDs = {d.name};
+
+IDs = {'buckner21_736315.310004_LE0.05_LN5.00_gs1_2_2_3_3_3__ireps2', 'buckner21_736315.503964_LE0.05_LN5.00_gs1_2_2_3_3_3__ireps2', 'buckner21_736315.595589_LE0.05_LN5.00_gs1_2_2_3_3_3__ireps2'};
 
 %% get parameters 
 % obtain parameters using from the first file in the first id.
@@ -125,13 +118,18 @@ for s = 1:nScales
     psn = plot((s-1) * nInnerReps  + (1:nInnerReps), scaleScaledLocalNorms', '.-'); 
 end
 
-legend(IDs);
+idnames = cellfunc(@(id, p) sprintf('%s l_n:%3.2f l_e:%3.2f', id, p.params.mrf.lambda_node, p.params.mrf.lambda_edge), IDs, n00);
+legend(idnames);
 
 %%
-plotDICEsubplots(IDs, n00, dices, dicelabels, 23); % all labels
-plotDICEsubplots(IDs, n00, dices, dicelabels, 24, [4, 43]) % ventricles
-plotDICEsubplots(IDs, n00, dices, dicelabels, 25, [17, 53]) % hippocampus
+plotDICEsubplots(idnames, n00, dices, dicelabels, 23); % all labels
+plotDICEsubplots(idnames, n00, dices, dicelabels, 24, [4, 43]) % ventricles
+plotDICEsubplots(idnames, n00, dices, dicelabels, 25, [17, 53]) % hippocampus
 
+%%
+speclabels = {alldicelabels, [4, 43], [17, 53], [2, 41], [3, 42]};
+plotDICEfinals(IDs, n00, dices, dicelabels, 31, speclabels);
+set(gca, 'xTickLabels', {'all', 'ventricles', 'hippocampi', 'white-matter', 'cortex'});
 
 %% Old Visualization code from patchreg.multiscale
 
