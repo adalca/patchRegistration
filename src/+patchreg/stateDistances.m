@@ -32,8 +32,9 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
     refLib = patchlib.vol2lib(target, patchSize);
     
     P = prod(patchSize);
-    pDst = Inf(size(srcLib, 1), P);
-    pIdx = ones(size(srcLib, 1), P); % Should be investigated. ones is a hack
+    K = prod(searchSize);
+    pDst = Inf(size(srcLib, 1), K);
+    pIdx = ones(size(srcLib, 1), K); % Should be investigated. ones is a hack
     patches = nan(size(srcLib, 1), P, prod(searchSize));
     local = (searchSize(1) - 1)/2;
     srcgridsub = ind2subvec(size(source), srcIdx(:));
@@ -55,7 +56,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         
         % get and store the neighbor patches
         neighborPatches = refLib(refNeighborIdx, :);
-        patches(i, 1:nNeighbors, :) = reshape(neighborPatches, [1, nNeighbors, P]);
+        patches(i, :, 1:nNeighbors) = reshape(neighborPatches, [1, P, nNeighbors]);
                         
         % patch intensity distance of current patch to neighbors
         % normal pdist2:
