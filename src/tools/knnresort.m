@@ -1,5 +1,5 @@
 function [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, gridSize, dispPatchSize)
-    
+
     pDstOrd = zeros(size(pDst));
     pIdxOrd = zeros(size(pDst));
     
@@ -34,6 +34,9 @@ function [pDstOrd, pIdxOrd] = knnresort(pDst, pIdx, gridSize, dispPatchSize)
         pDstOrd(patchNum, :) = pDst(patchNum, ci);
         pIdxOrd(patchNum, :) = pIdx(patchNum, ci);
     end
+    
+    pIdxOrd = fliplr(pIdxOrd);
+    pDstOrd = fliplr(pDstOrd);
 end
         
     
