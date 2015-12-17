@@ -29,7 +29,7 @@ function vol = stateDispQuilt(pDst, patchSize, patchOverlap, gridSize)
     % the vote function for quilt
     votefn = @(x) nth_output_max(2, x, patchSize);
     
-    vol = patchlib.quilt(newPdst, [gridSize, 1], newPatchSize, patchOverlap, 'voteAggregator', votefn);
+    vol = patchlib.quilt(newPdst, [gridSize, 1], newPatchSize, [patchOverlap, 1], 'voteAggregator', votefn);
 end
   
 function product = nanprod(varargin)
