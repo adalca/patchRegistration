@@ -20,7 +20,7 @@ do
   # run via mccBuild.sh
   ${MCCBUILD_PATH}/mccBuild.sh \
     ${MCC_RUN_DIR} \
-    ${PROJECT_PATH}/clust/${filename}.m \
+    ${PROJECT_PATH}/${filename}.m \
     ${MAIN_PATH}/MCC/MCC_${filename} \
     ${PROJECT_PATH}/src/ \
     ${TOOLBOX_PATH}
