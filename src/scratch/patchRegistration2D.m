@@ -43,7 +43,7 @@ multiimagesc(1, 2, v1sel, ref); colormap gray;
 [patches, pDst, pIdx, pRefIdxs, srcgridsize, refgridsize] = patchlib.volknnsearch(v1sel, ref, patchSize , 'K', 100, 'local', 20);
 
 %% 
-TODO: note that pIdx is in refgridsize not size(refslice).
+% TODO: note that pIdx is in refgridsize not size(refslice).
 figuresc(); clf;
 colormap gray;
 nRows = 3;
