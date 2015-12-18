@@ -6,9 +6,9 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     
     % parameters
     params.patchSize = o3 * 3; % patch size for comparing patches.
-    params.patchSize = bsxfun(@times, o3, [3, 3, 3, 3, 3, 3]'); 
+    params.patchSize = bsxfun(@times, o3, [3, 3, 3, 3]'); 
     params.searchSize = o3 * 3; % search region size. Note: >> local = (searchSize-1)/2.
-    params.gridSpacing = bsxfun(@times, o3, [1, 2, 2, 3, 3, 3]'); % define grid spacing by scale
+    params.gridSpacing = bsxfun(@times, o3, [1, 2, 2, 3]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
     params.mrf.lambda_node = 5; %5;
@@ -32,18 +32,18 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
     paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
     
-    % prepare save path
-    paramstr = sprintf('LE%3.2f_LN%3.2f_gs%s_ireps%d', params.mrf.lambda_edge, ...
-        params.mrf.lambda_node, sprintf('%d_', params.gridSpacing(:, 1)),  params.nInnerReps);
-    dirName = sprintf('%s_%f_%s', subjid, now, paramstr);
-    mkdir(OUTPUT_PATH, dirName);
-    opts.savefile = sprintf('%s%s/%%d_%%d.mat', OUTPUT_PATH, dirName);
-    
     % evaluate whatever modifiers are put in place
     % e.g. 'params.mrf.lambda_edge = 0.1';
     for i = 1:numel(varargin)
         eval(varargin{i});
     end
+    
+    %% prepare save path
+    paramstr = sprintf('LE%3.2f_LN%3.2f_gs%s_ireps%d', params.mrf.lambda_edge, ...
+        params.mrf.lambda_node, sprintf('%d_', params.gridSpacing(:, 1)),  params.nInnerReps);
+    dirName = sprintf('%s_%f_%s', subjid, now, paramstr);
+    mkdir(OUTPUT_PATH, dirName);
+    opts.savefile = sprintf('%s%s/%%d_%%d.mat', OUTPUT_PATH, dirName);
     
     %% carry out the registration
     tic;
