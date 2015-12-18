@@ -8,7 +8,7 @@ PROJECT_PATH="${MAIN_PATH}/git/"
 TOOLBOX_PATH="/data/vision/polina/users/adalca/MATLAB/toolboxes"
 
 # MCC-related paths
-MCCBUILD_PATH="${TOOLBOX_PATH}/mcc/" # mccBuild script path
+MCCBUILD_PATH="${TOOLBOX_PATH}/mgt/src/mcc/" # mccBuild script path
 MCC_RUN_DIR="/afs/csail.mit.edu/system/common/matlab/2013b/bin/mcc"
 
 # need to add main path to system path (?).
