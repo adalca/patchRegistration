@@ -18,7 +18,7 @@ function rand2D(I_1, varargin)
     I_DY = round(volblur(I, sigma)); 
     
     % warp the image I_1 according to the I_Ds to create I_2
-    I_2 = iminterpolate(I_1, I_DX, I_DY);
+    I_2 = volwarp(I_1, {I_DX, I_DY});
       
     % show the original image, the final image, and the two displacement
     % images
