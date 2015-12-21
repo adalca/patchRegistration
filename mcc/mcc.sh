@@ -6,6 +6,7 @@
 MAIN_PATH="/data/vision/polina/users/adalca/patchRegistration"
 PROJECT_PATH="${MAIN_PATH}/git/"
 TOOLBOX_PATH="/data/vision/polina/users/adalca/MATLAB/toolboxes"
+EXTTOOLBOX_PATH="/data/vision/polina/users/adalca/MATLAB/external_toolboxes"
 
 # MCC-related paths
 MCCBUILD_PATH="${TOOLBOX_PATH}/mgt/src/mcc/" # mccBuild script path
@@ -20,8 +21,9 @@ do
   # run via mccBuild.sh
   ${MCCBUILD_PATH}/mccBuild.sh \
     ${MCC_RUN_DIR} \
-    ${PROJECT_PATH}/${filename}.m \
+    ${PROJECT_PATH}/src/scratch/${filename}.m \
     ${MAIN_PATH}/MCC/MCC_${filename} \
     ${PROJECT_PATH}/src/ \
-    ${TOOLBOX_PATH}
+    ${TOOLBOX_PATH} \
+    ${EXTTOOLBOX_PATH}
 done
