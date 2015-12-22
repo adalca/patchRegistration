@@ -33,7 +33,7 @@ do
   for le in 0.01 0.25 0.05 0.1;
   do
 
-    for gs in 3 5 7;
+    for gs in 2 9; # 3 5 7
     do
 
       for ni in 2 4;
@@ -43,14 +43,16 @@ do
         par2="\"'params.gridSpacing(4,:)=${gs}'\"";
         par3="\"params.nInnerReps=${ni};\"";
 
-        out="${veroutpath}/${subjid}_$le_$gs"
+        outname="${veroutpath}/${subjid}_${le}_${gs}_${ni}/"
+        mkdir -p $outname
+        outname="${outname}/%d_%d.mat"
 
         # run training.
-        cmd="${PROJECT_PATH}sge/qsub-run ${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $OUTPUT_PATH $subjid $par1 $par2 $par3"
+        cmd="${PROJECT_PATH}sge/qsub-run ${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $outname $subjid $par1 $par2 $par3 -l mem_free=100G"
         echo $cmd
         $cmd
 
-        #sleep 1
+        sleep 5
       done
     done
   done
