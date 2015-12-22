@@ -39,6 +39,8 @@ else % unix/mac paths
         assert(strncmp(usrname, 'adalca', 6) )
         BUCKNER_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc';
         BUCKNER_ATLAS_PATH = '/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/atlases/';
+        TOOLS_PATH = '/data/vision/polina/users/adalca/MATLAB/toolboxes';
+        EXTLIB_PATH = '/data/vision/polina/users/adalca/MATLAB/external_toolboxes';
     end
 end
 

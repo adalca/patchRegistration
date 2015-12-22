@@ -205,5 +205,17 @@ function dst = correspdst(pstr1, pstr2, ~, ~)
 
     X = pstr1.disp;
     Y = pstr2.disp;
-    dst = pdist2mex(X', Y', 'euc', [], [], []);
+	
+	if ispc
+	    dst = pdist2mex(X', Y', 'euc', [], [], []);
+	
+	else % unix
+		ver = version('-release');
+		switch ver
+			case '2013b'
+				dst = pdist2mexR2013b(X', Y', 'euc', [], [], []);
+			otherwise
+				dst = pdist2mex(X', Y', 'euc', [], [], []);
+		end
+	end
 end

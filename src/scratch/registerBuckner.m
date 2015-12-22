@@ -39,11 +39,19 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     end
     
     %% prepare save path
-    paramstr = sprintf('LE%3.2f_LN%3.2f_gs%s_ireps%d', params.mrf.lambda_edge, ...
-        params.mrf.lambda_node, sprintf('%d_', params.gridSpacing(:, 1)),  params.nInnerReps);
-    dirName = sprintf('%s_%f_%s', subjid, now, paramstr);
-    mkdir(OUTPUT_PATH, dirName);
-    opts.savefile = sprintf('%s%s/%%d_%%d.mat', OUTPUT_PATH, dirName);
+	if sys.isdir(OUTPUT_PATH)
+		paramstr = sprintf('LE%3.2f_LN%3.2f_gs%s_ireps%d', params.mrf.lambda_edge, ...
+			params.mrf.lambda_node, sprintf('%d_', params.gridSpacing(:, 1)),  params.nInnerReps);
+		dirName = sprintf('%s_%f_%s', subjid, now, paramstr);
+		mkdir(OUTPUT_PATH, dirName);
+		opts.savefile = sprintf('%s%s/%%d_%%d.mat', OUTPUT_PATH, dirName);
+	
+	else
+	
+		opts.savefile = OUTPUT_PATH;
+	end
+		
+		
     
     %% carry out the registration
     tic;
