@@ -32,7 +32,7 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     
     %% Immediate Output Visualization
     % TODO: take this out and put it in a separate visualization function
-    if opts.verbose > 0
+    if opts.verbose > 1
         % This is just some quick visualization. Analysis should be done separately
         displvols = {source, target, sourceWarped}; % volumes to display
         
