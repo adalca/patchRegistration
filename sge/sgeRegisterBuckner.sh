@@ -33,7 +33,7 @@ do
   for le in 0.01 0.25 0.05 0.1;
   do
 
-    for gs in 2 9; # 3 5 7
+    for gs in 3 5 7 9; # 2 3 5 7 9
     do
 
       for ni in 2 4;
@@ -41,6 +41,7 @@ do
 
         par1="\"params.mrf.lambda_edge=${le};\"";
         par2="\"'params.gridSpacing(4,:)=${gs}'\"";
+        par2="\"'params.gridSpacing=bsxfun(@times,o3,[1,2,2,2,2,3,${gs}]'');'\"";
         par3="\"params.nInnerReps=${ni};\"";
 
         outfolname="${veroutpath}/${subjid}_${le}_${gs}_${ni}/"
