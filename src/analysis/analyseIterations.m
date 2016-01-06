@@ -26,45 +26,46 @@ nScales = q.params.nScales;
 nInnerReps = q.params.nInnerReps;
 
 %% gather data
-times = zeros(numel(IDs), nScales, nInnerReps);
-norms = cell(numel(IDs), nScales, nInnerReps);
-dices = cell(numel(IDs), nScales, nInnerReps);
-dicelabels = cell(numel(IDs), nScales, nInnerReps);
-data = cell(numel(IDs), nScales, nInnerReps);
-normLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
-normScaledLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
-
-n00 = cell(1, numel(IDs));
-for n = 1:numel(IDs)
-    ID = IDs{n};
-    n00{n} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
-    alldicelabels = unique([n00{n}.volumes.sourceSeg(:); n00{n}.volumes.targetSeg(:)]);
-    [dices{n, nScales+1, 1}, dicelabels{n, nScales+1, 1}] = dice(n00{n}.volumes.sourceSeg, n00{n}.volumes.targetSeg, alldicelabels);
-    
-    for s = 1:nScales
-        for i = 1:nInnerReps
-            % load volume
-            data{n, s, i} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', s, i)));             
-            
-            % extract useful data
-            times(n, s, i) = data{n, s, i}.state.runTime;
-            norms{n, s, i} = data{n, s, i}.displVolumes.localDispl;
-
-            % compute point-wise norms for localDispl and scaledLocalDispl
-            dsquared = cellfunc(@(x) x.^ 2, data{n, s, i}.displVolumes.localDispl);
-            normLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
-
-            scaledLocalDispl = resizeWarp(data{n, s, i}.displVolumes.localDispl, size(data{n, s, i}.volumes.scSource)); 
-            dsquared = cellfunc(@(x) x.^ 2, scaledLocalDispl);
-            normScaledLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
-    
-            % compute displ
-            wd = resizeWarp(data{n,s,i}.displVolumes.cdispl, size(n00{n}.volumes.source));
-            srcSegWarped = volwarp(n00{n}.volumes.sourceSeg, wd, n00{n}.opts.warpDir, 'interpmethod', 'nearest');
-            [dices{n, s, i}, dicelabels{n, s, i}] = dice(srcSegWarped, n00{n}.volumes.targetSeg, alldicelabels);
-        end
-    end
-end
+% % TODO: use reg2stats.
+% times = zeros(numel(IDs), nScales, nInnerReps);
+% norms = cell(numel(IDs), nScales, nInnerReps);
+% dices = cell(numel(IDs), nScales, nInnerReps);
+% dicelabels = cell(numel(IDs), nScales, nInnerReps);
+% data = cell(numel(IDs), nScales, nInnerReps);
+% normLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
+% normScaledLocalDisplVol = cell(numel(IDs), nScales, nInnerReps);
+% 
+% n00 = cell(1, numel(IDs));
+% for n = 1:numel(IDs)
+%     ID = IDs{n};
+%     n00{n} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', 0, 0)));             
+%     alldicelabels = unique([n00{n}.volumes.sourceSeg(:); n00{n}.volumes.targetSeg(:)]);
+%     [dices{n, nScales+1, 1}, dicelabels{n, nScales+1, 1}] = dice(n00{n}.volumes.sourceSeg, n00{n}.volumes.targetSeg, alldicelabels);
+%     
+%     for s = 1:nScales
+%         for i = 1:nInnerReps
+%             % load volume
+%             data{n, s, i} = load(fullfile(MATPATH, ID, sprintf('%d_%d.mat', s, i)));             
+%             
+%             % extract useful data
+%             times(n, s, i) = data{n, s, i}.state.runTime;
+%             norms{n, s, i} = data{n, s, i}.displVolumes.localDispl;
+% 
+%             % compute point-wise norms for localDispl and scaledLocalDispl
+%             dsquared = cellfunc(@(x) x.^ 2, data{n, s, i}.displVolumes.localDispl);
+%             normLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
+% 
+%             scaledLocalDispl = resizeWarp(data{n, s, i}.displVolumes.localDispl, size(data{n, s, i}.volumes.scSource)); 
+%             dsquared = cellfunc(@(x) x.^ 2, scaledLocalDispl);
+%             normScaledLocalDisplVol{n, s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
+%     
+%             % compute displ
+%             wd = resizeWarp(data{n,s,i}.displVolumes.cdispl, size(n00{n}.volumes.source));
+%             srcSegWarped = volwarp(n00{n}.volumes.sourceSeg, wd, n00{n}.opts.warpDir, 'interpmethod', 'nearest');
+%             [dices{n, s, i}, dicelabels{n, s, i}] = dice(srcSegWarped, n00{n}.volumes.targetSeg, alldicelabels);
+%         end
+%     end
+% end
 
 %%
 % v = [];
