@@ -1,5 +1,10 @@
 function reg2stats(regfolder, statsfile)
 
+    % load initial file
+    n00 = load(fullfile(regfolder, sprintf('%d_%d.mat', 0, 0)));      
+    nScales = n00.params.nScales;
+    nInnerReps = n00.params.nInnerReps;
+
     % data
     data = cell(nScales, nInnerReps);
 
@@ -12,7 +17,6 @@ function reg2stats(regfolder, statsfile)
     dicelabels = cell(nScales, nInnerReps);
 
     % go through iteration files
-    n00 = load(fullfile(regfolder, sprintf('%d_%d.mat', 0, 0)));             
     alldicelabels = unique([n00.volumes.sourceSeg(:); n00.volumes.targetSeg(:)]);
     [dices{nScales+1, 1}, dicelabels{nScales+1, 1}] = ...
         dice(n00.volumes.sourceSeg, n00.volumes.targetSeg, alldicelabels);
