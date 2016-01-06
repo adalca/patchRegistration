@@ -16,12 +16,14 @@ MCC_RUN_DIR="/afs/csail.mit.edu/system/common/matlab/2013b/bin/mcc"
 export PATH="${MAIN_PATH}:$PATH"
 
 ## run mcc on desired (*.m) files.
-for filename in registerBuckner
+for pfilename in "src/analysis/reg2stats" #src/scratch/registerBuckner 
 do
+  filename=`basename ${pfilename}`
+
   # run via mccBuild.sh
   ${MCCBUILD_PATH}/mccBuild.sh \
     ${MCC_RUN_DIR} \
-    ${PROJECT_PATH}/src/scratch/${filename}.m \
+    ${PROJECT_PATH}/${pfilename}.m \
     ${MAIN_PATH}/MCC/MCC_${filename} \
     ${PROJECT_PATH}/src/ \
     ${TOOLBOX_PATH} \
