@@ -18,7 +18,7 @@ OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
 
-# this verion's running path
+# this version's running path
 runver="span_le_ds";
 veroutpath="${OUTPUT_PATH}/runs_${runver}/"
 mkdir -p $veroutpath;
