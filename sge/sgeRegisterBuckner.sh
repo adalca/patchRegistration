@@ -43,12 +43,15 @@ do
         par2="\"'params.gridSpacing(4,:)=${gs}'\"";
         par3="\"params.nInnerReps=${ni};\"";
 
-        outname="${veroutpath}/${subjid}_${le}_${gs}_${ni}/"
-        mkdir -p $outname
-        outname="${outname}/%d_%d.mat"
+        outfolname="${veroutpath}/${subjid}_${le}_${gs}_${ni}/"
+        mkdir -p $outfolname
+        outname="${outfolname}/%d_%d.mat"
+
+        sgeopath = "${outfolname}/sge/"
+        mkdir -p $sgeopath
 
         # run training.
-        cmd="${PROJECT_PATH}sge/qsub-run ${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $outname $subjid $par1 $par2 $par3 -l mem_free=100G"
+        cmd="${PROJECT_PATH}sge/qsub-run ${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $outname $subjid $par1 $par2 $par3 -l mem_free=100G -o $sgeopath -e $sgeopath"
         echo $cmd
         $cmd
 
