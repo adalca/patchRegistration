@@ -108,7 +108,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             
             % run mrf regualization
             [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, ...
-                patchSize, srcPatchOverlap, srcgridsize, refgridsize, inputs.mrf);
+                patchSize, srcPatchOverlap, srcgridsize, refgridsize, params.mrffn, inputs.mrf);
 
         case 'quilt'
             % Regularization Method 2: quilt warp. (this may only have been implemented for 2d)
@@ -122,15 +122,16 @@ end
 
 %% Warp functions
 
-function [warp, quiltedPatches, quiltedpIdx] = mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, ...
-    srcgridsize, refgridsize, mrfparams)
+function [warp, quiltedPatches, quiltedpIdx] = ...
+    mrfwarp(srcSize, patches, pDst, pIdx, patchSize, srcPatchOverlap, ...
+    srcgridsize, refgridsize, mrffn, mrfparams)
  % TODO: try taking (mean shift?) mode of displacements as opposed to mrf. use quilt where
     % patches are copies of the displacements? TODO: do study.
     mrfargs = struct2cellWithNames(mrfparams);
     [quiltedPatches, bel, pot, ~, quiltedpIdx] = ...
-            patchlib.patchmrf(patches, srcgridsize, pDst, patchSize, srcPatchOverlap, ...
+            mrffn(patches, srcgridsize, pDst, patchSize, srcPatchOverlap, ...
             'pIdx', pIdx, 'refgridsize', refgridsize, 'srcSize', srcSize, mrfargs{:});
-     
+        
     % TODO: note: the grid displacement is moved to center of volume in disp2warp. This is a bit
     % messy, maybe clean up here?
      warp = patchreg.idx2warp(quiltedpIdx, srcSize, patchSize, srcPatchOverlap, refgridsize);

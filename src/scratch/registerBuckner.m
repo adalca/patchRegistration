@@ -13,7 +13,8 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     params.nInnerReps = 2;
     params.mrf.lambda_node = 5; %5;
     params.mrf.lambda_edge = 0.05; 
-    params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF
+    params.mrffn = @patchmrf_PR; % patchlib.patchmrf or patchmrf_PR
+    params.mrf.inferMethod = @UGM_Infer_LBP_PR; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
     
     % options
     opts.warpDir = 'backward'; % 'backward' or 'forward'
