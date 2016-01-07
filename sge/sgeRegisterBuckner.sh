@@ -5,6 +5,11 @@
 # Settings
 ###############################################################################
 
+# prepare SGE variables necessary to move SGE environment away from AFS.
+export SGE_LOG_PATH=/data/vision/polina/scratch/adalca/patchSynthesis/sge/
+export SGE_O_PATH=${SGE_LOG_PATH}
+export SGE_O_HOME=${SGE_LOG_PATH}
+
 # MCR file. This has to match the MCC version used in mcc.sh
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
@@ -86,7 +91,7 @@ do
         echo -e "$sgecmd\n"
         $sgecmd
 
-        # sleep
+        # sleep for a bit to give sge time to deal with the new job (?)
         sleep 1
       done
     done
