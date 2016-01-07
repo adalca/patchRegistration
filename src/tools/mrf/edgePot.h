@@ -28,7 +28,7 @@ double edgePot(double* displ, int n1, int s1, int n2, int s2,
     double v1, v2, d, s;
     int i;
     
-    // sum of squared differences
+    /* sum of squared differences */
     s = 0;
     for (i = 0; i < dim; i++) {
         v1 = displ[nNodes * i + n1 + (nNodes * dim) * s1];
@@ -37,7 +37,7 @@ double edgePot(double* displ, int n1, int s1, int n2, int s2,
         s = s + d*d;
     }
     
-    // exponential distance
+    /* exponential distance */
     s = sqrt(s);
     return exp(-lambda_edge * s);
 }

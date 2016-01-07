@@ -3,8 +3,8 @@
 #include "UGM_common.h"
 #include "edgePot.h"
 
-// compileme with
-// mex -Imex -outdir mrf mrf/UGM_Infer_LBPC_PR.c
+/* compileme with
+ * mex -Imex -outdir mrf mrf/UGM_Infer_LBPC_PR.c */
 
 /*************************************************************************************************
  * This file is a modification of UGM_Infer_LBPC to work with computing edgePot on the fly. 
@@ -44,7 +44,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   /* Input */
   nodePot = mxGetPr(prhs[0]);
-  displ = mxGetPr(prhs[1]); // N * D
+  displ = mxGetPr(prhs[1]); /* N * D */
   lambda_edge = ((double*)mxGetPr(prhs[2]))[0];
   edgeEnds = (int*)mxGetPr(prhs[3]);
   nStates = (int*)mxGetPr(prhs[4]);
@@ -63,9 +63,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
    /* Output */
   plhs[0] = mxCreateDoubleMatrix(nNodes,maxState,mxREAL);
-  dims[0] = 1; //maxState;
-  dims[1] = 1; //maxState;
-  dims[2] = 1; //nEdges;
+  dims[0] = 1; /*maxState; */
+  dims[1] = 1; /*maxState; */
+  dims[2] = 1; /*nEdges; */
   plhs[1] = mxCreateNumericArray(3,dims,mxDOUBLE_CLASS,mxREAL);
   plhs[2] = mxCreateDoubleMatrix(1,1,mxREAL);
   nodeBel = mxGetPr(plhs[0]);
@@ -137,12 +137,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             newMsgs[s1+maxState*(e+nEdges)] = 0.0;
             for(s2 = 0; s2 < nStates[n2]; s2++)
             {
-              // newMsgs[s1+maxState*(e+nEdges)] += tmp[s2]*edgePot[s1+maxState*(s2+maxState*e)];
+              /* newMsgs[s1+maxState*(e+nEdges)] += tmp[s2]*edgePot[s1+maxState*(s2+maxState*e)]; */
               
-              // This is where, instead of simply looking up the edge potential, we have to compute
-              // the right value
+              /* This is where, instead of simply looking up the edge potential, we have to compute
+              // the right value */
               newMsgs[s1+maxState*(e+nEdges)] += tmp[s2] * 
-                      edgePot(displ, n1, s1, n2, s2, dim, nNodes, nStates, lambda_edge);
+                      edgePot(displ, n1, s1, n2, s2, dim, nNodes, nStates[n1], lambda_edge);
             }
           }
           
@@ -160,9 +160,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             newMsgs[s2+maxState*e] = 0.0;
             for(s1 = 0; s1 < nStates[n1]; s1++)
             {
-              // newMsgs[s2+maxState*e] += tmp[s1]*edgePot[s1+maxState*(s2+maxState*e)];
+              /* newMsgs[s2+maxState*e] += tmp[s1]*edgePot[s1+maxState*(s2+maxState*e)]; */
               newMsgs[s2+maxState*e] += tmp[s1] *
-                      edgePot(displ, n1, s1, n2, s2, dim, nNodes, nStates, lambda_edge);
+                      edgePot(displ, n1, s1, n2, s2, dim, nNodes, nStates[n1], lambda_edge);
             }
             
           }
