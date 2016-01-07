@@ -76,4 +76,4 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     save(sprintf(opts.savefile, 0, 0), 'volumes', 'mastertoc', '-append');
     
     %% return
-    fname = fullfile(OUTPUT_PATH, dirName);
+    fname = opts.savefile;
