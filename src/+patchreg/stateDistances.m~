@@ -86,10 +86,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
             case 'sparse'
                 % distance function for sparse data
                 patchDifference = bsxfun(@minus, srcLib(i, :), neighborPatches) .^2 + eps;
-                productMask = bsxfun(@times, srcMaskLib(i, :), neighborMaskPatches) + eps;
-                numeratorD = sum(productMask .* patchDifference, 2)';
-                denominatorD = sum(productMask, 2)';
-                d = bsxfun(@times, numeratorD, 1./denominatorD) .^ 0.5;
+                avgMask = bsxfun(@plus, srcMaskLib(i, :), neighborMaskPatches) / 2 + eps;
+                numeratorD = sum(avgMask .* patchDifference, 2)';
+                denominatorD = sum(avgMask, 2)';
+                d = bsxfun(@times, numeratorD, 1./numitorD);
             otherwise
                 error('unknown distance metric');
         end

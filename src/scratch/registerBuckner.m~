@@ -33,7 +33,7 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
     paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
     if strcmp(opts.distance, 'sparse')
-        paths.sourceMaskFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_downsampled5_reinterpolated5_dsmask_reg.nii.gz']);
+        paths.sourceMaskFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
         paths.targetMaskFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc_allones.nii.gz');
     end
     

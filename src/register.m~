@@ -16,21 +16,18 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     target = padarray(volresize(double(niiTarget.img), newTarSize), params.volPad, 'both');
     
     % prepare masks is available
-    if strcmp(opts.distance, 'sparse')
+    if opts.distance == 'sparse'
         % prepare source mask
         niiSourceMask = loadNii(paths.sourceMaskFile);
         szRatio = max(size(niiSourceMask.img)) ./ opts.maxVolSize;
-        newSrcMaskSize = round(size(niiSourceMask.img) ./ szRatio);
-        sourceMask = padarray(volresize(double(niiSourceMask.img), newSrcMaskSize), params.volPad, 'both');
+        newSrcSize = round(size(niiSource.img) ./ szRatio);
+        source = padarray(volresize(double(niiSource.img), newSrcSize), params.volPad, 'both');
 
         % prepare target mask
         niiTargetMask = loadNii(paths.targetMaskFile);
-        szRatio = max(size(niiTargetMask.img)) ./ opts.maxVolSize;
-        newTarMaskSize = round(size(niiTargetMask.img) ./ szRatio);
-        targetMask = padarray(volresize(double(niiTargetMask.img), newTarMaskSize), params.volPad, 'both');
-        
-        params.sourceMask = sourceMask;
-        params.targetMask = targetMask;
+        szRatio = max(size(niiTarget.img)) ./ opts.maxVolSize;
+        newTarSize = round(size(niiTarget.img) ./ szRatio);
+        target = padarray(volresize(double(niiTarget.img), newTarSize), params.volPad, 'both');
     end
     
     %% Patch Registration
