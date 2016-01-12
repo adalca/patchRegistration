@@ -40,7 +40,7 @@ function reg2stats(regfolder, statsfile)
             normScaledLocalDisplVol{s, i} = sqrt(sum(cat(4, dsquared{:}), 4));
 
             % compute displ
-            wd = resizeWarp(data{n,s,i}.displVolumes.cdispl, size(n00.volumes.source));
+            wd = resizeWarp(data{s,i}.displVolumes.cdispl, size(n00.volumes.source));
             srcSegWarped = ...
                 volwarp(n00.volumes.sourceSeg, wd, n00.opts.warpDir, 'interpmethod', 'nearest');
             [dices{s, i}, dicelabels{s, i}] = ...
