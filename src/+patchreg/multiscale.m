@@ -58,7 +58,9 @@ function displ = multiscale(source, target, params, opts, varargin)
             % warp the source to match the size of the current displacement
             if strcmp(opts.warpRes, 'atscale')
                 scSourceWarped = volwarp(scSource, displ, opts.warpDir);
-            
+                if strcmp(opts.distance, 'sparse')
+                    scSourceMaskWarped = volwarp(scSourceMask, displ, opts.warpDir);
+                end
             else
                 assert(strcmp(opts.warpRes, 'full'));
                 sys.warnif(strcmp(opts.warpDir, 'forward'), ...
@@ -67,6 +69,10 @@ function displ = multiscale(source, target, params, opts, varargin)
                 wd = resizeWarp(displ, size(source));
                 sourceWarped = volwarp(source, wd, opts.warpDir);
                 scSourceWarped = volresize(sourceWarped, scSrcSize);
+                if strcmp(opts.distance, 'sparse')
+                    sourceMaskWarped = volwarp(params.sourceMask, wd, opts.warpDir);
+                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
+                end
             end
 
             % find the new warp (displacements)
@@ -76,7 +82,7 @@ function displ = multiscale(source, target, params, opts, varargin)
             locparams.gridSpacing = locparams.gridSpacing(s, :);
             locparams.searchSize = locparams.searchSize(s, :);
             if strcmp(opts.distance, 'sparse')
-                locparams.sourceMask = scSourceMask;
+                locparams.sourceMask = scSourceMaskWarped;
                 locparams.targetMask = scTargetMask;
             end
             
@@ -99,7 +105,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                 displVolumes = struct('prevdispl', {displ}, 'localDispl', {localDispl}, ...
                     'cdispl', {cdispl}); %#ok<NASGU>
                 volumes = struct('scSource', scSource, 'scTarget', scTarget, ...
-                    'scSourceWarped', scSourceWarped); %#ok<NASGU>
+                    'scSourceWarped', scSourceWarped, 'scSourceMaskWarped', scSourceMaskWarped); %#ok<NASGU>
                 filename = sprintf(opts.savefile, s, t);
                 save(filename, 'params', 'opts', 'state', 'displVolumes', 'volumes');
             end 

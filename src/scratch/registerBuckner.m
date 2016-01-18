@@ -6,15 +6,15 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     
     % parameters
     params.patchSize = o3 * 3; % patch size for comparing patches.
-    params.patchSize = bsxfun(@times, o3, [3, 3, 3, 3]'); 
+    params.patchSize = bsxfun(@times, o3, [9, 9, 9, 9]'); 
     params.searchSize = o3 * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 2, 3]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-    params.mrf.lambda_node = 5; %5;
-    params.mrf.lambda_edge = 0.05; 
-    params.mrffn = @patchmrf_PR; % patchlib.patchmrf or patchmrf_PR
-    params.mrf.inferMethod = @UGM_Infer_LBP_PR; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
+    params.mrf.lambda_node = 1; %5;
+    params.mrf.lambda_edge = 0.01; 
+    params.mrffn = @patchlib.patchmrf; % patchlib.patchmrf or patchmrf_PR
+    params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
     
     % options
     opts.warpDir = 'backward'; % 'backward' or 'forward'
@@ -31,6 +31,7 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
 
     % input volumes filenames for buckner
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
+    paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_downsampled5_reinterpolated5_reg.nii.gz']);
     paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
     if strcmp(opts.distance, 'sparse')
         paths.sourceMaskFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_downsampled5_reinterpolated5_dsmask_reg.nii.gz']);

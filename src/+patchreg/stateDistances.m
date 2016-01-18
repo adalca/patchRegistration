@@ -89,7 +89,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
                 productMask = bsxfun(@times, srcMaskLib(i, :), neighborMaskPatches) + eps;
                 numeratorD = sum(productMask .* patchDifference, 2)';
                 denominatorD = sum(productMask, 2)';
-                d = bsxfun(@times, numeratorD, 1./denominatorD) .^ 0.5;
+                d = bsxfun(@times, numeratorD, prod(patchSize)./denominatorD) .^ 0.5;
             otherwise
                 error('unknown distance metric');
         end

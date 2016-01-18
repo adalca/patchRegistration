@@ -39,12 +39,17 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
+    sourceMaskWarped = volwarp(sourceMask, displ, opts.warpDir);
     
     %% save final displacement and original volumes
     if isfield(opts, 'savefile') && ~isempty(opts.savefile)
         volumes.source = source;
         volumes.sourceWarped = sourceWarped;
         volumes.target = target; %#ok<STRNU>
+        if strcmp(opts.distance, 'sparse')
+            volumes.sourceMask = sourceMask;
+            volumes.sourceMaskWarped = sourceMaskWarped;
+        end
         save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'params', 'opts', 'paths');
     end
     
