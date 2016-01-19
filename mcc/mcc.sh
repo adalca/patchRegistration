@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
-# mcc files relevant topatch registration project.
+# mcc files relevant to patch registration project.
+#
+# usage:
+# mcc relpath1 relpath2
+#
+# where relpath are paths relative to ${PROJECT_PATH}
+# Example:
+# >$ ./mcc src/analysis/reg2stats src/scratch/registerBuckner 
 
 # prepare project and toolbox paths
 # if want to make current: "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
