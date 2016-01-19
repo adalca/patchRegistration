@@ -74,7 +74,7 @@ do
         par2="\"'params.gridSpacing=bsxfun(@times,o3,$gstext'');'\"";
         par3="\"params.nInnerReps=${ni};\"";
         par4="\"opts.verbose=1;\"";
-        par5="\"opts.distance="sparse";\"";
+        par5="\"opts.distance='sparse';\"";
         outname="${outfolder}/%d_%d.mat"
         lcmd="${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $outname $subjid $par1 $par2 $par3 $par4 $par5"
 
