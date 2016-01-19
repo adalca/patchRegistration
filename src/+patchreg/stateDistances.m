@@ -40,6 +40,18 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
     srcgridsub = ind2subvec(size(source), srcIdx(:));
     refgridsub = ind2subvec(size(target), refIdx(:));
     
+    % parse optional inputs
+    if(numel(varargin) == 2)
+        srcMask = varargin{1};
+        refMask = varargin{2};
+
+        % compute source mask library
+        srcMaskLib = patchlib.vol2lib(srcMask, patchSize, patchOverlap);
+
+        % build the reference mask libraries
+        refMaskLib = patchlib.vol2lib(refMask, patchSize);
+    end
+    
     % for each point in the source grid
     for i = 1:size(srcLib, 1)
         subIdx = srcgridsub(i, :);
@@ -57,6 +69,9 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         % get and store the neighbor patches
         neighborPatches = refLib(refNeighborIdx, :);
         patches(i, :, 1:nNeighbors) = reshape(neighborPatches, [1, P, nNeighbors]);
+        if(numel(varargin)==2)
+            neighborMaskPatches = refMaskLib(refNeighborIdx, :);
+        end
                         
         % patch intensity distance of current patch to neighbors
         % normal pdist2:
@@ -68,6 +83,13 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
                 % relative pdist2:
                 avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
                 d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';
+            case 'sparse'
+                % distance function for sparse data
+                patchDifference = bsxfun(@minus, srcLib(i, :), neighborPatches) .^2 + eps;
+                productMask = bsxfun(@times, srcMaskLib(i, :), neighborMaskPatches) + eps;
+                numeratorD = sum(productMask .* patchDifference, 2)';
+                denominatorD = sum(productMask, 2)';
+                d = bsxfun(@times, numeratorD, prod(patchSize)./denominatorD) .^ 0.5;
             otherwise
                 error('unknown distance metric');
         end

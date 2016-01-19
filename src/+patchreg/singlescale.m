@@ -33,6 +33,10 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     patchSize = params.patchSize;
     srcPatchOverlap = patchSize - params.gridSpacing; % patchSize - (source grid spacing)
     srcSize = size(source);
+    maskParams = {};
+    if(strcmp(opts.distance, 'sparse'))
+        maskParams = {params.sourceMask, params.targetMask};
+    end
     
     % get optimal patch movements via knnsearch and patchmrf.
     %   We're using volknnsearch simply because of existing implementaiton. In concept, we should
@@ -50,7 +54,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
                 [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
-                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance);
+                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, maskParams{:});
             end
         else
             if strcmp(opts.distanceMethod, 'volknnsearch')
@@ -58,7 +62,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 patchlib.volknnsearch(source, target, patchSize, srcPatchOverlap, refPatchOverlap, ...
                 'local', local, 'location', opts.location, 'K', prod(searchPatch), 'fillK', true, inputs.searchargs{:});
             else
-                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance);
+                [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(source, target, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, maskParams{:});
             end
         end
         

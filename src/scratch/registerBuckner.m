@@ -6,15 +6,15 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     
     % parameters
     params.patchSize = o3 * 3; % patch size for comparing patches.
-    params.patchSize = bsxfun(@times, o3, [3, 3, 3, 3]'); 
+    params.patchSize = bsxfun(@times, o3, [9, 9, 9, 9]'); 
     params.searchSize = o3 * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 2, 3]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
     params.nInnerReps = 2;
-    params.mrf.lambda_node = 5; %5;
-    params.mrf.lambda_edge = 0.05; 
-    params.mrffn = @patchmrf_PR; % patchlib.patchmrf or patchmrf_PR
-    params.mrf.inferMethod = @UGM_Infer_LBP_PR; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
+    params.mrf.lambda_node = 1; %5;
+    params.mrf.lambda_edge = 0.01; 
+    params.mrffn = @patchlib.patchmrf; % patchlib.patchmrf or patchmrf_PR
+    params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
     
     % options
     opts.warpDir = 'backward'; % 'backward' or 'forward'
@@ -25,14 +25,21 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     opts.location = 0.001;
     opts.maxVolSize = 160; % max data size along largest dimension
     opts.localSpatialPot = false; % TODO: move to mrf params
-    opts.distance = 'euclidean'; % 'euclidean' or 'seuclidean'
+    opts.distance = 'sparse'; % 'euclidean' or 'seuclidean' or 'sparse'
     opts.varargin = varargin;
+    
+
     
     params.volPad = o3 * 5; % this is mainly needed due nan-filling-in at edges. :(.
 
     % input volumes filenames for buckner
     paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_iso_2_ds5_us5_size_reg.nii.gz']);
+    paths.sourceFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_downsampled5_reinterpolated5_reg.nii.gz']);
     paths.targetFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc.nii.gz');
+    if strcmp(opts.distance, 'sparse')
+        paths.sourceMaskFile = fullfile(BUCKNER_PATH, subjid, [subjid, '_brain_downsampled5_reinterpolated5_dsmask_reg.nii.gz']);
+        paths.targetMaskFile = fullfile(BUCKNER_ATLAS_PATH, 'buckner61_brain_proc_allones.nii.gz');
+    end
     
     % evaluate whatever modifiers are put in place
     % e.g. 'params.mrf.lambda_edge = 0.1';

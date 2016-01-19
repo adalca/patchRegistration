@@ -15,18 +15,41 @@ function [sourceWarped, displ] = register(paths, params, opts, varargin)
     newTarSize = round(size(niiTarget.img) ./ szRatio);
     target = padarray(volresize(double(niiTarget.img), newTarSize), params.volPad, 'both');
     
+    % prepare masks is available
+    if strcmp(opts.distance, 'sparse')
+        % prepare source mask
+        niiSourceMask = loadNii(paths.sourceMaskFile);
+        szRatio = max(size(niiSourceMask.img)) ./ opts.maxVolSize;
+        newSrcMaskSize = round(size(niiSourceMask.img) ./ szRatio);
+        sourceMask = padarray(volresize(double(niiSourceMask.img), newSrcMaskSize), params.volPad, 'both');
+
+        % prepare target mask
+        niiTargetMask = loadNii(paths.targetMaskFile);
+        szRatio = max(size(niiTargetMask.img)) ./ opts.maxVolSize;
+        newTarMaskSize = round(size(niiTargetMask.img) ./ szRatio);
+        targetMask = padarray(volresize(double(niiTargetMask.img), newTarMaskSize), params.volPad, 'both');
+        
+        params.sourceMask = sourceMask;
+        params.targetMask = targetMask;
+    end
+    
     %% Patch Registration
     % do multi scale registration
     displ = patchreg.multiscale(source, target, params, opts, varargin{:});
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
+    sourceMaskWarped = volwarp(sourceMask, displ, opts.warpDir);
     
     %% save final displacement and original volumes
     if isfield(opts, 'savefile') && ~isempty(opts.savefile)
         volumes.source = source;
         volumes.sourceWarped = sourceWarped;
         volumes.target = target; %#ok<STRNU>
+        if strcmp(opts.distance, 'sparse')
+            volumes.sourceMask = sourceMask;
+            volumes.sourceMaskWarped = sourceMaskWarped;
+        end
         save(sprintf(opts.savefile, 0, 0), 'volumes', 'displ', 'params', 'opts', 'paths');
     end
     
