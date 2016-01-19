@@ -26,6 +26,7 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     opts.maxVolSize = 160; % max data size along largest dimension
     opts.localSpatialPot = false; % TODO: move to mrf params
     opts.distance = 'euclidean'; % 'euclidean' or 'seuclidean'
+    opts.varargin = varargin;
     
     params.volPad = o3 * 5; % this is mainly needed due nan-filling-in at edges. :(.
 
@@ -50,10 +51,8 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
 	else
 	
 		opts.savefile = OUTPUT_PATH;
-	end
+    end
 		
-		
-    
     %% carry out the registration
     tic;
     [sourceWarped, displ] = register(paths, params, opts);
