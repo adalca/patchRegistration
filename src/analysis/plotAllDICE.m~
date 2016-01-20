@@ -1,9 +1,12 @@
 fpath = ['/data/vision/polina/scratch/patchRegistration/output/', ...
-'runs_sparse_at4Scales_lambdaedge_gridspacing_innerreps/buckner*'];
+'runs_sparse_span_at4Scales_lambdaedge_gridspacing_innerreps/buckner*'];
 d = sys.fulldir(fpath);
 
-data = nan(1, numel(d));
+paramIdx = [17, 2, 3, 4, 53, 41, 42, 43];
+diceScores = nan(8, numel(d));
+jaccardScores = nan(8, numel(d));
 idx = nan(numel(d), 4);
+
 for i = 1:numel(d)
     % first, get format. This is not general :(
     % use parameters in n00?
@@ -13,20 +16,79 @@ for i = 1:numel(d)
 
     try
         n00 = load(fullfile(d(i).name, 'out', '0_0.mat'), 'params');
-        sta = load(fullfile(d(i).name, 'out', 'stats.mat'), 'dices', 'dicelabels');
+        sta = load(fullfile(d(i).name, 'out', 'stats.mat'), 'dices', 'dicelabels', 'jaccards', 'jaccardlabels');
     catch
         fprintf('skipping %s\n', fname);
         continue;
     end
-
-    % n00.params.gridSpacing
-    % d(i).name
 
     % still hardcoded, need to fix
     idx(i, 1) = znr;
     idx(i, 2) = n00.params.mrf.lambda_edge;
     idx(i, 3) = n00.params.gridSpacing(end);
     idx(i, 4) = n00.params.nInnerReps;
+    for p = 1:numel(paramIdx)
+        diceScores(p, i) = sta.dices{n00.params.nScales, end}(sta.dicelabels{n00.params.nScales, end}(:) == paramIdx(p));
+    end
+    jaccardLHippo(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 17);
+    jaccardLCWM(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 2);
+    jaccardLCC(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 3);
+    jaccardLLV(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 4);
+    jaccardRHippo(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 53);
+    jaccardRCWM(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 41);
+    jaccardRCC(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 42);
+    jaccardRLV(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 43);
+end
 
-    data(i) = sta.dices{n00.params.nScales, end}(sta.dicelabels{n00.params.nScales, end}(:) == 4);
+% do the plots
+
+dicePlotLabels = {'dice LH', 'dice LCWM', 'dice LCC', 'dice LLV', 'dice RH', 'dice RCWM', 'dice RCC', 'dice RLV'};
+jaccardPlotLabels = {'jaccard LH', 'jaccard LCWM', 'jaccard LCC', 'jaccard LLV', 'jaccard RH', 'jaccard RCWM', 'jaccard RCC', 'jaccard RLV'};
+
+for param = 1:4
+    f = figure();
+    subplot(4, 2, 1);
+    boxplot(diceLHippo, idx(:,param)); hold on;
+    subplot(4, 2, 2);
+    boxplot(diceLCWM, idx(:,param)); hold on;
+    subplot(4, 2, 3);
+    boxplot(diceLCC, idx(:,param)); hold on;
+    subplot(4, 2, 4);
+    boxplot(diceLLV, idx(:,param)); hold on;
+    subplot(4, 2, 5);
+    boxplot(diceRHippo, idx(:,param)); hold on;
+    subplot(4, 2, 6);
+    boxplot(diceRCWM, idx(:,param)); hold on;
+    subplot(4, 2, 7);
+    boxplot(diceRCC, idx(:,param)); hold on;
+    subplot(4, 2, 8);
+    boxplot(diceRLV, idx(:,param)); hold on;
+    ax = findobj(f,'Type','Axes');
+    for i=1:length(ax)
+        title(ax(i), dicePlotLabels{i})
+    end
+end
+
+for param = 1:4
+    f = figure();
+    subplot(4, 2, 1);
+    boxplot(jaccardLHippo, idx(:,param)); hold on;
+    subplot(4, 2, 2);
+    boxplot(jaccardLCWM, idx(:,param)); hold on;
+    subplot(4, 2, 3);
+    boxplot(jaccardLCC, idx(:,param)); hold on;
+    subplot(4, 2, 4);
+    boxplot(jaccardLLV, idx(:,param)); hold on;
+    subplot(4, 2, 5);
+    boxplot(jaccardRHippo, idx(:,param)); hold on;
+    subplot(4, 2, 6);
+    boxplot(jaccardRCWM, idx(:,param)); hold on;
+    subplot(4, 2, 7);
+    boxplot(jaccardRCC, idx(:,param)); hold on;
+    subplot(4, 2, 8);
+    boxplot(jaccardRLV, idx(:,param)); hold on;
+    ax = findobj(f,'Type','Axes');
+    for i=1:length(ax)
+        title(ax(i), jaccardPlotLabels{i})
+    end
 end
