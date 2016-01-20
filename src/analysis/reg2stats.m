@@ -15,11 +15,16 @@ function reg2stats(regfolder, statsfile)
     normScaledLocalDisplVol = cell(nScales, nInnerReps);
     dices = cell(nScales, nInnerReps);
     dicelabels = cell(nScales, nInnerReps);
-
+    jaccards = cell(nScales, nInnerReps);
+    jaccardlabels = cell(nScales, nInnerReps);
+    
     % go through iteration files
     alldicelabels = unique([n00.volumes.sourceSeg(:); n00.volumes.targetSeg(:)]);
     [dices{nScales+1, 1}, dicelabels{nScales+1, 1}] = ...
         dice(n00.volumes.sourceSeg, n00.volumes.targetSeg, alldicelabels);
+    [jaccards{nScales+1, 1}, jaccardlabels{nScales+1, 1}] = ...
+        jaccard(n00.volumes.sourceSeg, n00.volumes.targetSeg, alldicelabels);
+    
     for s = 1:nScales
         for i = 1:nInnerReps
             
@@ -45,9 +50,11 @@ function reg2stats(regfolder, statsfile)
                 volwarp(n00.volumes.sourceSeg, wd, n00.opts.warpDir, 'interpmethod', 'nearest');
             [dices{s, i}, dicelabels{s, i}] = ...
                 dice(srcSegWarped, n00.volumes.targetSeg, alldicelabels);
+            [jaccards{s, i}, jaccardlabels{s, i}] = ...
+                jaccard(srcSegWarped, n00.volumes.targetSeg, alldicelabels);
         end
     end
 
     % save stats
-    save(statsfile, 'times', 'norms', 'normLocalDisplVol', 'dices', 'dicelabels');
+    save(statsfile, 'times', 'norms', 'normLocalDisplVol', 'dices', 'dicelabels', 'jaccards', 'jaccardlabels');
     

@@ -10,9 +10,9 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     params.searchSize = o3 * 3; % search region size. Note: >> local = (searchSize-1)/2.
     params.gridSpacing = bsxfun(@times, o3, [1, 2, 2, 3]'); % define grid spacing by scale
     params.nScales = size(params.gridSpacing, 1); % take from gridSpacing
-    params.nInnerReps = 2;
+    params.nInnerReps = 1;
     params.mrf.lambda_node = 1; %5;
-    params.mrf.lambda_edge = 0.01; 
+    params.mrf.lambda_edge = 0.002; 
     params.mrffn = @patchlib.patchmrf; % patchlib.patchmrf or patchmrf_PR
     params.mrf.inferMethod = @UGM_Infer_LBP; % @UGM_Infer_LBP or @UGM_Infer_MF or % @UGM_Infer_LBP_PR
     
