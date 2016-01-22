@@ -4,6 +4,7 @@ d = sys.fulldir(fpath);
 
 paramIdx = [17, 2, 3, 4, 53, 41, 42, 43];
 diceScores = nan(8, numel(d));
+times = nan(1, numel(d));
 jaccardScores = nan(8, numel(d));
 idx = nan(numel(d), 4);
 
@@ -15,7 +16,7 @@ for i = 1:numel(d)
     znr = str2num(z{1}(end-1:end));
 
     try
-        n00 = load(fullfile(d(i).name, 'out', '0_0.mat'), 'params');
+        n00 = load(fullfile(d(i).name, 'out', '0_0.mat'), 'params', 'mastertoc');
         sta = load(fullfile(d(i).name, 'out', 'stats.mat'), 'dices', 'dicelabels', 'jaccards', 'jaccardlabels');
     catch
         fprintf('skipping %s\n', fname);
@@ -27,68 +28,46 @@ for i = 1:numel(d)
     idx(i, 2) = n00.params.mrf.lambda_edge;
     idx(i, 3) = n00.params.gridSpacing(end);
     idx(i, 4) = n00.params.nInnerReps;
+    times(i) = n00.mastertoc
     for p = 1:numel(paramIdx)
         diceScores(p, i) = sta.dices{n00.params.nScales, end}(sta.dicelabels{n00.params.nScales, end}(:) == paramIdx(p));
+        jaccardScores(p, i) = 1 - sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == paramIdx(p));
     end
-    jaccardLHippo(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 17);
-    jaccardLCWM(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 2);
-    jaccardLCC(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 3);
-    jaccardLLV(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 4);
-    jaccardRHippo(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 53);
-    jaccardRCWM(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 41);
-    jaccardRCC(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 42);
-    jaccardRLV(i) = sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == 43);
 end
 
 % do the plots
 
-dicePlotLabels = {'dice LH', 'dice LCWM', 'dice LCC', 'dice LLV', 'dice RH', 'dice RCWM', 'dice RCC', 'dice RLV'};
-jaccardPlotLabels = {'jaccard LH', 'jaccard LCWM', 'jaccard LCC', 'jaccard LLV', 'jaccard RH', 'jaccard RCWM', 'jaccard RCC', 'jaccard RLV'};
+dicePlotLabels = {'dice LeftHippocampus', 'dice LeftCerebralWhiteMatter', 'dice LeftCerebralCortex', 'dice LeftLateralVentricle', 'dice RightHippocampus', 'dice RightCerebralWhiteMatter', 'dice RightCerebralCortex', 'dice RightLateralVentricle'};
+jaccardPlotLabels = {'jaccard LeftHippocampus', 'jaccard LeftCerebralWhiteMatter', 'jaccard LeftCerebralCortex', 'jaccard LeftLateralVentricle', 'jaccard RightHippocampus', 'jaccard RightCerebralWhiteMatter', 'jaccard RightCerebralCortex', 'jaccard RightLateralVentricle'};
 
 for param = 1:4
     f = figure();
-    subplot(4, 2, 1);
-    boxplot(diceLHippo, idx(:,param)); hold on;
-    subplot(4, 2, 2);
-    boxplot(diceLCWM, idx(:,param)); hold on;
-    subplot(4, 2, 3);
-    boxplot(diceLCC, idx(:,param)); hold on;
-    subplot(4, 2, 4);
-    boxplot(diceLLV, idx(:,param)); hold on;
-    subplot(4, 2, 5);
-    boxplot(diceRHippo, idx(:,param)); hold on;
-    subplot(4, 2, 6);
-    boxplot(diceRCWM, idx(:,param)); hold on;
-    subplot(4, 2, 7);
-    boxplot(diceRCC, idx(:,param)); hold on;
-    subplot(4, 2, 8);
-    boxplot(diceRLV, idx(:,param)); hold on;
+    for labelIdx = 1:numel(paramIdx)
+        subplot(2, 4, labelIdx);
+        boxplot(diceScores(labelIdx, :), idx(:,param)); hold on; grid on;
+        if param==2 || param==4
+            ylim([0.3, 1]);
+        end
+    end
+    
     ax = findobj(f,'Type','Axes');
     for i=1:length(ax)
-        title(ax(i), dicePlotLabels{i})
+        title(ax(i), dicePlotLabels{length(ax)-i+1})
     end
 end
 
 for param = 1:4
     f = figure();
-    subplot(4, 2, 1);
-    boxplot(jaccardLHippo, idx(:,param)); hold on;
-    subplot(4, 2, 2);
-    boxplot(jaccardLCWM, idx(:,param)); hold on;
-    subplot(4, 2, 3);
-    boxplot(jaccardLCC, idx(:,param)); hold on;
-    subplot(4, 2, 4);
-    boxplot(jaccardLLV, idx(:,param)); hold on;
-    subplot(4, 2, 5);
-    boxplot(jaccardRHippo, idx(:,param)); hold on;
-    subplot(4, 2, 6);
-    boxplot(jaccardRCWM, idx(:,param)); hold on;
-    subplot(4, 2, 7);
-    boxplot(jaccardRCC, idx(:,param)); hold on;
-    subplot(4, 2, 8);
-    boxplot(jaccardRLV, idx(:,param)); hold on;
+    for labelIdx = 1:numel(paramIdx)
+        subplot(2, 4, labelIdx);
+        boxplot(jaccardScores(labelIdx, :), idx(:,param)); hold on; grid on;
+        if param==2 || param==4
+            ylim([0.3, 1]);
+        end
+    end
+
     ax = findobj(f,'Type','Axes');
     for i=1:length(ax)
-        title(ax(i), jaccardPlotLabels{i})
+        title(ax(i), jaccardPlotLabels{length(ax)-i+1})
     end
 end
