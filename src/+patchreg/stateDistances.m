@@ -83,6 +83,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
                 % relative pdist2:
                 avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
                 d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';
+                
             case 'sparse'
                 % distance function for sparse data
                 patchDifference = bsxfun(@minus, srcLib(i, :), neighborPatches) .^2 + eps;
