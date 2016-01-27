@@ -28,8 +28,6 @@ function fname = registerBuckner(BUCKNER_PATH, BUCKNER_ATLAS_PATH, OUTPUT_PATH, 
     opts.distance = 'sparse'; % 'euclidean' or 'seuclidean' or 'sparse'
     opts.varargin = varargin;
     
-
-    
     params.volPad = o3 * 5; % this is mainly needed due nan-filling-in at edges. :(.
 
     % input volumes filenames for buckner
