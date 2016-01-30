@@ -27,6 +27,6 @@ function [dst, labels] = jaccard(vol1, vol2, labels)
         vol2bw = vol2(:) == label;
 
         % compute jaccard
-        dst(i) = 1 - sum(vol1bw & vol2bw) ./ sum(vol1bw | vol2bw);
+        dst(i) = sum(vol1bw & vol2bw) ./ sum(vol1bw | vol2bw);
     end
 end 

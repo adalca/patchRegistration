@@ -1,4 +1,4 @@
-function displ = multiscale(source, target, params, opts, varargin)
+function displ = multiscale(source, target, params, opts, paths, varargin)
 % MULTISCALE run a full patch-based registration.
 %
 % displ = multiscale(source, target, params, opts)
@@ -18,6 +18,16 @@ function displ = multiscale(source, target, params, opts, varargin)
     srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(source));
     trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(target));
 
+    % check if the scaling is done via loading ds5usx
+    if strcmp(opts.scaleMethod, 'load')
+        srcScales = eval(paths.srcScales);
+        tarScales = eval(paths.tarScales);
+        if strcmp(opts.distance, 'sparse')
+            srcMaskScales = eval(paths.srcMaskScales);
+            tarMaskScales = eval(paths.tarMaskScales);
+        end
+    end
+    
     % initiate a zero displacement
     firstSize = cellfun(@(x) round(x(1)), srcSizes);
     displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
@@ -32,15 +42,27 @@ function displ = multiscale(source, target, params, opts, varargin)
     for s = 1:params.nScales        
         
         % resizing the original source and target images to s
-        scSrcSize = cellfun(@(x) x(s), srcSizes);
-        scSource = volresize(source, scSrcSize);
-        scTargetSize = cellfun(@(x) x(s), trgSizes);
-        scTarget = volresize(target, scTargetSize);
+        if strcmp(opts.scaleMethod, 'load')
+            scSource = prepNiiToVol(srcScales{s}, params.volPad);
+            scTarget = prepNiiToVol(tarScales{s}, params.volPad);
+            scSrcSize = size(scSource);
+            scTargetSize = size(scTarget);
+        else
+            scSrcSize = cellfun(@(x) x(s), srcSizes);
+            scSource = volresize(source, scSrcSize);
+            scTargetSize = cellfun(@(x) x(s), trgSizes);
+            scTarget = volresize(target, scTargetSize);
+        end
         
         % resize the original source mask and target mask images to s
         if strcmp(opts.distance, 'sparse')
-            scSourceMask = volresize(params.sourceMask, scSrcSize);
-            scTargetMask = volresize(params.targetMask, scTargetSize);
+            if strcmp(opts.scaleMethod, 'load')
+                scSourceMask = prepNiiToVol(srcMaskScales{s}, params.volPad);
+                scTargetMask = prepNiiToVol(tarMaskScales{s}, params.volPad);
+            else
+                scSourceMask = volresize(params.sourceMask, scSrcSize);
+                scTargetMask = volresize(params.targetMask, scTargetSize);
+            end
         end
         
         % resize the warp distances to the current scale size
