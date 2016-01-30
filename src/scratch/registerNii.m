@@ -13,6 +13,9 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     params.nScales = size(params.gridSpacing, 1);
     opts = ini2struct(optsFile);
     paths = ini2struct(pathsFile);
+    if strcmp(opts.scaleMethod, 'load')
+        params.volPad = [0, 0, 0];
+    end
     
     % evaluate whatever modifiers are put in place
     % e.g. 'params.mrf.lambda_edge = 0.1';
@@ -25,7 +28,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     %% Patch Registration
     % do multi scale registration
     tic;
-    displ = patchreg.multiscale(source, target, params, opts, varargin{:});
+    displ = patchreg.multiscale(source, target, params, opts, paths, varargin{:});
     mastertoc = toc;
     displInv = invertwarp(displ, opts.warpDir);
     
@@ -58,6 +61,16 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     volumes.sourceWarpedSeg = volwarp(volumes.sourceSeg, displ, opts.warpDir, 'interpmethod', 'nearest');
     volumes.targetWarpedSeg = volwarp(volumes.targetSeg, displInv, opts.warpDir, 'interpmethod', 'nearest');
 
+    % crop volumes after padding
+    for fi = fieldnames(volumes)
+        volumes.(fi) = cropVolume(volumes.(fi), params.volPad + 1, size(volumes.(fi)) - params.volPad);
+    end
+    
+    for volume = 1:numel(displ)
+        displ{volume} = cropVolume(displ{volume}, params.volPad + 1, size(displ{volume}) - params.volPad);
+        displInv{volume} = cropVolume(displInv{volume}, params.volPad + 1, size(displInv{volume}) - params.volPad);
+    end
+    
     save(sprintf([paths.savepathout '%d_%d.mat'], 0, 0), 'volumes', 'paths', 'displ', 'displInv', 'params', 'opts', 'mastertoc');
 
     % make and save niis

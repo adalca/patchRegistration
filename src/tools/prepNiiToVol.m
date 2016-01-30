@@ -4,10 +4,20 @@ function vol = prepNiiToVol(niifile, volPad, maxVolSize)
 % volpad is the image padding volume
 % maxVolSize is the maximum size of the volume
 
-    %% Prepare volume
+    % Prepare volume
     niiVol = loadNii(niifile);
-    szRatio = max(size(niiVol.img)) ./ maxVolSize;
-    newVolSize = round(size(niiVol.img) ./ szRatio);
-    vol = padarray(volresize(double(niiVol.img), newVolSize), volPad, 'both');
+    vol = double(niiVol.img);
+    
+    % resize volume if a maxVolSize is given
+    if nargin == 3
+        szRatio = max(size(niiVol.img)) ./ maxVolSize;
+        newVolSize = round(size(niiVol.img) ./ szRatio);
+        vol = volresize(double(vol), newVolSize);
+    end
+    
+    % pad if required
+    if nargin > 1
+        vol = padarray(vol, volPad, 'both');
+    end
     
 end
