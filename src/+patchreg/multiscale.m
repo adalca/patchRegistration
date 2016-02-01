@@ -18,7 +18,7 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
     srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(source));
     trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(target));
 
-    % check if the scaling is done via loading ds5usx
+    % check if the scaling is done via pre-loading scale niftis
     if strcmp(opts.scaleMethod, 'load')
         srcScales = eval(paths.srcScales);
         tarScales = eval(paths.tarScales);
@@ -37,6 +37,8 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
     if size(params.patchSize, 1) == 1, params.patchSize = rfn(params.patchSize); end
     if size(params.gridSpacing, 1) == 1, params.gridSpacing = rfn(params.gridSpacing); end
     if size(params.searchSize, 1) == 1, params.searchSize = rfn(params.searchSize); end
+    
+    
     
     % go through the multiple scales
     for s = 1:params.nScales        
@@ -83,6 +85,7 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
                 if strcmp(opts.distance, 'sparse')
                     scSourceMaskWarped = volwarp(scSourceMask, displ, opts.warpDir);
                 end
+                
             else
                 assert(strcmp(opts.warpRes, 'full'));
                 sys.warnif(strcmp(opts.warpDir, 'forward'), ...
@@ -97,7 +100,7 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
                 end
             end
 
-            % find the new warp (displacements)
+            % prepare the parameters for this scale run.
             sstic = tic();
             locparams = params;
             locparams.patchSize = locparams.patchSize(s, :);
@@ -108,17 +111,13 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
                 locparams.targetMask = scTargetMask;
             end
             
+            % find the new warp (displacements)
             localDispl = patchreg.singlescale(scSourceWarped, scTarget, locparams, opts, ...
                 'currentdispl', displ, varargin{:});
             sstime = toc(sstic);
 
             % compose previous warp with newfound warp
-            if strcmp(opts.warpDir, 'forward')
-                cdispl = composeWarps(displ, localDispl);
-            else
-                % warps are both in target ref frame, so we can just add them
-                cdispl = cellfunc(@(d,l) d + l, displ, localDispl);
-            end
+            cdispl = composeWarps(displ, localDispl, opts.warpDir, opts.warpDir);
             
             % if save mode is on, save relevant teration information
             if isfield(opts, 'savefile') && ~isempty(opts.savefile)
