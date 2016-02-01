@@ -55,6 +55,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
             else
                 [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
                     patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, maskParams{:});
+                
             end
         else
             if strcmp(opts.distanceMethod, 'volknnsearch')
@@ -197,7 +198,18 @@ function inputs = parseInputs(source, target, params, opts, varargin)
     end
     
     % setup edge function for mrfs.
-    inputs.mrf.edgeDst = @correspdst;
+    if ispc
+        pdistFunc = @pdist2mex;
+	else % unix
+		ver = version('-release');
+		switch ver
+			case '2013b'
+				pdistFunc = @pdist2mexR2013b;
+			otherwise
+				pdistFunc = @pdist2mex;
+		end
+    end
+    inputs.mrf.edgeDst = @(x, y, ~, ~) pdistFunc(x.disp', y.disp', 'euc', [], [], []);
 end
 
 %% edge distance function
@@ -210,17 +222,17 @@ function dst = correspdst(pstr1, pstr2, ~, ~)
 
     X = pstr1.disp;
     Y = pstr2.disp;
-	
-	if ispc
-	    dst = pdist2mex(X', Y', 'euc', [], [], []);
-	
-	else % unix
-		ver = version('-release');
-		switch ver
-			case '2013b'
-				dst = pdist2mexR2013b(X', Y', 'euc', [], [], []);
-			otherwise
-				dst = pdist2mex(X', Y', 'euc', [], [], []);
-		end
-	end
+
+    if ispc
+        dst = pdist2mex(X', Y', 'euc', [], [], []);
+
+    else % unix
+        ver = version('-release');
+        switch ver
+            case '2013b'
+                dst = pdist2mexR2013b(X', Y', 'euc', [], [], []);
+            otherwise
+                dst = pdist2mex(X', Y', 'euc', [], [], []);
+        end
+    end
 end
