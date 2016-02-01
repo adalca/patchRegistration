@@ -8,12 +8,14 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
 %
 % TODO: use cubic interpolation? see if there is a difference?
 
-    %% Prepare volumes
+    %% load in configurations
     params = ini2struct(paramsFile);
     params.nScales = size(params.gridSpacing, 1);
+    
     opts = ini2struct(optsFile);
+    
     paths = ini2struct(pathsFile);
-    if strcmp(opts.scaleMethod, 'load')
+    if strcmp(opts.scaleMethod, 'load') % load option has 
         params.volPad = [0, 0, 0];
     end
     
@@ -23,13 +25,15 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
         eval(varargin{i});
     end
 
-    [source, target, params.sourceMask, params.targetMask] = prepareVolumes(paths, params, opts);
+    [source, target, params.sourceMask, params.targetMask] = prepareVolumes(paths, params.volPad, opts);
     
     %% Patch Registration
     % do multi scale registration
     tic;
     displ = patchreg.multiscale(source, target, params, opts, paths, varargin{:});
     mastertoc = toc;
+    
+    %% 
     displInv = invertwarp(displ, opts.warpDir);
     
     % compose the final image using the resulting displacements
@@ -44,7 +48,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
 
     volumes.source = source;
     volumes.sourceWarped = sourceWarped;
-    volumes.target = target; %#ok<STRNU>
+    volumes.target = target; 
     volumes.targetWarped = targetWarped;
     if strcmp(opts.distance, 'sparse')
         volumes.sourceMask = params.sourceMask;
