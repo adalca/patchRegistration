@@ -25,7 +25,9 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
         eval(varargin{i});
     end
 
-    [source, target, params.sourceMask, params.targetMask] = prepareVolumes(paths, params.volPad, opts);
+    % TODO: should only do this in the case of non-load scaleMethod.
+    [source, target, params.sourceMask, params.targetMask] = ...
+        prepareVolumes(paths, params.volPad, opts);
     
     %% Patch Registration
     % do multi scale registration
@@ -33,7 +35,11 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     displ = patchreg.multiscale(source, target, params, opts, paths, varargin{:});
     mastertoc = toc;
     
-    %% 
+    %% save final displacement and original volumes and niis
+    % TODO: could move this to another file that takes in the same ini files, to make the code more
+    % modular. We can then call if from here. This file would then take in the displacement.
+
+    % get inverse displacement
     displInv = invertwarp(displ, opts.warpDir);
     
     % compose the final image using the resulting displacements
@@ -44,8 +50,6 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
         targetMaskWarped = volwarp(params.targetMask, displInv, opts.warpDir);
     end
     
-    %% save final displacement and original volumes and niis
-
     volumes.source = source;
     volumes.sourceWarped = sourceWarped;
     volumes.target = target; 
