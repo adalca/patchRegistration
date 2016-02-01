@@ -1,1 +1,0 @@
-/afs/csail.mit.edu/system/common/matlab/2013b/bin/mcc -C -m /data/vision/polina/users/adalca/patchRegistration/git/src/analysis/reg2stats.m -a /data/vision/polina/users/adalca/patchRegistration/git/src/ -a /data/vision/polina/users/adalca/MATLAB/toolboxes -a /data/vision/polina/users/adalca/MATLAB/external_toolboxes
