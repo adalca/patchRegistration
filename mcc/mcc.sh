@@ -6,7 +6,7 @@
 #
 # where relpath are paths relative to ${PROJECT_PATH}
 # Example:
-# >$ ./mcc src/analysis/reg2stats src/scratch/registerBuckner 
+# >$ ./mcc src/analysis/reg2stats src/scratch/registerBuckner
 
 # prepare project and toolbox paths
 # if want to make current: "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -23,7 +23,7 @@ MCC_RUN_DIR="/afs/csail.mit.edu/system/common/matlab/2013b/bin/mcc"
 export PATH="${MAIN_PATH}:$PATH"
 
 ## run mcc on desired (*.m) files.
-for pfilename in "src/analysis/reg2stats" #"src/scratch/registerBuckner" #src/analysis/reg2stats
+for pfilename in $1 #"src/analysis/reg2stats" #"src/scratch/registerBuckner" #src/analysis/reg2stats
 do
   filename=`basename ${pfilename}`
 
