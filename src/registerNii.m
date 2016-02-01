@@ -40,7 +40,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     % modular. We can then call if from here. This file would then take in the displacement.
 
     % get inverse displacement
-    displInv = invertwarp(displ, opts.warpDir);
+    displInv = invertwarp(displ);
     
     % compose the final image using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
@@ -70,8 +70,10 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     volumes.targetWarpedSeg = volwarp(volumes.targetSeg, displInv, opts.warpDir, 'interpmethod', 'nearest');
 
     % crop volumes after padding
-    for fi = fieldnames(volumes)
-        volumes.(fi) = cropVolume(volumes.(fi), params.volPad + 1, size(volumes.(fi)) - params.volPad);
+    volnames = fieldnames(volumes);
+    for fi = numel(volnames)
+        volname = volnames{fi};
+        volumes.(volname) = cropVolume(volumes.(volname), params.volPad + 1, size(volumes.(volname)) - params.volPad);
     end
     
     for volume = 1:numel(displ)
