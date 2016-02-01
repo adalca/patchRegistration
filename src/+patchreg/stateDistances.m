@@ -1,4 +1,6 @@
-function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(source, target, patchSize, patchOverlap, searchSize, locweight, distanceMetric, varargin)
+function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
+    stateDistances(source, target, patchSize, patchOverlap, searchSize, ...
+    locweight, distanceMetric, varargin)
 % As an easy start, we can assume the reference/target grid is dense ('sliding'). It would be nicer
 % to change this in the future, but it could be a good start.
 %
@@ -54,10 +56,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
     
     % for each point in the source grid
     for i = 1:size(srcLib, 1)
-        subIdx = srcgridsub(i, :);
+        srcsubi = srcgridsub(i, :);
         range = cell(1, nDims);
         for j = 1:nDims
-            range{j} = max(subIdx(j)-local, 1):min(subIdx(j)+local, refgridsize(j));
+            range{j} = max(srcsubi(j)-local, 1):min(srcsubi(j)+local, refgridsize(j));
             assert(~isempty(range{j}));
         end
         
@@ -96,7 +98,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(sourc
         end
         
         % compute spatial distance of current location to neighbors
-        dNeigh = locweight * pdist2(subIdx, refgridsub(refNeighborIdx, :));
+        dNeigh = locweight * pdist2(srcsubi, refgridsub(refNeighborIdx, :));
         
         % note we don't use 1:K, instead we use 1:numel(p) since we might allow less than K matches
         pDst(i, 1:nNeighbors) = d + dNeigh;   
