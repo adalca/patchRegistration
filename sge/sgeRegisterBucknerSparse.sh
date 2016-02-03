@@ -24,13 +24,15 @@ CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
 mccSh="${CLUST_PATH}MCC_registerBuckner/run_registerBuckner.sh"
 
 # this version's running path
-runver="span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v2_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 # parameters
-lambda_edge="0.01 0.25 0.05 0.1"
-gridSpacingTemplate='[1,2,2,${gs}]' # use ${gs} to decide where varGridSpacing goes
-varGridSpacing="2 3 5 7 9"
-innerReps="2 4"
+lambda_edge="0.002 0.005 0.01 0.05"
+lambda_edge="0.01"
+gridSpacingTemplate='"[1;2;2;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
+echo "$gridSpacingTemplate"
+varGridSpacing="3 5 7"
+innerReps="1 2"
 
 ###############################################################################
 # Running Code
@@ -68,10 +70,12 @@ do
         # sge file which we will execute
         sgerunfile="${sgeopath}/register.sh"
 
+        # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
+
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
         gstext=`eval "echo ${gridSpacingTemplate}"`
-        par2="\"'params.gridSpacing=bsxfun(@times,o3,$gstext'');'\"";
+        par2="\"params.gridSpacing=bsxfun(@times,o3,$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
         par4="\"opts.verbose=1;\"";
         par5="\"opts.distance='sparse';\"";
@@ -93,7 +97,7 @@ do
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        sleep 1
+        # sleep 1
       done
     done
   done
