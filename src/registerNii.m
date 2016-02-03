@@ -24,15 +24,45 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     for i = 1:numel(varargin)
         eval(varargin{i});
     end
-
+    
     % TODO: should only do this in the case of non-load scaleMethod.
-    [source, target, params.sourceMask, params.targetMask] = ...
-        prepareVolumes(paths, params.volPad, opts);
+    if ~strcmp(opts.scaleMethod, 'load')
+        [source, target, params.sourceMask, params.targetMask] = ...
+            prepareVolumes(paths, params.volPad, opts);
+    else
+        source = cell(1, params.nScales);
+        target = cell(1, params.nScales);
+        params.sourceMask = cell(1, params.nScales);
+        params.targetMask = cell(1, params.nScales);
+        
+        % go through the multiple scales
+        for s = 1:params.nScales        
+            srcScales = eval(paths.srcScales);
+            tarScales = eval(paths.tarScales);
+            source{1, s} = prepNiiToVol(srcScales{s}, params.volPad);
+            target{1, s} = prepNiiToVol(tarScales{s}, params.volPad);
+
+            % resize the original source mask and target mask images to s
+            if strcmp(opts.distance, 'sparse')
+                srcMaskScales = eval(paths.srcMaskScales);
+                tarMaskScales = eval(paths.tarMaskScales);
+                params.sourceMask{1, s} = prepNiiToVol(srcMaskScales{s}, params.volPad);
+                params.targetMask{1, s} = prepNiiToVol(tarMaskScales{s}, params.volPad);
+            end
+        end
+        sourceOrig = source{1, params.nScales};
+        targetOrig = target{1, params.nScales};
+        if strcmp(opts.distance, 'sparse')
+            sourceMaskOrig = params.sourceMask{1, params.nScales};
+            targetMaskOrig = params.sourceMask{1, params.nScales};
+        end 
+    end
+         
     
     %% Patch Registration
     % do multi scale registration
     tic;
-    displ = patchreg.multiscale(source, target, params, opts, paths, varargin{:});
+    displ = patchreg.multiscale(source, target, params, opts, varargin{:});
     mastertoc = toc;
     
     %% save final displacement and original volumes and niis
@@ -43,21 +73,21 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     displInv = invertwarp(displ);
     
     % compose the final image using the resulting displacements
-    sourceWarped = volwarp(source, displ, opts.warpDir);
-    targetWarped = volwarp(target, displInv, opts.warpDir);
+    sourceWarped = volwarp(sourceOrig, displ, opts.warpDir);
+    targetWarped = volwarp(targetOrig, displInv, opts.warpDir);
     if strcmp(opts.distance, 'sparse')
-        sourceMaskWarped = volwarp(params.sourceMask, displ, opts.warpDir);
-        targetMaskWarped = volwarp(params.targetMask, displInv, opts.warpDir);
+        sourceMaskWarped = volwarp(sourceMaskOrig, displ, opts.warpDir);
+        targetMaskWarped = volwarp(targetMaskOrig, displInv, opts.warpDir);
     end
     
-    volumes.source = source;
+    volumes.source = sourceOrig;
     volumes.sourceWarped = sourceWarped;
-    volumes.target = target; 
+    volumes.target = targetOrig; 
     volumes.targetWarped = targetWarped;
     if strcmp(opts.distance, 'sparse')
-        volumes.sourceMask = params.sourceMask;
+        volumes.sourceMask = sourceMaskOrig;
         volumes.sourceMaskWarped = sourceMaskWarped;
-        volumes.targetMask = params.targetMask;
+        volumes.targetMask = targetMaskOrig;
         volumes.targetMaskWarped = targetMaskWarped;
     end
 
@@ -84,19 +114,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     save(sprintf([paths.savepathout '%d_%d.mat'], 0, 0), 'volumes', 'paths', 'displ', 'displInv', 'params', 'opts', 'mastertoc');
 
     % make and save niis
-    displFile = sprintf('%s_2_%s.nii.gz', paths.sourceName, paths.targetName);
-    displInvFile = sprintf('%s_2_%s_inv.nii.gz', paths.sourceName, paths.targetName);
-    sourceWarpedFile = sprintf('%s_in%s_via%s_2_%s.nii.gz', paths.sourceName, paths.targetName, paths.sourceName, paths.targetName);
-    targetWarpedFile = sprintf('%s_in%s_via%s_2_%s_inv.nii.gz', paths.targetName, paths.sourceName, paths.sourceName, paths.targetName);
-    sourceWarpedSegFile = sprintf('%s_seg_in%s_via%s_2_%s.nii.gz', paths.sourceName, paths.targetName, paths.sourceName, paths.targetName);
-    targetWarpedSegFile = sprintf('%s_seg_in%s_via%s_2_%s_inv.nii.gz', paths.targetName, paths.sourceName, paths.sourceName, paths.targetName);
-    
-    saveNii(make_nii(cat(5, displ{:})), [paths.savepathnii displFile]);
-    saveNii(make_nii(cat(5, displInv{:})), [paths.savepathnii displInvFile]);
-    saveNii(make_nii(sourceWarped), [paths.savepathnii sourceWarpedFile]);
-    saveNii(make_nii(targetWarped), [paths.savepathnii targetWarpedFile]);
-    saveNii(make_nii(volumes.sourceWarpedSeg), [paths.savepathnii sourceWarpedSegFile]);
-    saveNii(make_nii(volumes.targetWarpedSeg), [paths.savepathnii targetWarpedSegFile]);
+    saveRegNiis(paths, volumes, displ);
     
     %% Immediate Output Visualization
     % TODO: take this out and put it in a separate visualization function

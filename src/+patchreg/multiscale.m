@@ -1,4 +1,4 @@
-function displ = multiscale(source, target, params, opts, paths, varargin)
+function displ = multiscale(source, target, params, opts, varargin)
 % MULTISCALE run a full patch-based registration.
 %
 % displ = multiscale(source, target, params, opts)
@@ -15,22 +15,22 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
     % e.g. 2.^linspace(log2(32), log2(256), 4)
     minSize = 16; % usually good to use 16.
     minScale = min(minSize, min([size(source), size(target)])/2);
-    srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(source));
-    trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(target));
-
-    % check if the scaling is done via pre-loading scale niftis
     if strcmp(opts.scaleMethod, 'load')
-        srcScales = eval(paths.srcScales);
-        tarScales = eval(paths.tarScales);
-        if strcmp(opts.distance, 'sparse')
-            srcMaskScales = eval(paths.srcMaskScales);
-            tarMaskScales = eval(paths.tarMaskScales);
-        end
+        srcSizes = cellfunc(@(x) size(x), source);
+        trgSizes = cellfunc(@(x) size(x), target);
+        firstSize = size(source{1, 1});
+        sourceOrig = source{1, params.nScales};
+        sourceMaskOrig = params.sourceMask{1, params.nScales};
+    else
+        srcSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(source));
+        trgSizes = arrayfunc(@(x) round(2 .^ linspace(log2(minScale), log2(x), params.nScales)), size(target));
+        firstSize = cellfun(@(x) round(x(1)), srcSizes);
+        sourceOrig = source;
+        sourceMaskOrig = params.sourceMask;
     end
     
     % initiate a zero displacement
-    firstSize = cellfun(@(x) round(x(1)), srcSizes);
-    displ = repmat({zeros(firstSize)}, [1, ndims(source)]); 
+    displ = repmat({zeros(firstSize)}, [1, ndims(sourceOrig)]); 
     
     % all sizes are allowed to be nScales sized.
     rfn = @(p) repmat(p, [params.nScales, 1]);
@@ -38,29 +38,27 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
     if size(params.gridSpacing, 1) == 1, params.gridSpacing = rfn(params.gridSpacing); end
     if size(params.searchSize, 1) == 1, params.searchSize = rfn(params.searchSize); end
     
-    
-    
     % go through the multiple scales
     for s = 1:params.nScales        
         
         % resizing the original source and target images to s
-        if strcmp(opts.scaleMethod, 'load')
-            scSource = prepNiiToVol(srcScales{s}, params.volPad);
-            scTarget = prepNiiToVol(tarScales{s}, params.volPad);
-            scSrcSize = size(scSource);
-            scTargetSize = size(scTarget);
+        if iscell(source)
+            scSrcSize = srcSizes{s};
+            scTargetSize = trgSizes{s};
+            scSource = source{1, s};
+            scTarget = target{1, s};
         else
             scSrcSize = cellfun(@(x) x(s), srcSizes);
-            scSource = volresize(source, scSrcSize);
             scTargetSize = cellfun(@(x) x(s), trgSizes);
+            scSource = volresize(source, scSrcSize);
             scTarget = volresize(target, scTargetSize);
         end
         
         % resize the original source mask and target mask images to s
         if strcmp(opts.distance, 'sparse')
-            if strcmp(opts.scaleMethod, 'load')
-                scSourceMask = prepNiiToVol(srcMaskScales{s}, params.volPad);
-                scTargetMask = prepNiiToVol(tarMaskScales{s}, params.volPad);
+            if iscell(source)
+                scSourceMask = params.sourceMask{1, s};
+                scTargetMask = params.targetMask{1, s};
             else
                 scSourceMask = volresize(params.sourceMask, scSrcSize);
                 scTargetMask = volresize(params.targetMask, scTargetSize);
@@ -91,11 +89,11 @@ function displ = multiscale(source, target, params, opts, paths, varargin)
                 sys.warnif(strcmp(opts.warpDir, 'forward'), ...
                     'Warning: forward full volwarp at each iteration is costly');
                 
-                wd = resizeWarp(displ, size(source));
-                sourceWarped = volwarp(source, wd, opts.warpDir);
+                wd = resizeWarp(displ, size(sourceOrig));
+                sourceWarped = volwarp(sourceOrig, wd, opts.warpDir);
                 scSourceWarped = volresize(sourceWarped, scSrcSize);
                 if strcmp(opts.distance, 'sparse')
-                    sourceMaskWarped = volwarp(params.sourceMask, wd, opts.warpDir);
+                    sourceMaskWarped = volwarp(sourceMaskOrig, wd, opts.warpDir);
                     scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
                 end
             end
