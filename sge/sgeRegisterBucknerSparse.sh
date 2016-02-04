@@ -19,8 +19,8 @@ BUCKNER_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckn
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
-paramsinifile="${PROJECT_PATH}/bucknerParams.ini";
-optsinifile="${PROJECT_PATH}/bucknerOpts.ini";
+paramsinifile="${PROJECT_PATH}/configs/buckner/bucknerParams.ini";
+optsinifile="${PROJECT_PATH}/configs/buckner/bucknerOpts.ini";
 
 # command shell file
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
