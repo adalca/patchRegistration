@@ -62,7 +62,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     %% Patch Registration
     % do multi scale registration
     tic;
-    displ = patchreg.multiscale(source, target, params, opts, varargin{:});
+    displ = patchreg.multiscale(source, target, params, opts);
     mastertoc = toc;
     
     %% save final displacement and original volumes and niis
