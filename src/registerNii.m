@@ -114,7 +114,7 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     save(sprintf([paths.savepathout '%d_%d.mat'], 0, 0), 'volumes', 'paths', 'displ', 'displInv', 'params', 'opts', 'mastertoc');
 
     % make and save niis
-    saveRegNiis(paths, volumes, displ);
+    saveRegNiis(paths, volumes, displ, displInv);
     
     %% Immediate Output Visualization
     % TODO: take this out and put it in a separate visualization function

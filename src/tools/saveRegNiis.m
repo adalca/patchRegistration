@@ -1,7 +1,4 @@
-function saveRegNiis(paths, volumes, displ)
-    % get inverse displacement
-    displInv = invertwarp(displ);
-
+function saveRegNiis(paths, volumes, displ, displInv)
     displFile = sprintf('%s_2_%s.nii.gz', paths.sourceName, paths.targetName);
     displInvFile = sprintf('%s_2_%s_inv.nii.gz', paths.sourceName, paths.targetName);
     sourceWarpedFile = sprintf('%s_in%s_via%s_2_%s.nii.gz', paths.sourceName, paths.targetName, paths.sourceName, paths.targetName);
