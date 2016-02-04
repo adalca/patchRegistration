@@ -19,12 +19,14 @@ BUCKNER_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckn
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
+paramsinifile="${PROJECT_PATH}/bucknerParams.ini";
+optsinifile="${PROJECT_PATH}/bucknerOpts.ini";
 
 # command shell file
-mccSh="${CLUST_PATH}MCC_registerBuckner/run_registerBuckner.sh"
+mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 
 # this version's running path
-runver="sparse_v2_span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v3_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 # parameters
 lambda_edge="0.002 0.005 0.01 0.05"
@@ -71,16 +73,46 @@ do
         sgerunfile="${sgeopath}/register.sh"
 
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
-
+        pathsinifile="${runfolder}/paths.ini"
+        echo "; paths" > ${pathsinifile}
+        echo "sourceFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_reg.nii.gz" >> ${pathsinifile}
+        echo "targetFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc.nii.gz" >> ${pathsinifile}
+        echo "sourceMaskFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_dsmask_reg.nii.gz" >> ${pathsinifile}
+        echo "targetMaskFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc_allones.nii.gz" >> ${pathsinifile}
+        echo "sourceSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_iso_ds5_us5_size_reg_seg.nii.gz" >> ${pathsinifile}
+        echo "targetSegFile = ${BUCKNER_ATLAS_PATH}buckner61_seg_proc.nii.gz" >> ${pathsinifile}
+        echo "; save paths" >> ${pathsinifile}
+        echo "savepathout = ${OUTPUT_PATH}runs_sparse_v2_span_at5Scales_lambdaedge_gridspacing_innerreps/${subjid}_${le}_${gs}_${ni}/out/" >> ${pathsinifile}
+        echo "savepathnii = ${OUTPUT_PATH}runs_sparse_v2_span_at5Scales_lambdaedge_gridspacing_innerreps/${subjid}_${le}_${gs}_${ni}/final/" >> ${pathsinifile}
+        echo "; names" >> ${pathsinifile}
+        echo "sourceName = ${subjid}" >> ${pathsinifile}
+        echo "targetName = buckner61" >> ${pathsinifile}
+        echo "; scales" >> ${pathsinifile}
+        
+        srcScales="srcScales = {"
+        tarScales="tarScales = {"
+        srcMaskScales="srcMaskScales = {"
+        tarMaskScales="tarMaskScales = {"
+        for scale in 1 2 3 4 5
+        do
+          srcScales=${srcScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated${scale}_reg.nii.gz' "
+          tarScales=${tarScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds5_us${scale}.nii.gz' "
+          srcMaskScales=${srcMaskScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated${scale}_dsmask_reg.nii.gz' "
+          tarMaskScales=${tarMaskScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds5_us${scale}_allones.nii.gz' "
+        done
+        echo "${srcScales}}" >> ${pathsinifile}
+        echo "${tarScales}}" >> ${pathsinifile}
+        echo "${srcMaskScales}}" >> ${pathsinifile}
+        echo "${tarMaskScales}}" >> ${pathsinifile}
+        
+        
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
         gstext=`eval "echo ${gridSpacingTemplate}"`
         par2="\"params.gridSpacing=bsxfun(@times,o3,$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
-        par4="\"opts.verbose=1;\"";
-        par5="\"opts.distance='sparse';\"";
         outname="${outfolder}/%d_%d.mat"
-        lcmd="${mccSh} $mcr $BUCKNER_PATH $BUCKNER_ATLAS_PATH $outname $subjid $par1 $par2 $par3 $par4 $par5"
+        lcmd="${mccSh} $mcr ${paramsinifile} ${optsinifile} ${pathsinifile} $par1 $par2 $par3"
 
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
@@ -97,7 +129,7 @@ do
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        # sleep 1
+        sleep 10
       done
     done
   done
