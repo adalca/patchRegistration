@@ -112,8 +112,9 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
     end
     
     save(sprintf([paths.savepathout '%d_%d.mat'], 0, 0), 'volumes', 'paths', 'displ', 'displInv', 'params', 'opts', 'mastertoc');
-
+    
     % make and save niis
+    volumes.sourceRawSeg = prepNiiToVol(paths.sourceRawSegFile, volPad, opts.maxVolSize);
     saveRegNiis(paths, volumes, displ, displInv);
     
     %% Immediate Output Visualization
