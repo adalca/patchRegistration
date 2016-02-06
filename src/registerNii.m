@@ -19,6 +19,8 @@ function registerNii(pathsFile, paramsFile, optsFile, varargin)
         params.volPad = [0, 0, 0];
     end
     
+    params.savefile = [paths.savepathout '/%d_%d.mat'];
+    
     % evaluate whatever modifiers are put in place
     % e.g. 'params.mrf.lambda_edge = 0.1';
     for i = 1:numel(varargin)
