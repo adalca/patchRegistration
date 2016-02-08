@@ -11,6 +11,8 @@ function displ = multiscale(source, target, params, opts, varargin)
 %
 % TODO: better documentation :)
 
+    mastertic = tic;
+
     % pre-compute the source and target sizes at each scale.
     % e.g. 2.^linspace(log2(32), log2(256), 4)
     minSize = 16; % usually good to use 16.
@@ -123,7 +125,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                     'scTargetSize', scTargetSize, 'runTime', sstime); %#ok<NASGU>
                 displVolumes = struct('prevdispl', {displ}, 'localDispl', {localDispl}, ...
                     'cdispl', {cdispl}); %#ok<NASGU>
-                volumes = struct('scSource', scSource, 'scTarget', scTarget, ...
+                volumes = struct('scSource', scSource, 'scTarget', scTarget, ... 
                     'scSourceWarped', scSourceWarped, 'scSourceMaskWarped', scSourceMaskWarped); %#ok<NASGU>
                 filename = sprintf(opts.savefile, s, t);
                 save(filename, 'params', 'opts', 'state', 'displVolumes', 'volumes');
@@ -133,4 +135,13 @@ function displ = multiscale(source, target, params, opts, varargin)
             displ = cdispl;
         end
     end
+    
+    if isfield(opts, 'savefile') && ~isempty(opts.savefile)
+        mastertoc = toc(mastertic);
+        state = struct('runTime', mastertoc); %#ok<NASGU>
+        volumes = struct('source', source, 'target', target); %#ok<NASGU>
+        displVolumes = struct('displ', displ); %#ok<NASGU>
+        filename = sprintf(opts.savefile, 0, 0);
+        save(filename, 'params', 'opts', 'displVolumes', 'volumes');
+    end    
 end

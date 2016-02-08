@@ -1,8 +1,9 @@
 function vol = prepNiiToVol(niifile, volPad, maxVolSize)
-% preprocess the Nii file into volume 
-% niifile is the nii file to be converted to volume
-% volpad is the image padding volume
-% maxVolSize is the maximum size of the volume
+% preprocess the nifti file into volume, allowing for optional volume resizing
+%
+%   niifile is the nii file to be converted to volume
+%   volpad is the image padding volume
+%   maxVolSize is the maximum size of the volume
 
     % Prepare volume
     niiVol = loadNii(niifile);
@@ -18,6 +19,5 @@ function vol = prepNiiToVol(niifile, volPad, maxVolSize)
     % pad if required
     if nargin > 1
         vol = padarray(vol, volPad, 'both');
-    end
-    
+    end 
 end
