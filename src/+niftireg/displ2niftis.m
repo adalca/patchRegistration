@@ -18,8 +18,8 @@ function displ2niftis(varargin)
 
     % prepare "original" volumes to warp 
     if strcmp(opts.scaleMethod, 'load')
-        source = source{nScales};
-        target = target{nScales};
+        source = source{end};
+        target = target{end};
     end
 
     
