@@ -1,5 +1,5 @@
 fpath = ['/data/vision/polina/scratch/patchRegistration/output/', ...
-'runs_sparse_v2_span_at4Scales_lambdaedge_gridspacing_innerreps/buckner*'];
+'runs_sparse_v4_span_at4Scales_lambdaedge_gridspacing_innerreps/buckner*'];
 d = sys.fulldir(fpath);
 
 paramIdx = [17, 2, 3, 4, 53, 41, 42, 43];
@@ -16,10 +16,10 @@ for i = 1:numel(d)
     znr = str2num(z{1}(end-1:end));
 
     try
-        n00 = load(fullfile(d(i).name, 'out', '0_0.mat'), 'params', 'mastertoc');
-        sta = load(fullfile(d(i).name, 'out', 'stats.mat'), 'dices', 'dicelabels', 'jaccards', 'jaccardlabels');
-    catch
-        fprintf('skipping %s\n', fname);
+        n00 = load(fullfile(d(i).name, 'out', '0_0.mat'), 'params'); % 'mastertoc'
+        sta = load(fullfile(d(i).name, 'out', 'stats.mat'), 'dicesSource', 'dicelabels', 'jaccardsSource', 'jaccardlabels');
+    catch err
+        fprintf(2, 'skipping %s because of \n %s\n', fname, err.message);
         continue;
     end
 
@@ -28,10 +28,12 @@ for i = 1:numel(d)
     idx(i, 2) = n00.params.mrf.lambda_edge;
     idx(i, 3) = n00.params.gridSpacing(end);
     idx(i, 4) = n00.params.nInnerReps;
-    times(i) = n00.mastertoc;
+%     times(i) = n00.mastertoc;
     for p = 1:numel(paramIdx)
-        diceScores(p, i) = sta.dices{n00.params.nScales, end}(sta.dicelabels{n00.params.nScales, end}(:) == paramIdx(p));
-        jaccardScores(p, i) = 1 - sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == paramIdx(p));
+%         diceScores(p, i) = sta.dices{n00.params.nScales, end}(sta.dicelabels{n00.params.nScales, end}(:) == paramIdx(p));
+%         jaccardScores(p, i) = 1 - sta.jaccards{n00.params.nScales, end}(sta.jaccardlabels{n00.params.nScales, end}(:) == paramIdx(p));
+        diceScores(p, i) = sta.dicesSource(sta.dicelabels(:) == paramIdx(p));
+        jaccardScores(p, i) = 1 - sta.jaccardsSource(sta.jaccardlabels(:) == paramIdx(p));
     end
 end
 
@@ -50,9 +52,9 @@ for param = 1:4
     for labelIdx = 1:numel(paramIdx)
         subplot(2, 4, labelIdx);
         boxplot(diceScores(labelIdx, :), idx(:,param)); hold on; grid on;
-        if param==2 || param==4
+%         if param==2 || param==4
             ylim([0.3, 1]);
-        end
+%         end
     end
     
     ax = findobj(f,'Type','Axes');

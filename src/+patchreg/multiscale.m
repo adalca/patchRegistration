@@ -96,7 +96,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                 scSourceWarped = volresize(sourceWarped, scSrcSize);
                 if strcmp(opts.distance, 'sparse')
                     sourceMaskWarped = volwarp(sourceMaskOrig, wd, opts.warpDir);
-                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
+                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);, 'params', 'runTime'
                 end
             end
 
@@ -142,6 +142,6 @@ function displ = multiscale(source, target, params, opts, varargin)
         volumes = struct('source', source, 'target', target); %#ok<NASGU>
         displVolumes = struct('displ', displ); %#ok<NASGU>
         filename = sprintf(opts.savefile, 0, 0);
-        save(filename, 'params', 'opts', 'displVolumes', 'volumes');
+        save(filename, 'params', 'opts', 'displVolumes', 'volumes', 'state');
     end    
 end
