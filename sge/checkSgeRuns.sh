@@ -16,6 +16,7 @@
 typeName=("registration" "stats")
 checkFile=("/out/0_0.mat" "/out/stats.mat")
 jobFile=("/sge/register.sh" "/sge/reg2stats.sh")
+extjobFile=("/sge/reg2stats.sh" "")
 nOptions="${#typeName[@]}"
 
 ##############################################################################
@@ -41,6 +42,7 @@ do
     typec=${typeName[$r]} # type
     checkc=${checkFile[$r]} # file to check
     jobc=${jobFile[$r]} # file to re-run
+    ejobc=${extjobFile[$r]} # file to re-run
 
     # process this option if selected
     if [ "${type}" = "all" ] || [ "${type}" = "${typec}" ] ; then
@@ -54,6 +56,9 @@ do
           echo "Resubmitting ${typec} job for ${foldername}."
           qsub "${file}${jobc}"
         fi
+      else
+        echo "  > ${foldername} did complete ${typec}."
+
       fi
     fi
   done

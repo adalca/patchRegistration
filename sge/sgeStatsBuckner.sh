@@ -24,7 +24,7 @@ CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
 mccSh="${CLUST_PATH}MCC_reg2stats/run_reg2stats.sh"
 
 # this version's running path
-runver="span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v4_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 ###############################################################################
 # Running Code
@@ -42,8 +42,9 @@ do
   sgeopath="${veroutpath}/${subjfolder}/sge/"
   sge_par_o="--sge \"-o ${sgeopath}\""
   sge_par_e="--sge \"-e ${sgeopath}\""
+  sge_par_q="" #--sge \"-q qOnePerHost \""
   sgerunfile="${sgeopath}/reg2stats.sh"
-  cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_o $sge_par_e ${lcmd} > ${sgerunfile}"
+  cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_o $sge_par_e $sge_par_q ${lcmd} > ${sgerunfile}"
   echo $cmd
   eval $cmd
 

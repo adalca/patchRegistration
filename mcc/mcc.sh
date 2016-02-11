@@ -33,6 +33,7 @@ do
     ${PROJECT_PATH}/${pfilename}.m \
     ${MAIN_PATH}/MCC/MCC_${filename} \
     ${PROJECT_PATH}/src/ \
+    ${PROJECT_PATH}/ext/ \
     ${TOOLBOX_PATH} \
     ${EXTTOOLBOX_PATH}
 done
