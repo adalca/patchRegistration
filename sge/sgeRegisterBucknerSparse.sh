@@ -26,12 +26,12 @@ optsinifile="${PROJECT_PATH}/configs/buckner/bucknerOpts.ini";
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 
 # this version's running path
-runver="sparse_v3_span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v4_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 # parameters
 lambda_edge="0.002 0.005 0.01 0.05"
 lambda_edge="0.01"
-gridSpacingTemplate='"[1;2;2;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
+gridSpacingTemplate='"[1;2;2;3;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
 varGridSpacing="3 5 7"
 innerReps="1 2"
@@ -66,6 +66,8 @@ do
         mkdir -p $runfolder
         outfolder="${runfolder}/out/"
         mkdir -p $outfolder
+        finalfolder="${runfolder}/final/"
+        mkdir -p $finalfolder
         sgeopath="${runfolder}/sge/"
         mkdir -p $sgeopath
 
@@ -75,44 +77,46 @@ do
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
         echo "; paths" > ${pathsinifile}
-        echo "sourceFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_reg.nii.gz" >> ${pathsinifile}
+        echo "sourceFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_reg.nii.gz" >> ${pathsinifile}
         echo "targetFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc.nii.gz" >> ${pathsinifile}
-        echo "sourceMaskFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_dsmask_reg.nii.gz" >> ${pathsinifile}
+        echo "sourceMaskFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_dsmask_reg.nii.gz" >> ${pathsinifile}
         echo "targetMaskFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc_allones.nii.gz" >> ${pathsinifile}
-        echo "sourceSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_iso_ds5_us5_size_reg_seg.nii.gz" >> ${pathsinifile}
+        echo "sourceSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_iso_2_ds7_us7_size_reg_seg.nii.gz" >> ${pathsinifile}
         echo "targetSegFile = ${BUCKNER_ATLAS_PATH}buckner61_seg_proc.nii.gz" >> ${pathsinifile}
-        echo "; save paths" >> ${pathsinifile}
-        echo "savepathout = ${OUTPUT_PATH}runs_sparse_v2_span_at5Scales_lambdaedge_gridspacing_innerreps/${subjid}_${le}_${gs}_${ni}/out/" >> ${pathsinifile}
-        echo "savepathnii = ${OUTPUT_PATH}runs_sparse_v2_span_at5Scales_lambdaedge_gridspacing_innerreps/${subjid}_${le}_${gs}_${ni}/final/" >> ${pathsinifile}
+
+        echo "; output paths" >> ${pathsinifile}
+        echo "savepathout = ${outfolder}" >> ${pathsinifile}
+        echo "savepathfinal = ${finalfolder}" >> ${pathsinifile}
+
         echo "; names" >> ${pathsinifile}
         echo "sourceName = ${subjid}" >> ${pathsinifile}
         echo "targetName = buckner61" >> ${pathsinifile}
+
         echo "; scales" >> ${pathsinifile}
-        
-        srcScales="srcScales = {"
-        tarScales="tarScales = {"
-        srcMaskScales="srcMaskScales = {"
-        tarMaskScales="tarMaskScales = {"
-        for scale in 1 2 3 4 5
+        srcScales="sourceScales = {"
+        tarScales="targetScales = {"
+        srcMaskScales="sourceMaskScales = {"
+        tarMaskScales="targetMaskScales = {"
+        for scale in 1 2 3 4 5 6 7
         do
-          srcScales=${srcScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated${scale}_reg.nii.gz' "
-          tarScales=${tarScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds5_us${scale}.nii.gz' "
-          srcMaskScales=${srcMaskScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated${scale}_dsmask_reg.nii.gz' "
-          tarMaskScales=${tarMaskScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds5_us${scale}_allones.nii.gz' "
+          srcScales=${srcScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_reg.nii.gz' "
+          tarScales=${tarScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds7_us${scale}.nii.gz' "
+          srcMaskScales=${srcMaskScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_dsmask_reg.nii.gz' "
+          tarMaskScales=${tarMaskScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds7_us${scale}_allones.nii.gz' "
         done
         echo "${srcScales}}" >> ${pathsinifile}
         echo "${tarScales}}" >> ${pathsinifile}
         echo "${srcMaskScales}}" >> ${pathsinifile}
-        echo "${tarMaskScales}}" >> ${pathsinifile}
-        
-        
+        #echo "${tarMaskScales}}" >> ${pathsinifile}
+
+
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
         gstext=`eval "echo ${gridSpacingTemplate}"`
-        par2="\"params.gridSpacing=bsxfun(@times,o3,$gstext);\"";
+        par2="\"params.gridSpacing=bsxfun(@times,[1,1,1],$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
         outname="${outfolder}/%d_%d.mat"
-        lcmd="${mccSh} $mcr ${paramsinifile} ${optsinifile} ${pathsinifile} $par1 $par2 $par3"
+        lcmd="${mccSh} $mcr ${pathsinifile} ${paramsinifile} ${optsinifile} $par1 $par2 $par3"
 
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
@@ -124,12 +128,13 @@ do
         eval $cmd
 
         # run sge
+        chmod a+x ${sgerunfile}
         sgecmd="qsub ${sgerunfile}"
         echo -e "$sgecmd\n"
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        sleep 10
+         #sleep 10
       done
     done
   done

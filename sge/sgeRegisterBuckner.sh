@@ -28,8 +28,9 @@ runver="span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 # parameters
 lambda_edge="0.01 0.25 0.05 0.1"
-gridSpacingTemplate='[1,2,2,${gs}]' # use ${gs} to decide where varGridSpacing goes
-varGridSpacing="2 3 5 7 9"
+lambda_edge="0.002 0.005"
+gridSpacingTemplate='[1\;2\;2\;${gs}]' # use ${gs} to decide where varGridSpacing goes
+varGridSpacing="3 5 7 9" # 3 was run earlier
 innerReps="2 4"
 
 ###############################################################################
@@ -71,7 +72,7 @@ do
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
         gstext=`eval "echo ${gridSpacingTemplate}"`
-        par2="\"'params.gridSpacing=bsxfun(@times,o3,$gstext'');'\"";
+        par2="\"params.gridSpacing=bsxfun(@times,o3,$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
         par4="\"opts.verbose=1;\"";
         outname="${outfolder}/%d_%d.mat"
@@ -80,8 +81,8 @@ do
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
-        sge_par_l="--sge \"-l mem_free=100G \""
-        sge_par_q="--sge \"-q qOnePerHost \""
+        sge_par_l="--sge \"-l mem_free=10G \""
+        sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd
         eval $cmd
