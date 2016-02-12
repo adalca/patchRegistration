@@ -96,7 +96,7 @@ function displ = multiscale(source, target, params, opts, varargin)
                 scSourceWarped = volresize(sourceWarped, scSrcSize);
                 if strcmp(opts.distance, 'sparse')
                     sourceMaskWarped = volwarp(sourceMaskOrig, wd, opts.warpDir);
-                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);, 'params', 'runTime'
+                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
                 end
             end
 

@@ -1,6 +1,6 @@
 function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
     stateDistances(source, target, patchSize, patchOverlap, searchSize, ...
-    locweight, distanceMetric, varargin)
+    locweight, distanceMetric, libraryMethod, varargin)
 % As an easy start, we can assume the reference/target grid is dense ('sliding'). It would be nicer
 % to change this in the future, but it could be a good start.
 %
@@ -26,18 +26,20 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
 
     [srcIdx, ~, srcgridsize, ~] = patchlib.grid(size(source), patchSize, patchOverlap);
     [refIdx, ~, refgridsize, ~] = patchlib.grid(size(target), patchSize);
- 
-    % compute source library
-    srcLib = patchlib.vol2lib(source, patchSize, patchOverlap);
     
-    % build the reference libraries
-    refLib = patchlib.vol2lib(target, patchSize);
+    if strcmp(libraryMethod, 'full')
+        % compute source library
+        srcLib = patchlib.vol2lib(source, patchSize, patchOverlap);
+
+        % build the reference libraries
+        refLib = patchlib.vol2lib(target, patchSize);
+    end
     
     P = prod(patchSize);
     K = prod(searchSize);
-    pDst = Inf(size(srcLib, 1), K);
-    pIdx = ones(size(srcLib, 1), K); % Should be investigated. ones is a hack
-    patches = nan(size(srcLib, 1), P, prod(searchSize));
+    pDst = Inf(numel(srcIdx), K);
+    pIdx = ones(numel(srcIdx), K); % Should be investigated. ones is a hack
+    patches = nan(numel(srcIdx), 1, prod(searchSize)); % We never use the patches in this case. The second argument should be P, but we're putting 1 for memory win.
     local = (searchSize(1) - 1)/2;
     srcgridsub = ind2subvec(size(source), srcIdx(:));
     refgridsub = ind2subvec(size(target), refIdx(:));
@@ -46,16 +48,18 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
     if(numel(varargin) == 2)
         srcMask = varargin{1};
         refMask = varargin{2};
+        
+        if strcmp(libraryMethod, 'full')
+            % compute source mask library
+            srcMaskLib = patchlib.vol2lib(srcMask, patchSize, patchOverlap);
 
-        % compute source mask library
-        srcMaskLib = patchlib.vol2lib(srcMask, patchSize, patchOverlap);
-
-        % build the reference mask libraries
-        refMaskLib = patchlib.vol2lib(refMask, patchSize);
+            % build the reference mask libraries
+            refMaskLib = patchlib.vol2lib(refMask, patchSize);
+        end
     end
     
     % for each point in the source grid
-    for i = 1:size(srcLib, 1)
+    for i = 1:numel(srcIdx)
         srcsubi = srcgridsub(i, :);
         range = cell(1, nDims);
         for j = 1:nDims
@@ -63,33 +67,69 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
             assert(~isempty(range{j}));
         end
         
+        rangeNumbers = ndgrid2vec(range{:});
+        
         % tranform indexes from target space to reference index.
         refNeighborIdx = ind2ind(size(target), refgridsize, refIdx(range{:}));
         refNeighborIdx = refNeighborIdx(:);
         nNeighbors = numel(refNeighborIdx);
         
-        % get and store the neighbor patches
-        neighborPatches = refLib(refNeighborIdx, :);
-        patches(i, :, 1:nNeighbors) = reshape(neighborPatches, [1, P, nNeighbors]);
-        if(numel(varargin)==2)
-            neighborMaskPatches = refMaskLib(refNeighborIdx, :);
-        end
-                        
+        if strcmp(libraryMethod, 'local')
+            % compute source library
+            srcLibCurrent = patchlib.vol2lib(source, patchSize, 'locations', srcsubi);
+
+            % build the reference libraries (same as neighboring patches)
+            targetCrop = cropVolume(target, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
+            neighborPatches = patchlib.vol2lib(targetCrop, patchSize);
+            %neighborPatches = patchlib.vol2lib(target, patchSize, 'locations', rangeNumbers);
+            %assert(all(neighborPatches(:)==neighborPatches2(:)));
+            
+            % parse optional inputs
+            if(numel(varargin) == 2)
+                % compute source mask library
+                srcMaskLibCurrent = patchlib.vol2lib(srcMask, patchSize, 'locations', srcsubi);
+
+                % build the reference mask libraries (same as neighboring
+                % mask patches)
+                %neighborMaskPatches = patchlib.vol2lib(refMask, patchSize, 'locations', rangeNumbers);  
+                targetMaskCrop = cropVolume(refMask, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
+                neighborMaskPatches = patchlib.vol2lib(targetMaskCrop, patchSize);
+            end
+        else
+            % extract source library
+            srcLibCurrent = srcLib(i, :);
+
+            % parse optional inputs
+            if(numel(varargin) == 2)
+                % compute source mask library
+                srcMaskLibCurrent = srcMaskLib(i, :);         
+            end
+            
+            % get the neighbor patches
+            neighborPatches = refLib(refNeighborIdx, :);
+            if(numel(varargin)==2)
+                neighborMaskPatches = refMaskLib(refNeighborIdx, :);
+            end
+        end     
+        
+        % store the neighbor patches
+        % patches(i, :, 1:nNeighbors) = reshape(neighborPatches, [1, P, nNeighbors]);
+        
         % patch intensity distance of current patch to neighbors
         % normal pdist2:
         switch distanceMetric
             case 'euclidean'
-                d = pdist2(srcLib(i, :), neighborPatches);
+                d = pdist2(srcLibCurrent, neighborPatches);
                 
             case 'seuclidean'
                 % relative pdist2:
-                avg = bsxfun(@plus, srcLib(i, :), neighborPatches) / 2 + eps;
-                d = sum((bsxfun(@times, srcLib(i, :), 1./avg) - neighborPatches./avg) .^2, 2)';
+                avg = bsxfun(@plus, srcLibCurrent, neighborPatches) / 2 + eps;
+                d = sum((bsxfun(@times, srcLibCurrent, 1./avg) - neighborPatches./avg) .^2, 2)';
                 
             case 'sparse'
                 % distance function for sparse data
-                patchDifference = bsxfun(@minus, srcLib(i, :), neighborPatches) .^2 + eps;
-                productMask = bsxfun(@times, srcMaskLib(i, :), neighborMaskPatches) + eps;
+                patchDifference = bsxfun(@minus, srcLibCurrent, neighborPatches) .^2 + eps;
+                productMask = bsxfun(@times, srcMaskLibCurrent, neighborMaskPatches) + eps;
                 numeratorD = sum(productMask .* patchDifference, 2)';
                 denominatorD = sum(productMask, 2)';
                 d = bsxfun(@times, numeratorD, prod(patchSize)./denominatorD) .^ 0.5;
