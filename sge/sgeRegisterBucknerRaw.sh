@@ -34,12 +34,12 @@ runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
 veroutpath="${OUTPUT_PATH}/runs_${runver}/"
 for subjfolder in `ls ${veroutpath}`
 do
-  subjid = echo $subjfolder | cut -d _ -f 1
-  sourceDsXFile = "${BUCKNER_PATH}${subjid}/${subjid}_brain_roc_downsampled5.nii.gz"
-  sourceDsXUsXMaskFile = "${BUCKNER_PATH}_brain_downsampled5_reinterpolated5_dsmask.nii.gz" 
-  atlSeg2SubjRegNii = "${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_reg_seg.nii.gz" 
-  atlSeg2SubjRegMat = "${BUCKNER_PATH}_brain_downsampled5_reinterpolated5_reg.mat"
-  saveSourceRawSegNii = "${veroutpath}${subjid}/buckner61-seg-in-${subjid}-raw_via_${subjid}2buckner61.nii.gz"
+  subjid=`echo $subjfolder | cut -d _ -f 1`
+  sourceDsXFile="${BUCKNER_PATH}${subjid}/${subjid}_brain_roc_downsampled5.nii.gz"
+  sourceDsXUsXMaskFile="${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_dsmask.nii.gz" 
+  atlSeg2SubjRegNii="${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_reg_seg.nii.gz" 
+  atlSeg2SubjRegMat="${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled5_reinterpolated5_reg.mat"
+  saveSourceRawSegNii="${veroutpath}${subjfolder}/final/buckner61-seg-in-${subjid}-raw_via_${subjid}2buckner61-invWarp.nii.gz"
   lcmd="${mccSh} $mcr $sourceDsXFile $sourceDsXUsXMaskFile $atlSeg2SubjRegNii $atlSeg2SubjRegMat $saveSourceRawSegNii"
 
   # create sge file
@@ -58,5 +58,5 @@ do
   $sgecmd
 
   # sleep for a bit to give sge time to deal with the new job (?)
-  # sleep 1
+  sleep 1
 done

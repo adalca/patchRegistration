@@ -14,7 +14,7 @@ function mccReg2raw(sourceDsXFile, sourceDsXUsXMaskFile, atlSeg2SubjRegNii, atlS
     tform = tform.invert;
     
     % this only makes sense one way. Need to process separately
-    % took out 'outputSave', saveSourceRawSegNii so that we can kiss. 
+    % took out 'outputSave', saveSourceRawSegNii  
     swNii = warpNii(atlSeg2SubjRegNii, tform, 'nearest', 'OutputView', sourceDsXUsXMaskFile);
     
     % make new nii in DsX space.

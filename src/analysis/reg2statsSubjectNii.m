@@ -12,6 +12,7 @@ function reg2statsSubjectNii(regfolder)
         targetWarpedFile = sprintf('%s-in-%s_via_%s.nii.gz', tgtName, srcName, displInvName);
         sourceWarpedSegFile = sprintf('%s-seg-in-%s_via_%s.nii.gz', srcName, tgtName, displName);
         targetWarpedSegFile = sprintf('%s-seg-in-%s_via_%s.nii.gz', tgtName, srcName, displInvName);
+        targetWarpedRawSegFile = sprintf('%s-seg-in-%s-raw_via_%s.nii.gz', tgtName, srcName, displInvName);
 
         displ = niftireg.prepNiiToVol(fullfile(regfolder, 'final', displFile));
         displInv = niftireg.prepNiiToVol(fullfile(regfolder, 'final', displInvFile));
@@ -19,8 +20,10 @@ function reg2statsSubjectNii(regfolder)
         targetWarped = niftireg.prepNiiToVol(fullfile(regfolder, 'final', targetWarpedFile));
         sourceWarpedSeg = niftireg.prepNiiToVol(fullfile(regfolder, 'final', sourceWarpedSegFile));
         targetWarpedSeg = niftireg.prepNiiToVol(fullfile(regfolder, 'final', targetWarpedSegFile));
+        targetWarpedRawSeg = niftireg.prepNiiToVol(fullfile(regfolder, 'final', targetWarpedRawSegFile));
         sourceSeg = niftireg.prepNiiToVol(paths.sourceSegFile);
         targetSeg = niftireg.prepNiiToVol(paths.targetSegFile);
+        sourceRawSeg = niftireg.prepNiiToVol(paths.sourceRawSegFile);
 
         % go through iteration files
         alldicelabels = unique([sourceSeg(:); targetSeg(:)]);
@@ -32,11 +35,13 @@ function reg2statsSubjectNii(regfolder)
             dice(targetWarpedSeg, sourceSeg, alldicelabels);
         [jaccardsTarget, jaccardlabels] = ...
             jaccard(targetWarpedSeg, sourceSeg, alldicelabels);
+        [dicesRaw, dicelabels] = ...
+            dice(targetWarpedRawSeg, sourceRawSeg, alldicelabels);
 
         savePath = [regfolder, '/out/stats.mat'];
         % save stats
         % TODO: also need stats for subject to subjectraw
-        save(savePath, 'dicesSource', 'dicelabels', 'jaccardsSource', 'jaccardlabels', 'dicesTarget', 'jaccardsTarget');
+        save(savePath, 'dicesSource', 'dicelabels', 'jaccardsSource', 'jaccardlabels', 'dicesTarget', 'jaccardsTarget', 'dicesRaw');
     catch err
         fprintf(1, 'skipping %d due to \n\t%s', i, err.identifier);
     end
