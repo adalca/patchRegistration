@@ -21,7 +21,7 @@ PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
 
 # command shell file
-mccSh="${CLUST_PATH}MCC_mccReg2statsSubjectNii/run_mccReg2statsSubjectNii.sh"
+mccSh="${CLUST_PATH}MCC_reg2statsSubjectNii/run_reg2statsSubjectNii.sh"
 
 # this version's running path
 runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
