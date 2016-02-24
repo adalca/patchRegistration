@@ -24,7 +24,7 @@ CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
 mccSh="${CLUST_PATH}MCC_mccReg2raw/run_mccReg2raw.sh"
 
 # this version's running path
-runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v4_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 ###############################################################################
 # Running Code
