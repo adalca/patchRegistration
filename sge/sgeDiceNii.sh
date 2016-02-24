@@ -14,6 +14,7 @@ export SGE_O_HOME=${SGE_LOG_PATH}
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
 # project paths
+ANTS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/ants/";
 BUCKNER_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc/";
 BUCKNER_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/atlases/";
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
@@ -31,15 +32,17 @@ runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
 ###############################################################################
 
 # execute
-veroutpath="${OUTPUT_PATH}/runs_${runver}/"
+veroutpath="${ANTS_PATH}"
 for subjfolder in `ls ${veroutpath}`
 do
   sourceFolder="${veroutpath}${subjfolder}"
-  subjid=`echo $subjfolder | cut -d _ -f 1`
-  sourceWarpedSegFileNii="${sourceFolder}/final/${subjid}-in-buckner61_via_${subjid}-2-buckner61-warp.nii.gz"
-  targetSegFileNii="${BUCKNER_ATLAS_PATH}buckner61_seg_proc.nii.gz" 
-  lcmd="${mccSh} $mcr $sourceWarpedSegFileNii $targetSegFileNii"
-
+  #subjid=`echo $subjfolder | cut -d _ -f 1`
+  sourceWarpedSegFileNii="${sourceFolder}/buckner61_seg_to_${subjfolder}_brain_roc_Ds7_Ds7-to-atlas.nii.gz";
+  targetSegFileNii="${BUCKNER_PATH}${subjfolder}/${subjfolder}_brain_iso_2_ds7_us7_size_reg_seg.nii.gz";
+  mkdir "${sourceFolder}/out"
+  savePath="${sourceFolder}/out/stats.mat"; 
+  lcmd="${mccSh} $mcr $sourceWarpedSegFileNii $targetSegFileNii $savePath"
+  echo $lcmd
   # create sge file
   sgeopath="${veroutpath}/${subjfolder}/sge/"
   sge_par_o="--sge \"-o ${sgeopath}\""

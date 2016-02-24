@@ -1,5 +1,4 @@
-fpath = ['/data/vision/polina/scratch/patchRegistration/output/', ...
-'runs_sparse_v3_span_at4Scales_lambdaedge_gridspacing_innerreps/buckner*'];
+fpath = ['/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/ants/buckner*'];
 d = sys.fulldir(fpath);
 
 paramIdx = [17, 2, 3, 4, 53, 41, 42, 43];
