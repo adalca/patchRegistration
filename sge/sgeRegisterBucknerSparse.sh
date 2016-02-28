@@ -19,14 +19,14 @@ BUCKNER_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckn
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
-paramsinifile="${PROJECT_PATH}/configs/buckner/bucknerParams.ini";
+paramsinifile="${PROJECT_PATH}/configs/buckner/bucknerParams7.ini";
 optsinifile="${PROJECT_PATH}/configs/buckner/bucknerOpts.ini";
 
 # command shell file
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 
 # this version's running path
-runver="sparse_v4_span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
 
 # parameters
 lambda_edge="0.002 0.005 0.01 0.05"
