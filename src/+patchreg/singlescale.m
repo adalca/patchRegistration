@@ -56,10 +56,10 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
                 [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
                     patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, opts.libraryMethod, maskParams{:});
                    
-                [fpatches, fpDst, fpIdx, fsrcgridsize, frefgridsize] = ...
-                    patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, 'full', maskParams{:});
+%                 [fpatches, fpDst, fpIdx, fsrcgridsize, frefgridsize] = ...
+%                     patchreg.stateDistances(target, source, patchSize, srcPatchOverlap, searchPatch, opts.location, opts.distance, 'full', maskParams{:});
                 
-                assert(all(fpDst(:) == pDst(:)));
+%                 assert(all(fpDst(:) == pDst(:)));
             end
         else
             if strcmp(opts.distanceMethod, 'volknnsearch')
