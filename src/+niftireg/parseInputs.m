@@ -9,6 +9,9 @@ function [source, target, paths, params, opts] = ...
     paths = ini2struct(pathsFile);
     params = ini2struct(paramsFile);
     
+    if isnumeric(paths.sourceName), paths.sourceName = sprintf('%d', paths.sourceName); end
+    if isnumeric(paths.targetName), paths.targetName = sprintf('%d', paths.targetName); end
+    
     % process options
     params.nScales = size(params.gridSpacing, 1);
     if strcmp(opts.scaleMethod, 'load') % load option has 
