@@ -28,6 +28,6 @@ function [source, target, paths, params, opts] = ...
     [source, target, params.sourceMask, params.targetMask] = ...
             niftireg.prepareVolumes(paths, params.volPad, opts);
     if iscell(source)
-        assert(params.nScales == numel(source));
+        assert(params.nScales == numel(source), 'nScales don''t match');
     end
     
