@@ -29,6 +29,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
 
     % parse inputs
     narginchk(4, inf);
+    assert(all(size(source) == size(target)), 'source and target are not the same size');
     inputs = parseInputs(source, target, params, opts, varargin{:});
     patchSize = params.patchSize;
     srcPatchOverlap = patchSize - params.gridSpacing; % patchSize - (source grid spacing)

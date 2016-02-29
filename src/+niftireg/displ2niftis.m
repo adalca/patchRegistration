@@ -22,7 +22,8 @@ function displ2niftis(varargin)
         target = target{end};
     end
 
-    doseg = isfield(paths, 'sourceSegFile');
+    doSourceSeg = isfield(paths, 'sourceSegFile');
+    doTargetSeg = isfield(paths, 'targetSegFile');
     
     
     %% prepare necessary volumes and warps
@@ -38,20 +39,16 @@ function displ2niftis(varargin)
     
     % prepare segmentations, non-padded
     % TODO: make sure we're looking at the right files in load and non-load options
-    if doseg
-        sourceSeg = nii2vol(paths.sourceSegFile);
-        targetSeg = nii2vol(paths.targetSegFile);
-    end
+    if doSourceSeg, sourceSeg = nii2vol(paths.sourceSegFile); end
+    if doTargetSeg, targetSeg = nii2vol(paths.targetSegFile); end
     
     % compose the final images using the resulting displacements
     sourceWarped = volwarp(source, displ, opts.warpDir);
     targetWarped = volwarp(target, displInv, opts.warpDir);
 
     % warp segmentations
-    if doseg
-        sourceWarpedSeg = volwarp(sourceSeg, displ, opts.warpDir, 'interpMethod', 'nearest');
-        targetWarpedSeg = volwarp(targetSeg, displInv, opts.warpDir, 'interpMethod', 'nearest');
-    end
+    if doSourceSeg, sourceWarpedSeg = volwarp(sourceSeg, displ, opts.warpDir, 'interpMethod', 'nearest'); end
+    if doTargetSeg, targetWarpedSeg = volwarp(targetSeg, displInv, opts.warpDir, 'interpMethod', 'nearest'); end
 
 
     
@@ -75,19 +72,15 @@ function displ2niftis(varargin)
     displInvNii = make_nii(cat(5, displInv{:}));
     sourceWarpedNii = make_nii(sourceWarped);
     targetWarpedNii = make_nii(targetWarped);
-    if doseg
-        sourceWarpedSegNii = make_nii(sourceWarpedSeg);
-        targetWarpedSegNii = make_nii(targetWarpedSeg);
-    end
+    if doSourceSeg, sourceWarpedSegNii = make_nii(sourceWarpedSeg); end
+    if doTargetSeg, targetWarpedSegNii = make_nii(targetWarpedSeg); end
     
     % save niftis
     saveNii(displNii, [paths.savepathfinal displFile]);
     saveNii(displInvNii, [paths.savepathfinal displInvFile]);
     saveNii(sourceWarpedNii, [paths.savepathfinal sourceWarpedFile]);
     saveNii(targetWarpedNii, [paths.savepathfinal targetWarpedFile]);
-    if doseg
-        saveNii(sourceWarpedSegNii, [paths.savepathfinal sourceWarpedSegFile]);
-        saveNii(targetWarpedSegNii, [paths.savepathfinal targetWarpedSegFile]);
-    end
+    if doSourceSeg, saveNii(sourceWarpedSegNii, [paths.savepathfinal sourceWarpedSegFile]); end
+    if doTargetSeg, saveNii(targetWarpedSegNii, [paths.savepathfinal targetWarpedSegFile]); end
 
 end
