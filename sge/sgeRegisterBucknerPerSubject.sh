@@ -54,5 +54,5 @@ do
   $sgecmd
 
   # sleep for a bit to give sge time to deal with the new job (?)
-  sleep 1
+  # sleep 1
 done

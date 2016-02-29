@@ -34,16 +34,16 @@ for i in $indir/*
 do
 	# input files
 	subjname=`basename $i`
-	infile="${indir}/${subjname}/${subjname}_brain_downsampled7_reinterpolated7.nii.gz"
+	infile="${indir}/${subjname}/${subjname}_brain_roc_downsampled7.nii.gz"
 
 	# output files and folders
-	coreName="Ds7Us7-to-atlas_"
+	coreName="Ds7-to-atlas"
 	subjpath="${outdir}/${subjname}/"
 	sgesubjpath="${subjpath}/sge/"
-	sgerunfile="${sgesubjpath}/${coreName}"
+	sgerunfile="${sgesubjpath}/${coreName}-warp.sh"
 	mkdir -p $sgesubjpath
-	outfilecore="${subjpath}/${subjname}_${coreName}"
-	outfileSeg="${outfilecore}_atlasSeg-to-Ds7Us7.nii.gz"
+	outfilecore="${subjpath}/${subjname}_${coreName}_"
+	outfileSeg="${subjpath}/buckner61_seg_to_${subjname}_brain_roc_Ds7_${coreName}.nii.gz"
 
 	antscmd="$ants 3 -m CC[${infile},${atlas},${ccparams}]
 		-t Syn[0.25] -o $outfilecore --number-of-affine-iterations ${nAffineIters} -i ${nIters} -r Gauss[${regParams}]"
@@ -53,7 +53,7 @@ do
 	# create sge file
 	sge_par_o="--sge \"-o ${sgesubjpath}\""
 	sge_par_e="--sge \"-e ${sgesubjpath}\""
-	cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_o $sge_par_e ${antscmd} > ${sgerunfile}"
+	cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_o $sge_par_e ${warmcmd} > ${sgerunfile}"
 	echo $cmd
 	eval $cmd
 
@@ -63,5 +63,5 @@ do
 	$sgecmd
 
 	# sleep for a bit to give sge time to deal with the new job (?)
-	sleep 1
+	# sleep 1
 done

@@ -9,6 +9,9 @@ function [source, target, paths, params, opts] = ...
     paths = ini2struct(pathsFile);
     params = ini2struct(paramsFile);
     
+    if isnumeric(paths.sourceName), paths.sourceName = sprintf('%d', paths.sourceName); end
+    if isnumeric(paths.targetName), paths.targetName = sprintf('%d', paths.targetName); end
+    
     % process options
     params.nScales = size(params.gridSpacing, 1);
     if strcmp(opts.scaleMethod, 'load') % load option has 
@@ -28,6 +31,6 @@ function [source, target, paths, params, opts] = ...
     [source, target, params.sourceMask, params.targetMask] = ...
             niftireg.prepareVolumes(paths, params.volPad, opts);
     if iscell(source)
-        assert(params.nScales == numel(source));
+        assert(params.nScales == numel(source), 'nScales don''t match');
     end
     
