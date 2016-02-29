@@ -5,7 +5,7 @@ function mccReg2raw(sourceDsXFile, sourceDsXUsXMaskFile, atlSeg2SubjRegNii, atlS
 %
 % sourceDsXFile example: buckner01_brain_roc_downsampled5.nii.gz
 % sourceDsXUsXMaskFile example: buckner01_brain_downsampled5_reinterpolated5_dsmask.nii.gz
-% atlSeg2SubjRegNii example: buckner01_brain_downsampled5_reinterpolated5_reg_seg.nii.gz
+% atlSeg2SubjRegNii example: sprintf('%s-seg-in-%s_via_%s.nii.gz', tgtName, srcName, displInvName);
 % atlSeg2SubjRegMat example: buckner01_brain_downsampled5_reinterpolated5_reg.mat
 % saveSourceRawSegNii example in output: sprintf('%s-seg-in-%s-raw_via_%s.nii.gz', tgtName, srcName, displInvName);
 
