@@ -27,7 +27,8 @@ function displ2niftis(varargin)
     
     %% prepare necessary volumes and warps
     % get inverse displacement
-    displInv = invertwarp(displ, @volwarpForwardApprox);    
+    fn = @(v,d) volwarpForwardApprox(v, d, 'nLayers', 2);
+    displInv = invertwarp(displ, fn);    
     
     % crop volumes
     cfn = @(v) cropVolume(v, params.volPad + 1, size(v) - params.volPad);
