@@ -9,7 +9,7 @@ function displ2niftis(varargin)
         [displ, source, target, paths, params, opts] = varargin{:};
         
     else % assuming same inputs as above
-        [source, target, paths, params, opts] = parseInputs(varargin{:});
+        [source, target, paths, params, opts] = niftireg.parseInputs(varargin{:});
         displName = sprintf('%s-2-%s-warp', paths.sourceName, paths.targetName);
         displFile = sprintf('%s.nii.gz', displName);
         displNii = loadNii([paths.savepathfinal, displFile]);
