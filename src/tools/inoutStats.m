@@ -1,5 +1,6 @@
 function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
-% given a intensity volume, and a binary mask volume (or segmentation volume + segmentation nr)
+% given an isotropic intensity volume, 
+%   and a binary mask volume (or segmentation volume + segmentation nr)
 % compute the mean intensity just inside and outside the label
 %
 % [meanin, meanout] = inoutStats(niifile, thr, maskniifile)
@@ -17,6 +18,8 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
     % get image
     if ischar(niifile)
         niifile = loadNii(niifile);
+        dims = niifile.hdr.dime.pixdim(2:4);
+        assert(all(dims(1) == dims), 'volume is not isotropic');
     end
     vol = niifile.img;
 
