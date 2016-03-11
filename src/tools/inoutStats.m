@@ -1,12 +1,19 @@
-function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
-% given an isotropic intensity volume, 
-%   and a binary mask volume (or segmentation volume + segmentation nr)
-% compute the mean intensity just inside and outside the label
+function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
+% INOUTSTATS compute the mean intensity just inside and just outside a
+% label of interest.
 %
-% [meanin, meanout] = inoutStats(niifile, thr, maskniifile)
+% [meanin, meanout] = inoutStats(niifile, thr, maskVol) given an isotropic
+% intensity volume,  and a binary mask volume, compute the mean intensity
+% just inside and outside the label of interest. niifile should be an
+% isotropic intensity nifti filename, or nifti struct. maskVol can
+% similarly be a nii filename, or nifti strucct, or just the volume
+% directly. 
 %
-% [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
-% 
+% [meanin, meanout] = inoutStats(niifile, thr, segVol, segid) allows for
+% the specification of a segmentation volume (multi-label volume) and a
+% particular label of interest. We then compute the maskVolume via
+% segVol==segid, and proceed from there.
+%
 % algo outline:
 % load files as necessary until we have a volume and a mask volume
 % outside mask: compute bwdist() on maskVolume, get all pixels whose bwdist is within thr
@@ -24,10 +31,14 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
     vol = niifile.img;
 
     % get mask volume
-    if ischar(segvolfile)
-        segvolfile = loadNii(segvolfile);
+    segvol = segniifile.img;
+    if ischar(segniifile)
+        segniifile = loadNii(segniifile);
+        segvol = segniifile.img;
+    elseif isstruct(segniifile)
+        segvol = segniifile.img;
     end
-    segvol = segvolfile.img;
+    
     if nargin == 4
         maskVol = segvol == segnr;
     else
