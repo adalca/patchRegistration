@@ -29,7 +29,7 @@ function outlinesVol = labelOutlines(segVolume, varargin)
     % parse extra inputs
     p = inputParser();
     p.addParameter('desiredLabels', availableLabels, @isvector);
-    p.addParameter('thickness', 1, @isscalar);
+    p.addParameter('thickness', 1.01, @isscalar);
     p.addParameter('colors', jitter(numel(availableLabels)), @isvector);
     p.parse(varargin{:});
     params = p.Results;
@@ -44,9 +44,9 @@ function outlinesVol = labelOutlines(segVolume, varargin)
         mask = segVolume == label;
 
         % extract inner bw distance
-        bw = bwmask(~mask);
+        bw = bwdist(~mask);
 
         % get edges
-        edgeMask = bw > 0 & bw < params.thickness;
+        edgeMask = bw > 0 & bw <= params.thickness;
         outlinesVol(edgeMask) = label;
     end
