@@ -1,9 +1,15 @@
 function outlinesVol = labelOutlines(segVolume, varargin)
-% draw outlines of the given labels via the given colors
-% defaults for optional arguments:
-%   desiredLabels: all > 0
-%   colors: seg color
+% LABELOUTLINES given a segmentation volume, draw outlines of the given labels.
+%
+% outlinesVol = labelOutlines(segVolume) given a segmentation volume, draw outlines 
+% of the given labels.
 %   
+% outlinesVol = labelOutlines(segVolume, Param, Value, ...) allow for
+% optional param/value pairs:
+%   desiredLabels e.g. [3 5 6 10] default: all labels in segVolume
+%   thickness - drawing thickness - e.g. default: 1
+%   colors - a vector of the same length as desiredLabels, with the
+%       color/index of each label edge. default: same as labels
 % 
 % algo outline:
 % init zero volume
