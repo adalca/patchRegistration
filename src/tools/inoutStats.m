@@ -18,9 +18,9 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
     % get image
     if ischar(niifile)
         niifile = loadNii(niifile);
-        dims = niifile.hdr.dime.pixdim(2:4);
-        assert(all(dims(1) == dims), 'volume is not isotropic');
     end
+    dims = niifile.hdr.dime.pixdim(2:4);
+    assert(all(dims(1) == dims), 'volume is not isotropic');
     vol = niifile.img;
 
     % get mask volume
@@ -32,16 +32,19 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
         maskVol = segvol == segnr;
     else
         maskVol = segvol > 0;
-        assert(numel(unique(maskVol(:))) <= 2, 'mask volume has more than one label');
+        msg = 'mask volume has more than one label';
+        assert(numel(unique(maskVol(:))) <= 2, msg);
     end
+    msg = 'volume and mask don''t match size';
+    assert(all(size(maskVol) == size(vol)), msg);
 
     % outside values
     obw = bwdist(maskVol);
     outMask = obw > 0 & obw < thr;
-    meanin = mean(vol(outMask(:)));
+    meanout = mean(vol(outMask(:)));
 
     % inside values
     ibw = bwdist(~maskVol);
     inMask = ibw > 0 & ibw < thr;
-    meanout = mean(vol(inMask(:)));
+    meanin = mean(vol(inMask(:)));
 end

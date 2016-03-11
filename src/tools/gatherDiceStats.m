@@ -1,11 +1,12 @@
 function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
-% [params, dices, dicelabels] = gatherDiceStats(path)
+% Gather Dice Data for the registration project.
 %
-% given a parent folder, go through each folder assuming the naming
+% given a parent path, go through each folder assuming the naming
 %   /fullpath/name_param1_param2_param3
 %   example:
 %   /fullpath/buckner01_0.01_3_1
 % this example has 4 "parameters" - a subject number and 3 parameters 
+% note the number of parameters isn't fixed. Let's call it nParams
 %
 % then, gather the dice data from 
 %   /fullpath/name_param1_param2_param3/out/stats.mat
