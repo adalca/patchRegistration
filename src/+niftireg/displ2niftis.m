@@ -14,6 +14,7 @@ function displ2niftis(varargin)
         displFile = sprintf('%s.nii.gz', displName);
         displNii = loadNii([paths.savepathfinal, displFile]);
         displ = dimsplit(5, displNii.img);
+        displ = displ(:)'
     end
 
     % prepare "original" volumes to warp 
