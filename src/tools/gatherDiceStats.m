@@ -34,6 +34,8 @@ function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
     
     % go through each folder
     params = nan(nRuns, nParams);
+    alldices = cell(nRuns, 1);
+    alldicelabels = cell(nRuns, 1);
     for i = 1:nRuns
         
         % parse folder name, should be string_float_float_...
@@ -41,22 +43,23 @@ function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
         C(2:end) = cellfunc(@(x) str2double(x), C(2:end));
         
         % assign parameters
-        nParams(i, 1) = find(strcmp(C{1}, subjNames));
-        nParams(i, 2:end) = cat(2, C{2:end});
+        params(i, 1) = find(strcmp(C{1}, subjNames));
+        params(i, 2:end) = cat(2, C{2:end});
         
-        % load dice.
+        % load dice scores and labels
         statsfile = fullfile(path, folders{i}, 'out', 'stats.mat');
         q = load(statsfile, 'dices', 'finalLabels');
-        
-        % for now, assume finalLabels is the same for everyone. Should make
-        % this more flexible?
-        if i == 1, 
-            dicelabels = q.finalLabels;
-            dices = nan(nRuns, size(dicelabels));
-        else
-            msg = 'for now, assume finalLabels is the same for everyone';
-            assert(all(dicelabels == q.finalLabels), msg);
-        end
-        dices(i, :) = q.dices;
+        alldices{i} = q.dices(:);
+        alldicelabels{i} = q.finalLabels(:);
+    end
+    
+    % get unique labels
+    dicelabels = cat(1, alldicelabels{:});
+    
+    % assign dices in the appropriate places
+    dices = nan(nRuns, numel(dicelabels));
+    for i = 1:nRuns
+        [~, ia] = intersect(dicelabels, alldicelabels{i});
+        dices(i, ia) = alldices{i}';
     end
     
