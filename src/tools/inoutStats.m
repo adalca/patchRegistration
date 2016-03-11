@@ -1,6 +1,6 @@
 function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
-% given a volume and a binary mask volume (or segmentation volume and segmentation nr)
-% compute the mean intensity inside and outside the ventricles
+% given a intensity volume, and a binary mask volume (or segmentation volume + segmentation nr)
+% compute the mean intensity just inside and outside the label
 %
 % [meanin, meanout] = inoutStats(niifile, thr, maskniifile)
 %
@@ -29,7 +29,7 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
         maskVol = segvol == segnr;
     else
         maskVol = segvol > 0;
-        assert(numel(unqiue(maskVol(:))) <= 2, 'mask volume has more than one label');
+        assert(numel(unique(maskVol(:))) <= 2, 'mask volume has more than one label');
     end
 
     % outside values
@@ -38,6 +38,7 @@ function [meanin, meanout] = inoutStats(niifile, thr, segvolfile, segnr)
     meanin = mean(vol(outMask(:)));
 
     % inside values
-    ibw = bwdist(-maskVol);
+    ibw = bwdist(~maskVol);
     inMask = ibw > 0 & ibw < thr;
     meanout = mean(vol(inMask(:)));
+end
