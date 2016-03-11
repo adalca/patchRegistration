@@ -44,7 +44,7 @@ function outlinesVol = labelOutlines(segVolume, varargin)
         mask = segVolume == label;
 
         % extract inner bw distance
-        bw = bwmask(-mask);
+        bw = bwmask(~mask);
 
         % get edges
         edgeMask = bw > 0 & bw < params.thickness;
