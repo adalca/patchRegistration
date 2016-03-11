@@ -1,6 +1,12 @@
 #!/bin/bash
 # run sparse stroke registration
 
+
+if [ "$#" -ne 0 ] ; then
+  echo "Usage: $0 " >&2
+  exit 1
+fi
+
 ###############################################################################
 # Settings
 ###############################################################################
@@ -14,8 +20,8 @@ export SGE_O_HOME=${SGE_LOG_PATH}
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
 # project paths
-STROKE_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/stroke/proc/";
-STROKE_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/stroke/atlases/";
+STROKE_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/proc/brain_pad10/";
+STROKE_ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/atlases/brain_pad10/";
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
@@ -26,12 +32,12 @@ optsinifile="${PROJECT_PATH}/configs/stroke/strokeOpts.ini";
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 
 # this version's running path
-runver="stroke/PBR_v1";
+runver="stroke/PBR_v5";
 
 # parameters
-lambda_edge="0.002 0.005 0.01 0.05"
-lambda_edge="0.01"
-gridSpacingTemplate='"[1;2;2;3;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
+lambda_edge="0.1 0.05 0.01 0.005" #"0.1 0.15 0.2"
+# lambda_edge="0.01"
+gridSpacingTemplate='"[1;1;2;2;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
 varGridSpacing="3 5 7"
 innerReps="1 2"
@@ -50,7 +56,7 @@ mkdir -p $veroutpath;
 # cp $myself $veroutpath
 
 # run jobs
-for subjid in `ls ${STROKE_PATH}`
+for subjid in 10529 10530 10534 10537 #`ls ${STROKE_PATH}`
 do
 
   for le in $lambda_edge
@@ -77,10 +83,9 @@ do
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
         echo "; paths" > ${pathsinifile}
-        echo "sourceFile = ${STROKE_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_reg.nii.gz" >> ${pathsinifile}
-        echo "targetFile = ${STROKE_ATLAS_PATH}stroke61_brain_proc_ds7_us1.nii.gz" >> ${pathsinifile}
-        echo "sourceMaskFile = ${STROKE_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_dsmask_reg.nii.gz" >> ${pathsinifile}
-        echo "sourceSegFile = ${STROKE_ATLAS_PATH}stroke61_seg_proc.nii.gz" >> ${pathsinifile}
+        echo "sourceFile = ${STROKE_PATH}${subjid}/${subjid}_ds7_us7_reg.nii.gz" >> ${pathsinifile}
+        echo "targetFile = ${STROKE_ATLAS_PATH}stroke61_brain_proc_ds7_us7.nii.gz" >> ${pathsinifile}
+        echo "sourceMaskFile = ${STROKE_PATH}${subjid}/${subjid}_ds7_ds7_dsmask_reg.nii.gz" >> ${pathsinifile}
         echo "targetSegFile = ${STROKE_ATLAS_PATH}stroke61_seg_proc.nii.gz" >> ${pathsinifile}
 
         echo "; output paths" >> ${pathsinifile}
@@ -89,7 +94,7 @@ do
 
         echo "; names" >> ${pathsinifile}
         echo "sourceName = ${subjid}" >> ${pathsinifile}
-        echo "targetName = buckner61" >> ${pathsinifile}
+        echo "targetName = stroke61" >> ${pathsinifile}
 
         echo "; scales" >> ${pathsinifile}
         srcScales="sourceScales = {"
@@ -97,9 +102,9 @@ do
         srcMaskScales="sourceMaskScales = {"
         for scale in 1 2 3 4 5 6 7
         do
-          srcScales=${srcScales}"'${STROKE_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_reg.nii.gz' "
+          srcScales=${srcScales}"'${STROKE_PATH}${subjid}/${subjid}_ds7_us${scale}_reg.nii.gz' "
           tarScales=${tarScales}"'${STROKE_ATLAS_PATH}stroke61_brain_proc_ds7_us${scale}.nii.gz' "
-          srcMaskScales=${srcMaskScales}"'${STROKE_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_dsmask_reg.nii.gz' "
+          srcMaskScales=${srcMaskScales}"'${STROKE_PATH}${subjid}/${subjid}_ds7_us${scale}_dsmask_reg.nii.gz' "
         done
         echo "${srcScales}}" >> ${pathsinifile}
         echo "${tarScales}}" >> ${pathsinifile}
@@ -117,7 +122,7 @@ do
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
         sge_par_l="--sge \"-l mem_free=100G \""
-        sge_par_q="--sge \"-q qOnePerHost \""
+        sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd
         eval $cmd
@@ -129,7 +134,7 @@ do
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-         #sleep 10
+        # sleep 10
       done
     done
   done

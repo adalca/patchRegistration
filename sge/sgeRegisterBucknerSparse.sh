@@ -14,8 +14,8 @@ export SGE_O_HOME=${SGE_LOG_PATH}
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
 # project paths
-BUCKNER_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/proc/";
-BUCKNER_ATLAS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/buckner/atlases/";
+BUCKNER_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/buckner/proc/brain_pad10/";
+BUCKNER_ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/buckner/atlases/brain_pad10/";
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
@@ -24,14 +24,15 @@ optsinifile="${PROJECT_PATH}/configs/buckner/bucknerOpts.ini";
 
 # command shell file
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
+mccSh="${CLUST_PATH}MCC_mccDispl2niftis/run_mccDispl2niftis.sh"
 
 # this version's running path
-runver="sparse_v5_span_at4Scales_lambdaedge_gridspacing_innerreps";
+runver="sparse_ds7_pad10_lambdaedge_gridspacing_innerreps";
 
 # parameters
-lambda_edge="0.002 0.005 0.01 0.05"
-lambda_edge="0.01"
-gridSpacingTemplate='"[1;2;2;3;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
+lambda_edge="0.002 0.005 0.01 0.05 0.1"
+#lambda_edge="0.01"
+gridSpacingTemplate='"[1;1;2;2;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
 varGridSpacing="3 5 7"
 innerReps="1 2"
@@ -41,7 +42,7 @@ innerReps="1 2"
 ###############################################################################
 
 # prepare general running folder
-veroutpath="${OUTPUT_PATH}/runs_${runver}/"
+veroutpath="${OUTPUT_PATH}/buckner/${runver}/"
 mkdir -p $veroutpath;
 
 # copy myself. # unfortunately this complicates the folder :(
@@ -77,11 +78,11 @@ do
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
         echo "; paths" > ${pathsinifile}
-        echo "sourceFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_reg.nii.gz" >> ${pathsinifile}
+        echo "sourceFile = ${BUCKNER_PATH}${subjid}/${subjid}_ds7_us7_reg.nii.gz" >> ${pathsinifile}
         echo "targetFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc.nii.gz" >> ${pathsinifile}
-        echo "sourceMaskFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated7_dsmask_reg.nii.gz" >> ${pathsinifile}
-        echo "targetMaskFile = ${BUCKNER_ATLAS_PATH}buckner61_brain_proc_allones.nii.gz" >> ${pathsinifile}
-        echo "sourceSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_brain_iso_2_ds7_us7_size_reg_seg.nii.gz" >> ${pathsinifile}
+        echo "sourceMaskFile = ${BUCKNER_PATH}${subjid}/${subjid}_ds7_us7_dsmask_reg.nii.gz" >> ${pathsinifile}
+        echo "sourceSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_ds7_us7_reg_seg.nii.gz" >> ${pathsinifile}
+        echo "sourceRawSegFile = ${BUCKNER_PATH}${subjid}/${subjid}_proc_ds7_seg.nii.gz" >> ${pathsinifile}
         echo "targetSegFile = ${BUCKNER_ATLAS_PATH}buckner61_seg_proc.nii.gz" >> ${pathsinifile}
 
         echo "; output paths" >> ${pathsinifile}
@@ -99,10 +100,9 @@ do
         tarMaskScales="targetMaskScales = {"
         for scale in 1 2 3 4 5 6 7
         do
-          srcScales=${srcScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_reg.nii.gz' "
+          srcScales=${srcScales}"'${BUCKNER_PATH}${subjid}/${subjid}_ds7_us${scale}_reg.nii.gz' "
           tarScales=${tarScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds7_us${scale}.nii.gz' "
-          srcMaskScales=${srcMaskScales}"'${BUCKNER_PATH}${subjid}/${subjid}_brain_downsampled7_reinterpolated${scale}_dsmask_reg.nii.gz' "
-          tarMaskScales=${tarMaskScales}"'${BUCKNER_ATLAS_PATH}buckner61_brain_proc_ds7_us${scale}_allones.nii.gz' "
+          srcMaskScales=${srcMaskScales}"'${BUCKNER_PATH}${subjid}/${subjid}_ds7_us${scale}_dsmask_reg.nii.gz' "
         done
         echo "${srcScales}}" >> ${pathsinifile}
         echo "${tarScales}}" >> ${pathsinifile}
@@ -122,7 +122,7 @@ do
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
         sge_par_l="--sge \"-l mem_free=100G \""
-        sge_par_q="--sge \"-q qOnePerHost \""
+        sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd
         eval $cmd
@@ -131,7 +131,7 @@ do
         chmod a+x ${sgerunfile}
         sgecmd="qsub ${sgerunfile}"
         echo -e "$sgecmd\n"
-        $sgecmd
+        # $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
          #sleep 10
