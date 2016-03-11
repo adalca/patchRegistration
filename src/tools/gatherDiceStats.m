@@ -24,7 +24,7 @@ function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
     
     % extract all folder names
     folders = {d.name};
-    isfolder = cellfun(@(s) ~strcmp(s(1), '.'), folders);
+    isfolder = cellfun(@(s) isdir(fullfile(path,s)) && ~strcmp(s(1), '.'), folders);
     folders = folders(isfolder);
     nRuns = numel(folders);
     
@@ -49,13 +49,17 @@ function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
         
         % load dice scores and labels
         statsfile = fullfile(path, folders{i}, 'out', 'stats.mat');
-        q = load(statsfile, 'dices', 'finalLabels');
-        alldices{i} = q.dices(:);
-        alldicelabels{i} = q.finalLabels(:);
+        try
+            q = load(statsfile, 'dices', 'finalLabels');
+            alldices{i} = q.dices(:);
+            alldicelabels{i} = q.finalLabels(:);
+        catch err
+            fprintf(1, 'skipping %d due to \n\t%s', double(params(i, 1)), err.identifier);
+        end
     end
     
     % get unique labels
-    dicelabels = cat(1, alldicelabels{:});
+    dicelabels = unique(cat(1, alldicelabels{:}));
     
     % assign dices in the appropriate places
     dices = nan(nRuns, numel(dicelabels));
