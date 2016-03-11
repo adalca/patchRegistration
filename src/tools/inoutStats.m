@@ -1,4 +1,4 @@
-function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
+function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewise)
 % INOUTSTATS compute the mean intensity just inside and just outside a
 % label of interest.
 %
@@ -14,13 +14,16 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
 % particular label of interest. We then compute the maskVolume via
 % segVol==segid, and proceed from there.
 %
+% [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr,
+% slicewise) allows for slicewise analysis.
+%
 % algo outline:
 % load files as necessary until we have a volume and a mask volume
 % outside mask: compute bwdist() on maskVolume, get all pixels whose bwdist is within thr
 % inside mask: compute bwdist() on 1-maskVolume
 % compute the two means and return
 
-    narginchk(3, 4);
+    narginchk(3, 5);
 
     % get image
     if ischar(niifile)
@@ -39,7 +42,7 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
         segvol = segniifile.img;
     end
     
-    if nargin == 4
+    if nargin >= 4
         maskVol = segvol == segnr;
     else
         maskVol = segvol > 0;
@@ -49,13 +52,29 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr)
     msg = 'volume and mask don''t match size';
     assert(all(size(maskVol) == size(vol)), msg);
 
+    if exist('slicewise', 'var') && slicewise
+        invals = cell(1, size(vol,3));
+        outvals = cell(1, size(vol,3));
+        for i = 1:size(vol, 3)
+            [invals{i}, outvals{i}] = inout(vol(:,:,i), maskVol(:,:,i), thr);
+        end
+        meanin = mean(cat(1, invals{:}));
+        meanout = mean(cat(1, outvals{:}));
+    else
+        [invals, outvals] = inout(vol, maskVol, thr);
+        meanin = mean(invals);
+        meanout = mean(outvals);
+    end
+end
+
+function [invals, outvals] = inout(vol, maskVol, thr)
     % outside values
     obw = bwdist(maskVol);
     outMask = obw > 0 & obw < thr;
-    meanout = mean(vol(outMask(:)));
+    outvals = vol(outMask(:));
 
     % inside values
     ibw = bwdist(~maskVol);
     inMask = ibw > 0 & ibw < thr;
-    meanin = mean(vol(inMask(:)));
+    invals = vol(inMask(:));
 end
