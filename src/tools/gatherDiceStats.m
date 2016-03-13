@@ -1,4 +1,4 @@
-function [params, dices, dicelabels, subjNames] = gatherDiceStats(path)
+function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path)
 % Gather Dice Data for the registration project.
 %
 % given a parent path, go through each folder assuming the naming
