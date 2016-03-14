@@ -56,7 +56,8 @@ mkdir -p $veroutpath;
 # cp $myself $veroutpath
 
 # run jobs
-for subjid in 10529 10530 10534 10537 #`ls ${STROKE_PATH}`
+# 10529 10530 10534 10537
+for subjid in 10543 10546 10553 10557 10558 10564 10566 10567 10571 10575 #`ls ${STROKE_PATH}`
 do
 
   for le in $lambda_edge
@@ -121,7 +122,7 @@ do
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
-        sge_par_l="--sge \"-l mem_free=100G \""
+        sge_par_l="--sge \"-l mem_free=150G \""
         sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd

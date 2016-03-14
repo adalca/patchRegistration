@@ -121,7 +121,7 @@ do
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
-        sge_par_l="--sge \"-l mem_free=100G \""
+        sge_par_l="--sge \"-l mem_free=150G \""
         sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd
