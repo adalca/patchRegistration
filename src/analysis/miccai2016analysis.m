@@ -19,6 +19,8 @@ bapath = [OUTPATH, 'buckner/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam/
 sppath = [OUTPATH, 'stroke/PBR_v5'];
 sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam']; %ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam
 
+saveImagesPath = '/data/vision/polina/scratch/patchRegistration/output/miccai2016figures';
+
 buckneroutpaths = {bppath, bapath};
 strokeoutpaths = {sppath, sapath};
 bucknerpathnames = {'buckner-PBR', 'buckner-ANTs'};
@@ -76,18 +78,25 @@ for pi = 1:numel(buckneroutpaths)
     selfname = sprintf(segInRawFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    showVolStructures2D(vol, seg, {'axial'}); title(bucknerpathnames{pi});
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}); title(bucknerpathnames{pi});
+    for im = 1:numel(rgbImages)
+        imwrite(rgbImages{im}, fullfile(saveImagesPath, sprintf('%s_axial_%d',bucknerpathnames{pi}, im)));
+    end 
     % saggital - here we want the interpolated volumes(maybe)
     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
     selfname = sprintf(segInSubjFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    showVolStructures2D(vol, seg, {'saggital'}); title(bucknerpathnames{pi});
+    [rgbImage, ~] = showVolStructures2D(vol, seg, {'saggital'}); title(bucknerpathnames{pi});
+    for im = 1:numel(rgbImages)
+        imwrite(rgbImages{im}, fullfile(saveImagesPath, sprintf('%s_saggital_%d',bucknerpathnames{pi}, im)));
+    end
 end
 
 % joint dice plotting
 boxplotALMM(dice4OverallPlots, dicenames); grid on;
 ylabel('DICE', 'FontSize', 28);
+ylim([0.1,1]);
 legend(bucknerpathnames(1:2));
 
 %% stroke analysis 
