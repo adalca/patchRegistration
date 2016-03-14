@@ -1,4 +1,4 @@
-function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path, verbose)
+function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path, desiredDiceLabels, verbose)
 % Gather Dice Data for the registration project.
 %
 % given a parent path, go through each folder assuming the naming
@@ -19,8 +19,8 @@ function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path,
 % subjNames is a cell array of containing the subject names extracted from the file names. 
 %    so when the first parameter (the subject nr) is 1, the name of that subjet is subjNames{1}
 
-    narginchk(1, 2);
-    if nargin < 2, verbose = false; end
+    narginchk(1, 3);
+    if nargin < 3, verbose = 1; end
 
     % get folders in path
     d = dir(path);
@@ -57,7 +57,7 @@ function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path,
             alldices{i} = q.dices(:);
             alldicelabels{i} = q.finalLabels(:);
         catch err
-            if verbose
+            if verbose >= 2
                 fprintf(1, 'skipping %d due to \t%s\n', double(params(i, 1)), err.message);
             end
         end
@@ -72,4 +72,24 @@ function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path,
         [~, ia] = intersect(dicelabels, alldicelabels{i});
         dices(i, ia) = alldices{i}';
     end
+
+    % select the dice scores for the desired dice labels only
+    if nargin >= 2 && ~isempty(desiredDiceLabels)
+        [~, ix] = intersect(dicelabels, desiredDiceLabels);
+        dices = dices(:, ix);
+        dicelabels = dicelabels(ix);
+    end
+    
+    % print some skipping information
+    if verbose
+        nanind = find(all(isnan(dices), 2));
+        fprintf('Did not run:\n'); 
+        for i = 1:numel(nanind), 
+            fprintf('%s ', subjNames{params(nanind(i), 1)}); 
+            fprintf('%f ', params(nanind(i), :)); 
+            fprintf('\n'); 
+        end
+    end
+    
+    
     

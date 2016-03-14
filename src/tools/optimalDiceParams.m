@@ -1,4 +1,4 @@
-function [bestParams, bestDices] = optimalDiceParams(params, dices)
+function [bestParams, bestDices] = optimalDiceParams(params, dices, verbose)
 % TODO: might be able to do thismuch faster, see version 2 below.
 
     nParams = size(params, 2);
@@ -24,3 +24,10 @@ function [bestParams, bestDices] = optimalDiceParams(params, dices)
 %         stats = grpstats(dices, params(:, pri), 'mean');
 %     end
     
+    if verbose
+        fprintf('best parameter options are:\n');
+        for i = 1:(nParams-1)
+            fprintf('%f (%f)\n', bestParams(i), bestDices(i));
+        end
+        fprintf('\n');
+    end
