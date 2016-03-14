@@ -17,7 +17,7 @@ OUTPATH = '/data/vision/polina/scratch/patchRegistration/output/';
 bppath = [OUTPATH, 'buckner/sparse_ds7_pad10_lambdaedge_gridspacing_innerreps/'];
 bapath = [OUTPATH, 'buckner/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam/'];
 sppath = [OUTPATH, 'stroke/PBR_v5'];
-sapath = [OUTPATH, 'stroke/ANTs_v2_raw_fromDs7us7Reg_continueAffine']; %ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam
+sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam']; %ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam
 
 buckneroutpaths = {bppath, bapath};
 strokeoutpaths = {sppath, sapath};
@@ -28,7 +28,7 @@ segInRawFiletpl = '%s61-seg-in-%s-raw_via_%s-2-%s61-invWarp.nii.gz';
 rawSubjFiletpl = '%s_proc_ds7.nii.gz';
 
 segInSubjFiletpl = '%s61-seg-in-%s_via_%s-2-%s61-invWarp.nii.gz';
-subjFiletpl = '%s_proc_ds7_ds7_reg.nii.gz';
+subjFiletpl = '%s_ds7_us7_reg.nii.gz';
 
 %% settings
 bucknerSelSubj = 'buckner03';
@@ -68,18 +68,21 @@ for pi = 1:numel(buckneroutpaths)
     end
     
     % show some example slices of outlines 
-    % axial slices
     subjnr = find(strcmp(subjNames, bucknerSelSubj));
     showSel = find(all(bsxfun(@eq, params, [subjnr, optParams]), 2));
     assert(numel(showSel) == 1, 'did not find the folder to show');
-    % extract volumes
+    % axial
     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(rawSubjFiletpl, bucknerSelSubj)));
     selfname = sprintf(segInRawFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    hs = showVolStructures2D(vol, seg, {'axial', 'saggital'});
-    figure(hs{1}); title(bucknerpathnames{pi});
-    figure(hs{2}); title(bucknerpathnames{pi});
+    showVolStructures2D(vol, seg, {'axial'}); title(bucknerpathnames{pi});
+    % saggital - here we want the interpolated volumes(maybe)
+    vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
+    selfname = sprintf(segInSubjFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
+    seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
+    seg(~ismember(seg, desiredDiceLabels)) = 0;
+    showVolStructures2D(vol, seg, {'saggital'}); title(bucknerpathnames{pi});
 end
 
 % joint dice plotting
@@ -96,6 +99,9 @@ for pi = 1:numel(strokeoutpaths)
     
     % go through existing folders
     for i = 1:numel(folders)
+        % TODO: save meanin/meanout to stats. If it exists, load, otherwise compute.
+        % statsfile = 
+        
         subjName = subjNames{params(i, 1)};
         volfile = fullfile(strokeinpath, subjName, sprintf(rawSubjFiletpl, subjName));
         selfname = sprintf(segInRawFiletpl, 'stroke', subjName, subjName, 'stroke');
@@ -121,14 +127,18 @@ for pi = 1:numel(strokeoutpaths)
     subjnr = find(strcmp(subjNames, strokeSelSubj));
     [optParams, optDiffs] = optimalDiceParams(params(:, 2:end), meanout - meanin, true);
     showSel = find(all(bsxfun(@eq, params, [subjnr, optParams]), 2));
-    % get volumes
+    % get and show axial images
     vol = nii2vol(fullfile(strokeinpath, strokeSelSubj, sprintf(rawSubjFiletpl, strokeSelSubj)));
     selfname = sprintf(segInRawFiletpl, 'stroke', strokeSelSubj, strokeSelSubj, 'stroke');
     seg = nii2vol(fullfile(strokeoutpaths{pi}, folders{showSel}, 'final', selfname));
-    % get and show axial images
-    hs = showVolStructures2D(vol, seg, {'axial', 'saggital'});
-    figure(hs{1}); title(strokeoutpaths{pi});
-    figure(hs{2}); title(strokeoutpaths{pi});
+    seg(~ismember(seg, desiredDiceLabels)) = 0;
+    showVolStructures2D(vol, seg, {'axial'}); title(strokeoutpaths{pi});
+    % saggital - here we want the interpolated volumes(maybe)
+    vol = nii2vol(fullfile(strokeinpath, strokeSelSubj, sprintf(subjFiletpl, strokeSelSubj)));
+    selfname = sprintf(segInSubjFiletpl, 'stroke', strokeSelSubj, strokeSelSubj, 'stroke');
+    seg = nii2vol(fullfile(strokeoutpaths{pi}, folders{showSel}, 'final', selfname));
+    seg(~ismember(seg, desiredDiceLabels)) = 0;
+    showVolStructures2D(vol, seg, {'saggital'}); title(strokeoutpaths{pi});
 end
 
 figure(); plot(meanout - meanin, '.'); title('Mean intensity diff around ventricles');
