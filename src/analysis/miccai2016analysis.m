@@ -91,41 +91,51 @@ ylabel('DICE', 'FontSize', 28);
 legend(bucknerpathnames(1:2));
 
 %% stroke analysis 
-meanin = nan(numel(folders), 2);
-meanout = nan(numel(folders), 2);
+glmeanin = cell(1, 2);
+glmeanout = cell(1, 2);
 for pi = 1:numel(strokeoutpaths)
     % get stroke folders
     [params, subjNames, folders] = gatherRunParams(strokeoutpaths{pi});
+    glmeanin{pi} = nan(numel(folders), 1);
+    glmeanout{pi} = nan(numel(folders), 1);
     
     % go through existing folders
     for i = 1:numel(folders)
         % TODO: save meanin/meanout to stats. If it exists, load, otherwise compute.
-        % statsfile = 
-        
-        subjName = subjNames{params(i, 1)};
-        volfile = fullfile(strokeinpath, subjName, sprintf(rawSubjFiletpl, subjName));
-        selfname = sprintf(segInRawFiletpl, 'stroke', subjName, subjName, 'stroke');
-        segfile = fullfile(strokeoutpaths{pi}, folders{i}, 'final', selfname);
-        
-        if ~sys.isfile(volfile)
-            fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, volfile);
-            continue;
+        statsfile = fullfile(strokeoutpaths{pi}, folders{i}, 'out/stats.mat');
+        if sys.isfile(statsfile)
+            load(statsfile, 'stats');
+        else
+            
+            subjName = subjNames{params(i, 1)};
+            volfile = fullfile(strokeinpath, subjName, sprintf(rawSubjFiletpl, subjName));
+            selfname = sprintf(segInRawFiletpl, 'stroke', subjName, subjName, 'stroke');
+            segfile = fullfile(strokeoutpaths{pi}, folders{i}, 'final', selfname);
+
+            if ~sys.isfile(volfile)
+                fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, volfile);
+                continue;
+            end
+
+            if ~sys.isfile(segfile)
+                fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, segfile);
+                continue;
+            end
+
+            volnii = loadNii(volfile);
+            segnii = loadNii(segfile);
+
+            [stats.meanin, stats.meanout] = inoutStats(volnii, 3, segnii, desiredDiceLabels(3), true);
+            mkdir(fullfile(strokeoutpaths{pi}, folders{i}, 'out'));
+            save(statsfile, 'stats');
         end
-        
-        if ~sys.isfile(segfile)
-            fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, segfile);
-            continue;
-        end
-        
-        volnii = loadNii(volfile);
-        segnii = loadNii(segfile);
-        
-        [meanin(i, pi), meanout(i, pi)] = inoutStats(volnii, 3, segnii, desiredDiceLabels(3), true);
+        glmeanin{pi}(i) = stats.meanin;
+        glmeanout{pi}(i) = stats.meanout;
     end
     
     % show optimal based on meanout - meanin
     subjnr = find(strcmp(subjNames, strokeSelSubj));
-    [optParams, optDiffs] = optimalDiceParams(params(:, 2:end), meanout - meanin, true);
+    [optParams, optDiffs] = optimalDiceParams(params(:, 2:end), glmeanout{pi} - glmeanin{pi}, true);
     showSel = find(all(bsxfun(@eq, params, [subjnr, optParams]), 2));
     % get and show axial images
     vol = nii2vol(fullfile(strokeinpath, strokeSelSubj, sprintf(rawSubjFiletpl, strokeSelSubj)));
@@ -141,8 +151,12 @@ for pi = 1:numel(strokeoutpaths)
     showVolStructures2D(vol, seg, {'saggital'}); title(strokeoutpaths{pi});
 end
 
-figure(); plot(meanout - meanin, '.'); title('Mean intensity diff around ventricles');
+diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);
+diffvec = cat(1, diffcell{:});
+grp = [zeros(numel(diffcell{1}), 1); ones(numel(diffcell{2}), 1)];
+figure(); plot(diffcell{1}, '.'); hold on; plot(diffcell{2}, '.'); title('Mean intensity diff around ventricles');
 legend(strokepathnames);
-xlabel('run/subject');
+figure(); boxplot(diffvec, grp); title('Mean intensity diff around ventricles');
+xlabel('run or subject');
 ylabel('out - in intensity diff');
 
