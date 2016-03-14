@@ -29,12 +29,13 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewi
     if ischar(niifile)
         niifile = loadNii(niifile);
     end
-    dims = niifile.hdr.dime.pixdim(2:4);
-    assert(all(dims(1) == dims), 'volume is not isotropic');
+    if ~exist('slicewise', 'var') || ~slicewise
+        dims = niifile.hdr.dime.pixdim(2:4);
+        assert(all(dims(1) == dims), 'volume is not isotropic');
+    end
     vol = niifile.img;
 
     % get mask volume
-    segvol = segniifile.img;
     if ischar(segniifile)
         segniifile = loadNii(segniifile);
         segvol = segniifile.img;
@@ -42,7 +43,7 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewi
         segvol = segniifile.img;
     end
     
-    if nargin >= 4
+    if nargin >= 4 && ~isempty(segnr)
         maskVol = segvol == segnr;
     else
         maskVol = segvol > 0;
@@ -65,6 +66,8 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewi
         meanin = mean(invals);
         meanout = mean(outvals);
     end
+    assert(isclean(meanin));
+    assert(isclean(meanout));
 end
 
 function [invals, outvals] = inout(vol, maskVol, thr)

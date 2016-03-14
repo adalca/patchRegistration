@@ -1,4 +1,4 @@
-function [rgbImage, colors] = overlapVolSeg(labelVol, segvolslice, colors, dooutline)
+function [rgbImage, colors] = overlapVolSeg(labelVol, segvolslice, colors, labels, dooutline)
 % OVERLAPVOLSEG overlap a 2d intensity slice with a 2d segmentation (or outline) slice
 %
 % rgbImage = overlapVolSeg(labelVol, segvolslice) overlap a 2D intensity
@@ -12,24 +12,26 @@ function [rgbImage, colors] = overlapVolSeg(labelVol, segvolslice, colors, doout
 % [rgbImage, ...] = overlapVolSeg(labelVol, segvolslice, colors) allows
 % specification of colors to be used for each non-zero label
 %
-% [rgbImage, ...] = overlapVolSeg(labelVol, segvolslice, colors,
+% [rgbImage, ...] = overlapVolSeg(labelVol, segvolslice, colors, labels,
 % dooutline) specify boolean dooutline, which if true executes slice-wise
 % labelOutline() computation of each label. colors can be [] here, in which
 % case the default colors behavior takes over
 
     % initialize rgb image
     rgbImage = repmat(labelVol, [1,1,3]);
-    
-    % understand labels
-    labels = unique(segvolslice(:));
-    labels(labels == 0) = [];
-    nLabels = numel(labels);
-    
+
     % prepare colors
     if nargin <= 2 || isempty(colors)
         colors = jitter(nLabels);
     end
     
+    % understand labels
+    if ~exist('labels', 'var')
+        labels = unique(segvolslice(:));
+        labels(labels == 0) = [];
+    end
+    nLabels = numel(labels);
+        
     % get (2D) outlines if required
     if exist('dooutline', 'var') && dooutline
         segvolslice = labelOutlines(segvolslice);

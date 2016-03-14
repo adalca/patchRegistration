@@ -1,4 +1,4 @@
-function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path)
+function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path, verbose)
 % Gather Dice Data for the registration project.
 %
 % given a parent path, go through each folder assuming the naming
@@ -18,6 +18,9 @@ function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path)
 % diceLabels is a nLabels vector of dice ids.
 % subjNames is a cell array of containing the subject names extracted from the file names. 
 %    so when the first parameter (the subject nr) is 1, the name of that subjet is subjNames{1}
+
+    narginchk(1, 2);
+    if nargin < 2, verbose = false; end
 
     % get folders in path
     d = dir(path);
@@ -54,7 +57,9 @@ function [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(path)
             alldices{i} = q.dices(:);
             alldicelabels{i} = q.finalLabels(:);
         catch err
-            fprintf(1, 'skipping %d due to \n\t%s', double(params(i, 1)), err.identifier);
+            if verbose
+                fprintf(1, 'skipping %d due to \t%s\n', double(params(i, 1)), err.message);
+            end
         end
     end
     
