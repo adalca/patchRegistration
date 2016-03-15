@@ -17,14 +17,14 @@ OUTPATH = '/data/vision/polina/scratch/patchRegistration/output/';
 bppath = [OUTPATH, 'buckner/sparse_ds7_pad10_lambdaedge_gridspacing_innerreps/'];
 bapath = [OUTPATH, 'buckner/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam/'];
 sppath = [OUTPATH, 'stroke/PBR_v5'];
-sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam']; %ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam
+sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam']; 
 
 saveImagesPath = '/data/vision/polina/scratch/patchRegistration/output/miccai2016figures/mar15';
 
-buckneroutpaths = {bppath, bapath};
-strokeoutpaths = {sppath, sapath};
-bucknerpathnames = {'buckner-PBR', 'buckner-ANTs'};
-strokepathnames = {'stroke-PBR', 'stroke-ANTs'};
+buckneroutpaths = {bapath, bppath};
+strokeoutpaths = {sapath, sppath};
+bucknerpathnames = {'buckner-ANTs', 'buckner-PBR'};
+strokepathnames = {'stroke-ANTs', 'stroke-PBR'};
 
 segInRawFiletpl = '%s61-seg-in-%s-raw_via_%s-2-%s61-invWarp.nii.gz';
 rawSubjFiletpl = '%s_proc_ds7.nii.gz';

@@ -13,7 +13,13 @@ miccai2016analysisPaths
 
 %% settings
 nTrainSubj = 10;
-strokeSelSubj = '10534'; % 10530
+strokeSelSubj = '10537'; % 10530
+% bad one: 10534
+% catastrofic failure for ANTs: 10530
+
+desiredDiceLabels = [2, 3, 4, 41, 42, 43];
+dicenames = {'Left White Matter', 'Left Cortex', 'Left Ventricle', 'Right White Matter', 'Right Cortex', 'Right Ventricle'};
+
 
 %% stroke analysis 
 glmeanin = cell(1, 2);
@@ -86,7 +92,7 @@ for pi = 1:numel(strokeoutpaths)
 end
 
 %% plots
-save([saveImagePath, '/strokePlotData.mat'], 'glmeanout', 'glmeanin', 'strokepathnames');
+save([saveImagesPath, '/strokePlotData.mat'], 'glmeanout', 'glmeanin', 'strokepathnames');
 diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);
 diffvec = cat(1, diffcell{:});
 
