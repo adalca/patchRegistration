@@ -26,7 +26,7 @@ function [bestParams, bestDices] = optimalDiceParams(params, dices, verbose)
     
     if verbose
         fprintf('best parameter options are:\n');
-        for i = 1:(nParams-1)
+        for i = 1:nParams
             fprintf('%f (%f)\n', bestParams(i), bestDices(i));
         end
         fprintf('\n');

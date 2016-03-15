@@ -13,10 +13,11 @@ miccai2016analysisPaths
 
 %% settings
 nTrainSubj = 10;
-bucknerSelSubj = 'buckner03';
+bucknerSelSubj = 'buckner19';
+% goodish for both: 23
 
 desiredDiceLabels = [2, 3, 4, 41, 42, 43];
-dicenames = {'Left White Matter', 'LC', 'LV', 'RWM', 'RC', 'RV'};
+dicenames = {'Left White Matter', 'Left Cortex', 'Left Ventricle', 'Right White Matter', 'Right Cortex', 'Right Ventricle'};
 
 %% buckner analysis
 dice4OverallPlots = cell(1, numel(desiredDiceLabels));
@@ -69,11 +70,10 @@ for pi = 1:numel(buckneroutpaths)
     miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'))
 end
 
+
 %% joint dice plotting
-save([saveImagePath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
-
+save([saveImagesPath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
 dicePlot = boxplotALMM(dice4OverallPlots, dicenames); grid on;
-
 ylabel('Volume Overlap (Dice)', 'FontSize', 28);
 ylim([0.1,1]);
 legend(bucknerpathnames(1:2));
