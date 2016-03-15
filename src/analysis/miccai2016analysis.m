@@ -37,8 +37,8 @@ bucknerSelSubj = 'buckner03';
 strokeSelSubj = '10534'; % 10530
 nTrainSubj = 10;
 
-desiredDiceLabels = [2, 3, 4, 17, 41, 42, 43, 53];
-dicenames = {'LWM', 'LC', 'LV', 'LH', 'RWM', 'RC', 'RV', 'RH'};
+desiredDiceLabels = [2, 3, 4, 41, 42, 43];
+dicenames = {'LWM', 'LC', 'LV', 'RWM', 'RC', 'RV'};
 dice4OverallPlots = cell(1, numel(desiredDiceLabels));
 
 %% buckner analysis
@@ -79,8 +79,8 @@ for pi = 1:numel(buckneroutpaths)
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
     [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}); title(bucknerpathnames{pi});
-    for im = 1:numel(rgbImages)
-        imwrite(rgbImages{im}, fullfile(saveImagesPath, sprintf('%s_axial_%d',bucknerpathnames{pi}, im)));
+    for im = 1:size(rgbImages, 4)
+        imwrite(rgbImages(:, :, :, im), fullfile(saveImagesPath, sprintf('%s_axial_%d.png',bucknerpathnames{pi}, im)));
     end 
     % saggital - here we want the interpolated volumes(maybe)
     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
@@ -88,16 +88,17 @@ for pi = 1:numel(buckneroutpaths)
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
     [rgbImage, ~] = showVolStructures2D(vol, seg, {'saggital'}); title(bucknerpathnames{pi});
-    for im = 1:numel(rgbImages)
-        imwrite(rgbImages{im}, fullfile(saveImagesPath, sprintf('%s_saggital_%d',bucknerpathnames{pi}, im)));
+    for im = 1:size(rgbImages, 4)
+        imwrite(rgbImages(:, :, :, im), fullfile(saveImagesPath, sprintf('%s_saggital_%d.png',bucknerpathnames{pi}, im)));
     end
 end
 
 % joint dice plotting
-boxplotALMM(dice4OverallPlots, dicenames); grid on;
+dicePlot = boxplotALMM(dice4OverallPlots, dicenames); grid on;
 ylabel('DICE', 'FontSize', 28);
 ylim([0.1,1]);
 legend(bucknerpathnames(1:2));
+export_fig(dicePlot, fullfile(saveImagesPath, 'BucknerDicePlot'), '-pdf', '-transparent');
 
 %% stroke analysis 
 glmeanin = cell(1, 2);
@@ -151,21 +152,28 @@ for pi = 1:numel(strokeoutpaths)
     selfname = sprintf(segInRawFiletpl, 'stroke', strokeSelSubj, strokeSelSubj, 'stroke');
     seg = nii2vol(fullfile(strokeoutpaths{pi}, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    showVolStructures2D(vol, seg, {'axial'}); title(strokeoutpaths{pi});
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}); title(strokeoutpaths{pi});
+    for im = 1:size(rgbImages, 4)
+        imwrite(rgbImages(:, :, :, im), fullfile(saveImagesPath, sprintf('%s_axial_%d.png',strokepathnames{pi}, im)));
+    end 
     % saggital - here we want the interpolated volumes(maybe)
     vol = nii2vol(fullfile(strokeinpath, strokeSelSubj, sprintf(subjFiletpl, strokeSelSubj)));
     selfname = sprintf(segInSubjFiletpl, 'stroke', strokeSelSubj, strokeSelSubj, 'stroke');
     seg = nii2vol(fullfile(strokeoutpaths{pi}, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    showVolStructures2D(vol, seg, {'saggital'}); title(strokeoutpaths{pi});
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}); title(strokeoutpaths{pi});
+    for im = 1:size(rgbImages, 4)
+        imwrite(rgbImages(:, :, :, im), fullfile(saveImagesPath, sprintf('%s_saggital_%d.png',strokepathnames{pi}, im)));
+    end 
 end
 
 diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);
 diffvec = cat(1, diffcell{:});
 grp = [zeros(numel(diffcell{1}), 1); ones(numel(diffcell{2}), 1)];
-figure(); plot(diffcell{1}, '.'); hold on; plot(diffcell{2}, '.'); title('Mean intensity diff around ventricles');
+f1 = figure(); plot(diffcell{1}, '.'); hold on; plot(diffcell{2}, '.'); title('Mean intensity diff around ventricles');
 legend(strokepathnames);
-figure(); boxplot(diffvec, grp); title('Mean intensity diff around ventricles');
+export_fig(f1, fullfile(saveImagesPath, 'MeanIntensity'), '-pdf', '-transparent');
+f2 = figure(); boxplot(diffvec, grp); title('Mean intensity diff around ventricles');
 xlabel('run or subject');
 ylabel('out - in intensity diff');
-
+export_fig(f2, fullfile(saveImagesPath, 'MeanIntensityBox'), '-pdf', '-transparent');

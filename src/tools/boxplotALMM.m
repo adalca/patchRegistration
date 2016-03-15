@@ -1,4 +1,4 @@
-function boxplotALMM(diffs, names, order, colors)
+function h = boxplotALMM(diffs, names, order, colors)
 
     if nargin == 2
         order = 1:numel(diffs);
@@ -19,7 +19,7 @@ function boxplotALMM(diffs, names, order, colors)
     set(0,'DefaultTextFontname', 'Garamond')
     set(0,'DefaultAxesFontName', 'Garamond')
 
-    figuresc(); hold on;
+    h = figuresc(); hold on;
     emptylabels = {};
     for i = 1:numel(order);
         idx = order(i);

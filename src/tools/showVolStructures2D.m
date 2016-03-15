@@ -1,4 +1,4 @@
-function hs = showVolStructures2D(vol, seg, directions)
+function [rgbImages, hs] = showVolStructures2D(vol, seg, directions)
 
     % load data
     if ischar(vol) || isstruct(vol), vol = nii2vol(vol); end
