@@ -25,14 +25,13 @@ for pi = 1:numel(buckneroutpaths)
     
     % gather Dice parameters 
     [params, dices, dicelabels, subjNames, folders] = gatherDiceStats(respath, desiredDiceLabels, 1);
-    nParams = size(params, 2);
     
     % select entries that belong to the first nTrainSubj subjects
     trainidx = params(:, 1) < nTrainSubj;
     testidx = ~trainidx;
 
     % get optimal parameters for training subjects
-    [optParams, optDices] = optimalDiceParams(params(trainidx, 2:end), dices(trainidx, :), true);
+    optParams = optimalDiceParams(params(trainidx, 2:end), dices(trainidx, :), true);
 
     % select testing subjects dice values for those parameters.
     optsel = testidx & all(bsxfun(@eq, params(:, 2:end), optParams), 2);
@@ -57,26 +56,24 @@ for pi = 1:numel(buckneroutpaths)
     selfname = sprintf(segInRawFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}); title(bucknerpathnames{pi});
-    foldername = sprintf('%s/%s_%s', saveImagesPath, bucknerpathnames{pi}, bucknerSelSubj); mkdir(foldername);
-    for imnr = 1:size(rgbImages, 4)
-        imwrite(rgbImages(:, :, :, imnr), fullfile(foldername, sprintf('axial_%d.png', imnr)));
-    end
-    
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}, 3, 3); title(bucknerpathnames{pi});
+    foldername = sprintf('%s/%s_%s/', saveImagesPath, bucknerpathnames{pi}, bucknerSelSubj); mkdir(foldername);
+    miccai2016saveFrames(rgbImages, fullfile(foldername, 'axial_%d.png'));
+
     % saggital - here we want the interpolated volumes
     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
     selfname = sprintf(segInSubjFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImage, ~] = showVolStructures2D(vol, seg, {'saggital'}); title(bucknerpathnames{pi});
-    for imnr = 1:size(rgbImages, 4)
-        imwrite(rgbImages(:, :, :, imnr), fullfile(foldername, sprintf('saggital_%d.png', imnr)));
-    end
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}, 3, 3); title(bucknerpathnames{pi});
+    miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'))
 end
 
 %% joint dice plotting
 save([saveImagePath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
+
 dicePlot = boxplotALMM(dice4OverallPlots, dicenames); grid on;
+
 ylabel('Volume Overlap (Dice)', 'FontSize', 28);
 ylim([0.1,1]);
 legend(bucknerpathnames(1:2));

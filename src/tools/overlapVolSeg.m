@@ -1,4 +1,4 @@
-function [rgbImage, colors] = overlapVolSeg(labelVol, segVol, labels, colors, dooutline)
+function [rgbImage, colors] = overlapVolSeg(labelVol, segVol, labels, colors, thickness)
 % OVERLAPVOLSEG overlap a 2d intensity slice with a 2d segmentation (or outline) slice
 %
 % rgbImage = overlapVolSeg(labelVol, segvolslice) overlap a 2D intensity
@@ -37,8 +37,8 @@ function [rgbImage, colors] = overlapVolSeg(labelVol, segVol, labels, colors, do
         segslice = segVol(:, :, zi);
         
         % get (2D) outlines if required
-        if exist('dooutline', 'var') && dooutline
-            segslice = labelOutlines(segslice);
+        if exist('thickness', 'var') && thickness > 0
+            segslice = labelOutlines(segslice, 'thickness', thickness);
         end
         segslice = repmat(segslice, [1, 1, 3]);
         

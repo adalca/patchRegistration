@@ -1,9 +1,22 @@
-function [rgbImages, hs] = showVolStructures2D(vol, seg, directions)
+function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, thickness)
+%
+%
+% TODO: combine with mmit's nii2images
+    warning('TODO: combine showVolStructures2D with nii2images');
 
     % load data
     if ischar(vol) || isstruct(vol), vol = nii2vol(vol); end
     if ischar(seg) || isstruct(seg), seg = nii2vol(seg); end
+    
+    if nargin <= 3 || isempty(multfact), multfact = 1; end
+    
+    % resize if necessary
+    if multfact > 0
+        vol = volresize(vol, size(vol) .* multfact);
+        seg = volresize(seg, size(seg) .* multfact, 'nearest');
+    end
 
+    % create 2D images.
     hs = cell(numel(directions), 1);
     for diri = 1:numel(directions)
         dirn = directions{diri};
@@ -11,7 +24,7 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions)
         switch dirn
             case 'axial'
                 % get and show axial images
-                rgbImages = flip(permute(overlapVolSeg(vol, seg, [], [], 1), [2, 1, 3, 4]), 1);
+                rgbImages = flip(permute(overlapVolSeg(vol, seg, [], [], 1), [2, 1, 3, 4]), thickness);
                 view2D(dimsplit(4, rgbImages)); 
                 hs{diri} = gcf;
                 
@@ -20,7 +33,7 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions)
                 mid = round(size(vol, 1)/2);
                 svol = vol(mid-10:3:mid+10, :, :); 
                 sseg = seg(mid-10:3:mid+10, :, :);
-                rgbImages = overlapVolSeg(permute(svol, [3, 2, 1]), permute(sseg, [3, 2, 1]), [], [], 1);
+                rgbImages = overlapVolSeg(permute(svol, [3, 2, 1]), permute(sseg, [3, 2, 1]), [], [], thickness);
                 rgbImages = flip(rgbImages, 1);
                 view2D(dimsplit(4, rgbImages)); 
                 hs{diri} = gcf;
@@ -30,3 +43,4 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions)
         end
         
     end
+    

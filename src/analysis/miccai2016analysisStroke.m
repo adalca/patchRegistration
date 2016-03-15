@@ -98,10 +98,26 @@ ylabel('out - in intensity diff');
 title('Mean intensity diff around ventricles');
 export_fig(f1, fullfile(saveImagesPath, 'MeanIntensity'), '-pdf', '-transparent');
 
-% dice plot
+f2 = figure(); 
 grp = [zeros(numel(diffcell{1}), 1); ones(numel(diffcell{2}), 1)];
-f2 = figure(); boxplot(diffvec, grp); 
-xlabel('run or subject');
+boxplot(diffvec, grp); 
+
+% dice plot
+f2 = figure(); hold on;
+set(0,'DefaultTextFontname', 'CMU Serif')
+set(0,'DefaultAxesFontName', 'CMU Serif')
+set(0,'DefaultTextFontname', 'Garamond')
+set(0,'DefaultAxesFontName', 'Garamond')
+b = boxplot(diffcell{1}, 'colors', [0 0.447 0.741]); set(b, 'LineWidth', 3); set(findobj(gca, 'Type', 'text'), 'FontSize', 18);
+b = boxplot([zeros(numel(diffcell{2}), 1)-100, diffcell{2}], 'Labels', {}, 'colors', [0.85 0.325 0.098]);  set(b, 'LineWidth', 3); set(findobj(gca, 'Type', 'text'), 'FontSize', 18);
+ylim([min(diffvec)*1.1, max(diffvec)*1.1]);
+
+
+xlabel('');
 ylabel('out - in intensity diff');
 title('Mean intensity diff around ventricles');
+
+set(gca, 'XTickLabel', []);
+set(gca, 'XTickLabel', {'ANTs', 'Patch based MRF'}, 'FontSize', 22);
+drawnow;
 export_fig(f2, fullfile(saveImagesPath, 'MeanIntensityBox'), '-pdf', '-transparent');

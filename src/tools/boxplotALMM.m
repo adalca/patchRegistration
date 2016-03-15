@@ -46,6 +46,6 @@ function h = boxplotALMM(diffs, names, order, colors)
     set(gca, 'XTickLabel', []);
     set(gca, 'XTick', []);
     set(gca, 'XTick', mid:(nSkip+1):(numel(order)*(nSkip+1)));
-    set(gca, 'XTickLabel', names(order), 'FontSize', 28);
+    set(gca, 'XTickLabel', names(order), 'FontSize', 22);
     % legend({'Registration through Atlas', 'Linear model', 'Full Model'}, 'FontSize', 28);
     % legend({'Baseline', 'Linear model', 'Full Model'}, 'FontSize', 28);
