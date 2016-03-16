@@ -1,4 +1,4 @@
-function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, thickness)
+function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, thickness, docrop)
 %
 %
 % TODO: combine with mmit's nii2images
@@ -9,6 +9,13 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, t
     if ischar(seg) || isstruct(seg), seg = nii2vol(seg); end
     
     if nargin <= 3 || isempty(multfact), multfact = 1; end
+    if nargin <= 5 || isempty(docrop), docrop = false; end
+    
+    % crop if asked to
+    if docrop
+        [vol, ~, c] = boundingBox(vol);
+        seg = seg(c{:});
+    end
     
     % resize if necessary
     if multfact > 0

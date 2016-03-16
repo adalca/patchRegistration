@@ -1,4 +1,4 @@
-function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewise)
+function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnrs, slicewise)
 % INOUTSTATS compute the mean intensity just inside and just outside a
 % label of interest.
 %
@@ -43,8 +43,8 @@ function [meanin, meanout] = inoutStats(niifile, thr, segniifile, segnr, slicewi
         segvol = segniifile.img;
     end
     
-    if nargin >= 4 && ~isempty(segnr)
-        maskVol = segvol == segnr;
+    if nargin >= 4 && ~isempty(segnrs)
+        maskVol = ismember(segvol, segnrs);
     else
         maskVol = segvol > 0;
         msg = 'mask volume has more than one label';

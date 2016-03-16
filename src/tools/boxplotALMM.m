@@ -12,7 +12,6 @@ function h = boxplotALMM(diffs, names, order, colors)
     end
     
     nSkip = size(diffs{1}, 2);
-    nSkip
 
     set(0,'DefaultTextFontname', 'CMU Serif')
     set(0,'DefaultAxesFontName', 'CMU Serif')

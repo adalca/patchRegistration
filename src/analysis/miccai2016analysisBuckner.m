@@ -16,11 +16,17 @@ nTrainSubj = 10;
 bucknerSelSubj = 'buckner19';
 % goodish for both: 23
 
+nUpscale = 3;
+segThickness = 3;
+
+inoutDesiredLabels = [4, 43];
 desiredDiceLabels = [2, 3, 4, 41, 42, 43];
 dicenames = {'Left White Matter', 'Left Cortex', 'Left Ventricle', 'Right White Matter', 'Right Cortex', 'Right Ventricle'};
 
 %% buckner analysis
 dice4OverallPlots = cell(1, numel(desiredDiceLabels));
+glmeanin = cell(1, 2);
+glmeanout = cell(1, 2);
 for pi = 1:numel(buckneroutpaths)
     respath = buckneroutpaths{pi};
     
@@ -32,7 +38,7 @@ for pi = 1:numel(buckneroutpaths)
     testidx = ~trainidx;
 
     % get optimal parameters for training subjects
-    optParams = optimalDiceParams(params(trainidx, 2:end), dices(trainidx, :), true);
+    [optParams, bestDices] = optimalDiceParams(params(trainidx, 2:end), dices(trainidx, :), true);
 
     % select testing subjects dice values for those parameters.
     optsel = testidx & all(bsxfun(@eq, params(:, 2:end), optParams), 2);
@@ -57,7 +63,7 @@ for pi = 1:numel(buckneroutpaths)
     selfname = sprintf(segInRawFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}, 3, 3); title(bucknerpathnames{pi});
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
     foldername = sprintf('%s/%s_%s/', saveImagesPath, bucknerpathnames{pi}, bucknerSelSubj); mkdir(foldername);
     miccai2016saveFrames(rgbImages, fullfile(foldername, 'axial_%d.png'));
 
@@ -66,15 +72,36 @@ for pi = 1:numel(buckneroutpaths)
     selfname = sprintf(segInSubjFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
     seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}, 3, 3); title(bucknerpathnames{pi});
-    miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'))
+    [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
+    miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'));
+    
+    % gather intensity differences around ventricles
+    [glmeanin{pi}, glmeanout{pi}] = miccai2016inoutStats(strokeoutpaths{pi}, folders, params, strokeinpath, ...
+        subjNames, rawSubjFiletpl, segInRawFiletpl, inoutDesiredLabels);
+    assert(size(glmeanin{pi}, 1) == size(params, 1));
 end
 
+%% plot dice vs ventricle difference
+diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);  
+diffsel = diffcell{1}(optsel, :);
+vdice = mean([dice4OverallPlots{3}, dice4OverallPlots{6}], 2);
+plot(diffsel, vdice, '.');
 
 %% joint dice plotting
 save([saveImagesPath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
+
+% combine left and right
+nDiceHalf = numel(dicenames) / 2;
+dicenames = dicenames(1:nDiceHalf); dicenames = cellfunc(@(d) strrep(d, 'Left ', ''), dicenames);
+for i = 1:nDiceHalf
+    dice4OverallPlots{i} = [dice4OverallPlots{i}; dice4OverallPlots{i+nDiceHalf}];
+end
+dice4OverallPlots(nDiceHalf+1:end) = [];
+
+% plot
 dicePlot = boxplotALMM(dice4OverallPlots, dicenames); grid on;
 ylabel('Volume Overlap (Dice)', 'FontSize', 28);
-ylim([0.1,1]);
+ylim([0.01,1]);
 legend(bucknerpathnames(1:2));
+
 export_fig(dicePlot, fullfile(saveImagesPath, 'BucknerDicePlot'), '-pdf', '-transparent');

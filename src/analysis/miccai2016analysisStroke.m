@@ -17,9 +17,9 @@ strokeSelSubj = '10537'; % 10530
 % bad one: 10534
 % catastrofic failure for ANTs: 10530
 
+inoutDesiredLabels = [4, 43];
 desiredDiceLabels = [2, 3, 4, 41, 42, 43];
 dicenames = {'Left White Matter', 'Left Cortex', 'Left Ventricle', 'Right White Matter', 'Right Cortex', 'Right Ventricle'};
-
 
 %% stroke analysis 
 glmeanin = cell(1, 2);
@@ -27,46 +27,14 @@ glmeanout = cell(1, 2);
 for pi = 1:numel(strokeoutpaths)
     % get stroke folders
     [params, subjNames, folders] = gatherRunParams(strokeoutpaths{pi});
-    glmeanin{pi} = nan(numel(folders), 1);
-    glmeanout{pi} = nan(numel(folders), 1);
     
-    % go through existing folders
-    for i = 1:numel(folders)
-        % TODO: save meanin/meanout to stats. If it exists, load, otherwise compute.
-        statsfile = fullfile(strokeoutpaths{pi}, folders{i}, 'out/stats.mat');
-        if sys.isfile(statsfile)
-            load(statsfile, 'stats');
-        else
-            
-            subjName = subjNames{params(i, 1)};
-            volfile = fullfile(strokeinpath, subjName, sprintf(rawSubjFiletpl, subjName));
-            selfname = sprintf(segInRawFiletpl, 'stroke', subjName, subjName, 'stroke');
-            segfile = fullfile(strokeoutpaths{pi}, folders{i}, 'final', selfname);
-
-            if ~sys.isfile(volfile)
-                fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, volfile);
-                continue;
-            end
-
-            if ~sys.isfile(segfile)
-                fprintf(2, 'Skipping %s due to missing %s\n', folders{i}, segfile);
-                continue;
-            end
-
-            volnii = loadNii(volfile);
-            segnii = loadNii(segfile);
-
-            [stats.meanin, stats.meanout] = inoutStats(volnii, 3, segnii, desiredDiceLabels(3), true);
-            mkdir(fullfile(strokeoutpaths{pi}, folders{i}, 'out'));
-            save(statsfile, 'stats');
-        end
-        glmeanin{pi}(i) = stats.meanin;
-        glmeanout{pi}(i) = stats.meanout;
-    end
+    % get in out paths
+    [glmeanin{pi}, glmeanout{pi}] = miccai2016inoutStats(strokeoutpaths{pi}, folders, params, strokeinpath, ...
+        subjNames, rawSubjFiletpl, segInRawFiletpl, inoutDesiredLabels);
     
     % show optimal based on meanout - meanin
     subjnr = find(strcmp(subjNames, strokeSelSubj));
-    [optParams, optDiffs] = optimalDiceParams(params(:, 2:end), glmeanout{pi} - glmeanin{pi}, true);
+    optParams = optimalDiceParams(params(:, 2:end), glmeanout{pi} - glmeanin{pi}, true);
     showSel = find(all(bsxfun(@eq, params, [subjnr, optParams]), 2));
     
     % axial - use the raw volumes

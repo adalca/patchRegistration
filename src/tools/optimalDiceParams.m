@@ -2,7 +2,7 @@ function [bestParams, bestDices] = optimalDiceParams(params, dices, verbose)
 % TODO: might be able to do thismuch faster, see version 2 below.
 
     nParams = size(params, 2);
-    statsfn = @(x) nanmean(x(:)); % x is a matrix. Perhaps should do smarter stuff here.
+    statsfn = @(x) nanmedian(x(:)); % x is a matrix. Perhaps should do smarter stuff here.
     
     % it is probably possible to do this much faster, see version 2 below?
     bestDices = nan(1, nParams);
