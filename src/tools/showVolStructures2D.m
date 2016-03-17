@@ -31,7 +31,7 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, t
         switch dirn
             case 'axial'
                 % get and show axial images
-                rgbImages = flip(permute(overlapVolSeg(vol, seg, [], [], 1), [2, 1, 3, 4]), thickness);
+                rgbImages = flip(permute(overlapVolSeg(vol, seg, [], [], thickness), [2, 1, 3, 4]), 1);
                 view2D(dimsplit(4, rgbImages)); 
                 hs{diri} = gcf;
                 

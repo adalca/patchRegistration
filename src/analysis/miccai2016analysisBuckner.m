@@ -15,9 +15,10 @@ miccai2016analysisPaths
 nTrainSubj = 10;
 bucknerSelSubj = 'buckner19';
 % goodish for both: 23
+doInOutAnalysis = false;
 
-nUpscale = 3;
-segThickness = 3;
+nUpscale = [3, 3, 1];
+segThickness = 6;
 
 inoutDesiredLabels = [4, 43];
 desiredDiceLabels = [2, 3, 4, 41, 42, 43];
@@ -76,30 +77,42 @@ for pi = 1:numel(buckneroutpaths)
     miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'));
     
     % gather intensity differences around ventricles
-    [glmeanin{pi}, glmeanout{pi}] = miccai2016inoutStats(strokeoutpaths{pi}, folders, params, strokeinpath, ...
-        subjNames, rawSubjFiletpl, segInRawFiletpl, inoutDesiredLabels);
-    assert(size(glmeanin{pi}, 1) == size(params, 1));
+    if doInOutAnalysis
+        [glmeanin{pi}, glmeanout{pi}] = miccai2016inoutStats(buckneroutpaths{pi}, folders, params, bucknerinpath, ...
+            subjNames, rawSubjFiletpl, segInRawFiletpl, inoutDesiredLabels, 'buckner');
+        assert(size(glmeanin{pi}, 1) == size(params, 1));
+    end
 end
 
 %% plot dice vs ventricle difference
-diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);  
-diffsel = diffcell{1}(optsel, :);
-vdice = mean([dice4OverallPlots{3}, dice4OverallPlots{6}], 2);
-plot(diffsel, vdice, '.');
+if doInOutAnalysis
+    diffcell = cellfunc(@(o,i) o(:)-i(:), glmeanout, glmeanin);  
+    % diffsel = diffcell{2}(optsel, :);
+    % vdice = mean([dice4OverallPlots{3}, dice4OverallPlots{6}], 2);
+    diffsel = diffcell{2};
+    vdice = sum(dices(:, [3, 6]), 2);
+    nonnan = ~isnan(diffsel) & ~isnan(vdice);
+    figure(); plot(diffsel, vdice, '.'); xlabel('diff'); ylabel('Dice'); hold on;
+    p = polyfit(diffsel(nonnan), vdice(nonnan), 1);
+    x = [min(diffsel), max(diffsel)]; plot(x, polyval(p, x));
+    title(sprintf('cc: %5.3f', corr(diffsel(nonnan), vdice(nonnan))));
+end
 
 %% joint dice plotting
 save([saveImagesPath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
 
 % combine left and right
+dice4OverallPlotsHalf = dice4OverallPlots;
 nDiceHalf = numel(dicenames) / 2;
-dicenames = dicenames(1:nDiceHalf); dicenames = cellfunc(@(d) strrep(d, 'Left ', ''), dicenames);
+dicenamesHalf = dicenames(1:nDiceHalf); 
+dicenamesHalf = cellfunc(@(d) strrep(d, 'Left ', ''), dicenamesHalf);
 for i = 1:nDiceHalf
-    dice4OverallPlots{i} = [dice4OverallPlots{i}; dice4OverallPlots{i+nDiceHalf}];
+    dice4OverallPlotsHalf{i} = [dice4OverallPlotsHalf{i}; dice4OverallPlotsHalf{i+nDiceHalf}];
 end
-dice4OverallPlots(nDiceHalf+1:end) = [];
+dice4OverallPlotsHalf(nDiceHalf+1:end) = [];
 
 % plot
-dicePlot = boxplotALMM(dice4OverallPlots, dicenames); grid on;
+dicePlot = boxplotALMM(dice4OverallPlotsHalf, dicenamesHalf); grid on;
 ylabel('Volume Overlap (Dice)', 'FontSize', 28);
 ylim([0.01,1]);
 legend(bucknerpathnames(1:2));
