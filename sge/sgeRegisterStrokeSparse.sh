@@ -7,6 +7,9 @@ if [ "$#" -ne 0 ] ; then
   exit 1
 fi
 
+prepType="wholevol"
+prepType="brain_pad10"
+
 ###############################################################################
 # Settings
 ###############################################################################
@@ -20,8 +23,8 @@ export SGE_O_HOME=${SGE_LOG_PATH}
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
 # project paths
-STROKE_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/proc/brain_pad10/";
-STROKE_ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/atlases/brain_pad10/";
+STROKE_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/proc/${prepType}/";
+STROKE_ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/stroke/atlases/${prepType}/";
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
@@ -32,15 +35,15 @@ optsinifile="${PROJECT_PATH}/configs/stroke/strokeOpts.ini";
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 
 # this version's running path
-runver="stroke/PBR_v5";
+runver="stroke/PBR_v101_brain_pad10";
 
 # parameters
-lambda_edge="0.1 0.05 0.01 0.005" #"0.1 0.15 0.2"
+lambda_edge="0.1 0.01 0.001" #"0.1 0.15 0.2"
 # lambda_edge="0.01"
 gridSpacingTemplate='"[1;1;2;2;3;3;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
-varGridSpacing="3 5 7"
-innerReps="1 2"
+varGridSpacing="4"
+innerReps="1"
 
 ###############################################################################
 # Running Code
@@ -56,16 +59,16 @@ mkdir -p $veroutpath;
 # cp $myself $veroutpath
 
 # run jobs
-# 10529 10530 10534 10537
-for subjid in 10543 10546 10553 10557 10558 10564 10566 10567 10571 10575 #`ls ${STROKE_PATH}`
+#for i in  `ls ${STROKE_PATH}`
+# bad: 14382 13888 P0054 13916 14133 14209 12191 12469 P0175 P0180
+# iffy P0060 P0181 14157 13853 13909
+# rand middle: 12328  12685  13543  14000  14506  24596
+for subjid in P0060
 do
-
   for le in $lambda_edge
   do
-
     for gs in $varGridSpacing
     do
-
       for ni in $innerReps
       do
         # prepare output folder for this setting
@@ -101,15 +104,18 @@ do
         srcScales="sourceScales = {"
         tarScales="targetScales = {"
         srcMaskScales="sourceMaskScales = {"
+        tarMaskScales="targetMaskScales = {"
         for scale in 1 2 3 4 5 6 7
         do
           srcScales=${srcScales}"'${STROKE_PATH}${subjid}/${subjid}_ds7_us${scale}_reg.nii.gz' "
           tarScales=${tarScales}"'${STROKE_ATLAS_PATH}stroke61_brain_proc_ds7_us${scale}.nii.gz' "
           srcMaskScales=${srcMaskScales}"'${STROKE_PATH}${subjid}/${subjid}_ds7_us${scale}_dsmask_reg.nii.gz' "
+          tarMaskScales=${tarMaskScales}"'${STROKE_ATLAS_PATH}stroke61_seg_proc_ds7_us${scale}.nii.gz' "
         done
         echo "${srcScales}}" >> ${pathsinifile}
         echo "${tarScales}}" >> ${pathsinifile}
         echo "${srcMaskScales}}" >> ${pathsinifile}
+        # echo "${tarMaskScales}}" >> ${pathsinifile}
 
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
@@ -122,7 +128,7 @@ do
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
         sge_par_e="--sge \"-e ${sgeopath}\""
-        sge_par_l="--sge \"-l mem_free=150G \""
+        sge_par_l="--sge \"-l mem_free=100G \""
         sge_par_q="" #--sge \"-q qOnePerHost \""
         cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${lcmd} > ${sgerunfile}"
         echo $cmd

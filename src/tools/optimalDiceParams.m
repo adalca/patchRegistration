@@ -17,6 +17,21 @@ function [bestParams, bestDices] = optimalDiceParams(params, dices, verbose)
         [bestDices(i), mi] = max(mdice);
         bestParams(i) = uParams(mi);
     end
+    
+    uParams = cell(1, nParams);
+    for i = 1:nParams
+        uParams{i} = unique(params(:, i));
+    end
+    paramcombos = ndgrid2vec(uParams{:});
+    dicet = zeros(1, size(paramcombos, 1));
+    for i = 1:size(paramcombos, 1)
+        idx = all(bsxfun(@eq, paramcombos(i, :), params), 2);
+        dicet(i) = statsfn(dices(idx, :));
+    end
+    
+    [bestDices, bestParamsi] = nanmax(dicet);
+    bestParams = paramcombos(bestParamsi, :);
+    
 
     % get optimal parameters - version 2 (this could be much faster?)
     % could even try on one line? where second arg is a cell.
@@ -27,7 +42,7 @@ function [bestParams, bestDices] = optimalDiceParams(params, dices, verbose)
     if verbose
         fprintf('best parameter options are:\n');
         for i = 1:nParams
-            fprintf('%f (%f)\n', bestParams(i), bestDices(i));
+            fprintf('%f (%f)\n', bestParams(i), bestDices);
         end
         fprintf('\n');
     end

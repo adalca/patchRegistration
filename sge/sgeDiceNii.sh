@@ -1,5 +1,6 @@
 #!/bin/bash
 # run dice on ${dataName} registration
+# sgeDiceNii dataType runver dsRate
 
 ###############################################################################
 # Settings
@@ -14,7 +15,9 @@ export SGE_O_HOME=${SGE_LOG_PATH}
 mcr=/data/vision/polina/shared_software/MCR/v82/
 
 # project paths
-dataName='buckner'
+dataName='ADNI_T1_baselines'
+dataName="$1"
+dsRate="$3"
 ANTS_PATH="/data/vision/polina/scratch/adalca/patchSynthesis/data/${dataName}/ants/";
 BUCKNER_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/${dataName}/proc/brain_pad10/";
 BUCKNER_ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/${dataName}/atlases/brain_pad10/";
@@ -27,6 +30,9 @@ mccSh="${CLUST_PATH}MCC_diceNii/run_diceNii.sh"
 
 # this version's running path
 runver="sparse_ds7_pad10_lambdaedge_gridspacing_innerreps";
+runver="ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam"
+runver="ANTs_v102_brainpad10_ds7us7reg_multiparam"
+runver="$2"
 
 ###############################################################################
 # Running Code
@@ -39,14 +45,13 @@ do
   sourceFolder="${veroutpath}${subjfolder}/final/"
   subjid=`echo $subjfolder | cut -d _ -f 1`
   sourceWarpedSegFileNii="${sourceFolder}/${dataName}61-seg-in-${subjid}-raw_via_${subjid}-2-${dataName}61-invWarp.nii.gz";
-  targetSegFileNii="${BUCKNER_PATH}${subjid}/${subjid}_proc_ds7_seg.nii.gz";
+  targetSegFileNii="${BUCKNER_PATH}${subjid}/${subjid}_proc_ds${dsRate}_seg.nii.gz";
   mkdir "${veroutpath}${subjfolder}/out" > /dev/null 2> /dev/null
   savePath="${veroutpath}${subjfolder}/out/stats.mat";
-  
-  if [ -f $savePath ] ; then
-     echo "skipping $subjfolder since $savePath exists" 
-     continue
-  fi
+
+  if [ ! -f ${sourceWarpedSegFileNii} ] ; then echo "skipping ${subjid} due to missing ${sourceWarpedSegFileNii}"; continue; fi
+  if [ ! -f $targetSegFileNii ] ; then echo "skipping ${subjid} due to missing ${targetSegFileNii}"; continue; fi
+  if [ -f $savePath ] ; then echo "skipping ${subjid} since ${savePath} already exists."; continue; fi
 
   lcmd="${mccSh} $mcr $sourceWarpedSegFileNii $targetSegFileNii $savePath"
   echo $lcmd
@@ -59,7 +64,7 @@ do
   sge_par_q="" #--sge \"-q qOnePerHost \""
   sgerunfile="${sgeopath}/reg2StatsPerSubject_${subjid}.sh"
   cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_o $sge_par_e $sge_par_q $sge_par_l ${lcmd} > ${sgerunfile}"
-  echo $cmd
+  # echo $cmd
   eval $cmd
 
   # run sge
