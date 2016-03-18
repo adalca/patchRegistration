@@ -1,7 +1,7 @@
 function [glmeanin, glmeanout] = miccai2016inoutStats(corepath, folders, params, inpath, ...
     subjNames, rawSubjFiletpl, segInRawFiletpl, inoutDesiredLabels, type)
 % corepath = strokeoutpaths{pi};
-    voxThr = 5;
+    voxThr = 1.01;
 
     glmeanin = nan(numel(folders), 1);
     glmeanout = nan(numel(folders), 1);
@@ -10,6 +10,7 @@ function [glmeanin, glmeanout] = miccai2016inoutStats(corepath, folders, params,
         % TODO: save meanin/meanout to stats. If it exists, load, otherwise compute.
         statsfile = fullfile(corepath, folders{i}, 'out/stats.mat');
         try 
+            % asdsa
             % try is faster than 
             % if sys.isfile(statsfile) && numel(whos(matfile(statsfile), 'stats')) > 0
             % since matfile is slow
@@ -41,7 +42,11 @@ function [glmeanin, glmeanout] = miccai2016inoutStats(corepath, folders, params,
             assert(isclean(stats.meanin));
             assert(isclean(stats.meanout));
             mkdir(fullfile(corepath, folders{i}, 'out'));
-            save(statsfile, 'stats', '-append');
+            if ~sys.isfile(statsfile)
+                save(statsfile, 'stats');
+            else
+                save(statsfile, 'stats', '-append');
+            end
         end
         glmeanin(i) = stats.meanin;
         glmeanout(i) = stats.meanout;

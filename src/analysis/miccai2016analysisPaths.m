@@ -10,14 +10,19 @@
 
 %% setup paths
 INPUT = '/data/vision/polina/scratch/patchRegistration/inputs/';
-bucknerinpath = [INPUT, 'buckner/proc/brain_pad10/'];
+bucknerinpath = [INPUT, 'ADNI_T1_baselines/proc/brain_pad10/'];
 strokeinpath = [INPUT, 'stroke/proc/brain_pad10/'];
 
 OUTPATH = '/data/vision/polina/scratch/patchRegistration/output/';
 bppath = [OUTPATH, 'buckner/sparse_ds7_pad10_lambdaedge_gridspacing_innerreps/'];
+bppath = [OUTPATH, 'ADNI_T1_baselines/PBR_v101_wholevol/'];
 bapath = [OUTPATH, 'buckner/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam/'];
+bapath = [OUTPATH, 'ADNI_T1_baselines/ANTs_v102_brainpad10_ds7us7reg_multiparam/'];
+bapath = [OUTPATH, 'ADNI_T1_baselines/ANTs_v103_brainpad10_ds9us9reg_noaffine_multiparam/'];
 sppath = [OUTPATH, 'stroke/PBR_v5'];
-sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam']; 
+sppath = [OUTPATH, 'stroke/PBR_v101_brain_pad10'];
+sapath = [OUTPATH, 'stroke/ANTs_v3_raw_fromDs7us7Reg_continueAffine_multiparam/']; 
+sapath = [OUTPATH, 'stroke/ANTs_v102_brainpad10_ds7us7reg_multiparam/'];
 
 saveImagesPath = '/data/vision/polina/scratch/patchRegistration/output/miccai2016figures/mar15';
 
@@ -27,7 +32,7 @@ bucknerpathnames = {'buckner-ANTs', 'buckner-PBR'};
 strokepathnames = {'stroke-ANTs', 'stroke-PBR'};
 
 segInRawFiletpl = '%s61-seg-in-%s-raw_via_%s-2-%s61-invWarp.nii.gz';
-rawSubjFiletpl = '%s_proc_ds7.nii.gz';
+rawSubjFiletpl = '%s_proc_ds9.nii.gz';
 
 segInSubjFiletpl = '%s61-seg-in-%s_via_%s-2-%s61-invWarp.nii.gz';
-subjFiletpl = '%s_ds7_us7_reg.nii.gz';
+subjFiletpl = '%s_ds9_us9_reg.nii.gz';

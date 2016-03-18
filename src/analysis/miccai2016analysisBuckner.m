@@ -13,7 +13,7 @@ miccai2016analysisPaths
 
 %% settings
 nTrainSubj = 10;
-bucknerSelSubj = 'buckner19';
+bucknerSelSubj = '101411';
 % goodish for both: 23
 doInOutAnalysis = false;
 
@@ -51,7 +51,13 @@ for pi = 1:numel(buckneroutpaths)
     
     % prepare Dice of rest of subjects given top parameters
     for i = 1:numel(dice4OverallPlots)
-        dice4OverallPlots{i} = [dice4OverallPlots{i}, dices(optsel, i)];
+        if pi == 1, dice4OverallPlots{i} = dices(optsel, i); 
+        else q = nan(max(size(dice4OverallPlots{i}, 1), sum(optsel)), size(dice4OverallPlots{i}, 2) + 1);
+            q(1:size(dice4OverallPlots{i}, 1), 1:size(dice4OverallPlots{i}, 2)) = dice4OverallPlots{i};
+            q(1:sum(optsel), size(dice4OverallPlots{i}, 2) + 1) = dices(optsel, i);
+            dice4OverallPlots{i} = q;
+        end
+        % dice4OverallPlots{i} = [dice4OverallPlots{i}, dices(optsel, i)];
     end
     
     % show some example slices of outlines 
@@ -59,23 +65,23 @@ for pi = 1:numel(buckneroutpaths)
     showSel = find(all(bsxfun(@eq, params, [subjnr, optParams]), 2));
     assert(numel(showSel) == 1, 'did not find the folder to show');
     
-    % axial - use the raw volumes
-    vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(rawSubjFiletpl, bucknerSelSubj)));
-    selfname = sprintf(segInRawFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
-    seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
-    seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
-    foldername = sprintf('%s/%s_%s/', saveImagesPath, bucknerpathnames{pi}, bucknerSelSubj); mkdir(foldername);
-    miccai2016saveFrames(rgbImages, fullfile(foldername, 'axial_%d.png'));
+%     % axial - use the raw volumes
+%     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(rawSubjFiletpl, bucknerSelSubj)));
+%     selfname = sprintf(segInRawFiletpl, 'ADNI_T1_baselines', bucknerSelSubj, bucknerSelSubj, 'ADNI_T1_baselines');
+%     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
+%     seg(~ismember(seg, desiredDiceLabels)) = 0;
+%     [rgbImages, ~] = showVolStructures2D(vol, seg, {'axial'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
+%     foldername = sprintf('%s/%s_%s/', saveImagesPath, bucknerpathnames{pi}, bucknerSelSubj); mkdir(foldername);
+%     miccai2016saveFrames(rgbImages, fullfile(foldername, 'axial_%d.png'));
 
-    % saggital - here we want the interpolated volumes
-    vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
-    selfname = sprintf(segInSubjFiletpl, 'buckner', bucknerSelSubj, bucknerSelSubj, 'buckner');
-    seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
-    seg(~ismember(seg, desiredDiceLabels)) = 0;
-    [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
-    miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'));
-    
+%     % saggital - here we want the interpolated volumes
+%     vol = nii2vol(fullfile(bucknerinpath, bucknerSelSubj, sprintf(subjFiletpl, bucknerSelSubj)));
+%     selfname = sprintf(segInSubjFiletpl, 'ADNI_T1_baselines', bucknerSelSubj, bucknerSelSubj, 'ADNI_T1_baselines');
+%     seg = nii2vol(fullfile(respath, folders{showSel}, 'final', selfname));
+%     seg(~ismember(seg, desiredDiceLabels)) = 0;
+%     [rgbImages, ~] = showVolStructures2D(vol, seg, {'saggital'}, nUpscale, segThickness, 1); title(bucknerpathnames{pi});
+%     miccai2016saveFrames(rgbImages, fullfile(foldername, 'saggital_%d.png'));
+%     
     % gather intensity differences around ventricles
     if doInOutAnalysis
         [glmeanin{pi}, glmeanout{pi}] = miccai2016inoutStats(buckneroutpaths{pi}, folders, params, bucknerinpath, ...
@@ -99,7 +105,7 @@ if doInOutAnalysis
 end
 
 %% joint dice plotting
-save([saveImagesPath, '/bucknerDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
+save([saveImagesPath, '/adniDiceData.mat'], 'dice4OverallPlots', 'dicenames', 'bucknerpathnames');
 
 % combine left and right
 dice4OverallPlotsHalf = dice4OverallPlots;
