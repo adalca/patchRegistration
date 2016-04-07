@@ -39,6 +39,8 @@ function displ = multiscale(source, target, params, opts, varargin)
     if size(params.patchSize, 1) == 1, params.patchSize = rfn(params.patchSize); end
     if size(params.gridSpacing, 1) == 1, params.gridSpacing = rfn(params.gridSpacing); end
     if size(params.searchSize, 1) == 1, params.searchSize = rfn(params.searchSize); end
+    if size(params.mrf.lambda_edge, 1) == 1, params.mrf.lambda_edge = rfn(params.mrf.lambda_edge); end
+    if size(params.mrf.lambda_node, 1) == 1, params.mrf.lambda_node = rfn(params.mrf.lambda_node); end
     
     % go through the multiple scales
     for s = 1:params.nScales        
@@ -91,12 +93,14 @@ function displ = multiscale(source, target, params, opts, varargin)
                 sys.warnif(strcmp(opts.warpDir, 'forward'), ...
                     'Warning: forward full volwarp at each iteration is costly');
                 
-                wd = resizeWarp(displ, size(sourceOrig));
-                sourceWarped = volwarp(sourceOrig, wd, opts.warpDir);
-                scSourceWarped = volresize(sourceWarped, scSrcSize);
+                %wd = resizeWarp(displ, size(sourceOrig));
+                %sourceWarped = volwarp(sourceOrig, wd, opts.warpDir);
+                %scSourceWarped = volresize(sourceWarped, scSrcSize);
+                scSourceWarped = volwarp(scSource, displ, opts.warpDir);
                 if strcmp(opts.distance, 'sparse')
-                    sourceMaskWarped = volwarp(sourceMaskOrig, wd, opts.warpDir);
-                    scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
+                    %sourceMaskWarped = volwarp(sourceMaskOrig, wd, opts.warpDir);
+                    %scSourceMaskWarped = volresize(sourceMaskWarped, scSrcSize);
+                    scSourceMaskWarped = volwarp(scSourceMask, displ, opts.warpDir);
                 end
             end
 
@@ -106,6 +110,8 @@ function displ = multiscale(source, target, params, opts, varargin)
             locparams.patchSize = locparams.patchSize(s, :);
             locparams.gridSpacing = locparams.gridSpacing(s, :);
             locparams.searchSize = locparams.searchSize(s, :);
+            locparams.mrf.lambda_edge = locparams.mrf.lambda_edge(1, s);
+            locparams.mrf.lambda_node = locparams.mrf.lambda_node(1, s);
             if strcmp(opts.distance, 'sparse')
                 locparams.sourceMask = scSourceMaskWarped;
                 locparams.targetMask = scTargetMask;
