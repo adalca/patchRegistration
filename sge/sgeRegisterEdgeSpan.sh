@@ -39,6 +39,7 @@ runver="PBR_v101_wholevol";
 
 # parameters
 lambda_edge="0.005 0.01 0.03 0.05 0.1"
+lambda_node="[1, 1, 1, 1, 1, 1, 1]"
 gridSpacingTemplate='"[1;1;2;2;3;3;4;4;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
 varGridSpacing="4"
@@ -123,8 +124,9 @@ do
         gstext=`eval "echo ${gridSpacingTemplate}"`
         par2="\"params.gridSpacing=bsxfun(@times,[1,1,1],$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
+	par4="\"params.mrf.lambda_node=${lambda_node}\"";
         outname="${outfolder}/%d_%d.mat"
-        lcmd="${mccSh} $mcr ${pathsinifile} ${paramsinifile} ${optsinifile} $par1 $par2 $par3"
+        lcmd="${mccSh} $mcr ${pathsinifile} ${paramsinifile} ${optsinifile} $par1 $par2 $par3 $par4"
 
         # create sge file
         sge_par_o="--sge \"-o ${sgeopath}\""
