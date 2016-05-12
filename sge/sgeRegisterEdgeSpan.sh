@@ -9,7 +9,7 @@ preptype="wholevol"
 preptype="brain_pad10"
 
 datatype="buckner"
-datatype="ADNI_T1_baselines"
+datatype="stroke"
 
 dsRate="9"
 
