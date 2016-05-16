@@ -5,13 +5,11 @@
 # Settings
 ###############################################################################
 
-preptype="wholevol"
 preptype="brain_pad10"
 
-datatype="buckner"
 datatype="stroke"
 
-dsRate="9"
+dsRate="7"
 
 # prepare SGE variables necessary to move SGE environment away from AFS.
 export SGE_LOG_PATH=/data/vision/polina/scratch/adalca/patchSynthesis/sge/
@@ -27,23 +25,24 @@ ATLAS_PATH="/data/vision/polina/projects/stroke/work/patchSynthesis/data/${datat
 OUTPUT_PATH="/data/vision/polina/scratch/patchRegistration/output/";
 PROJECT_PATH="/data/vision/polina/users/adalca/patchRegistration/git/"
 CLUST_PATH="/data/vision/polina/users/adalca/patchRegistration/MCC/";
-paramsinifile="${PROJECT_PATH}/configs/buckner/bucknerParams${dsRate}.ini";
-optsinifile="${PROJECT_PATH}/configs/buckner/bucknerOpts.ini";
+paramsinifile="${PROJECT_PATH}/configs/stroke/strokeParams.ini";
+optsinifile="${PROJECT_PATH}/configs/stroke/strokeOpts.ini";
 
 # command shell file
 mccSh="${CLUST_PATH}MCC_registerNii/run_registerNii.sh"
 # mccSh="${CLUST_PATH}MCC_mccDispl2niftis/run_mccDispl2niftis.sh"
 
 # this version's running path
-runver="PBR_v101_wholevol";
+runver="PBR_v516_brainpad";
 
 # parameters
 lambda_edge="0.005 0.01 0.03 0.05 0.1"
 lambda_node="[1, 1, 1, 1, 1, 1, 1]"
 gridSpacingTemplate='"[1;1;2;2;3;3;4;4;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 echo "$gridSpacingTemplate"
-varGridSpacing="4"
+varGridSpacing="3 4 5 7"
 innerReps="3"
+hardSubjects="12191 12469 13888 13916 P0054"
 
 ###############################################################################
 # Running Code
@@ -60,7 +59,7 @@ mkdir -p $veroutpath;
 
 # run jobs
 cnt=0
-for subjid in `ls ${INPUT_PATH}`
+for subjid in $hardSubjects #`ls ${INPUT_PATH}`
 do
 
   for le in $lambda_edge
@@ -86,38 +85,36 @@ do
 
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
-        echo "; paths" > ${pathsinifile}
-        echo "sourceFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz" >> ${pathsinifile}
-        echo "targetFile = ${ATLAS_PATH}${datatype}61_brain_proc.nii.gz" >> ${pathsinifile}
-        echo "sourceMaskFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask_reg.nii.gz" >> ${pathsinifile}
-        echo "sourceSegFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg_seg.nii.gz" >> ${pathsinifile}
-        echo "sourceRawSegFile = ${INPUT_PATH}${subjid}/${subjid}_proc_ds${dsRate}_seg.nii.gz" >> ${pathsinifile}
-        echo "targetSegFile = ${ATLAS_PATH}${datatype}61_seg_proc.nii.gz" >> ${pathsinifile}
+	echo "; names" >> ${pathsinifile}
+	echo "targetName = ${subjid}" >> ${pathsinifile}
+	echo "sourceName = ${datatype}61" >> ${pathsinifile}
+        echo "; paths" >> ${pathsinifile}
+        echo "targetFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz" >> ${pathsinifile}
+        echo "sourceFile = ${ATLAS_PATH}${datatype}61_brain_proc_ds${dsRate}_us${dsRate}.nii.gz" >> ${pathsinifile}
+        echo "sourceSegFile = ${ATLAS_PATH}${datatype}61_seg_proc_ds${dsRate}_us${dsRate}.nii.gz" >> ${pathsinifile}
 
         echo "; output paths" >> ${pathsinifile}
         echo "savepathout = ${outfolder}" >> ${pathsinifile}
         echo "savepathfinal = ${finalfolder}" >> ${pathsinifile}
 
-        echo "; names" >> ${pathsinifile}
-        echo "sourceName = ${subjid}" >> ${pathsinifile}
-        echo "targetName = ${datatype}61" >> ${pathsinifile}
-
         echo "; scales" >> ${pathsinifile}
         srcScales="sourceScales = {"
         tarScales="targetScales = {"
-        srcMaskScales="sourceMaskScales = {"
         tarMaskScales="targetMaskScales = {"
         for scale in `seq ${dsRate}` # 1 2 3 4 5 6 `
         do
-          srcScales=${srcScales}"'${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${scale}_reg.nii.gz' "
-          tarScales=${tarScales}"'${ATLAS_PATH}${datatype}61_brain_proc_ds${dsRate}_us${scale}.nii.gz' "
-          srcMaskScales=${srcMaskScales}"'${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${scale}_dsmask_reg.nii.gz' "
+          tarScales=${tarScales}"'${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${scale}_reg.nii.gz' "
+          srcScales=${srcScales}"'${ATLAS_PATH}${datatype}61_brain_proc_ds${dsRate}_us${scale}.nii.gz' "
           tarMaskScales=${tarMaskScales}"'${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${scale}_dsmask_reg.nii.gz' "
         done
         echo "${srcScales}}" >> ${pathsinifile}
         echo "${tarScales}}" >> ${pathsinifile}
-        echo "${srcMaskScales}}" >> ${pathsinifile}
-        # echo "${tarMaskScales}}" >> ${pathsinifile} # note, not adding target masks!
+        echo "${tarMaskScales}}" >> ${pathsinifile}
+        # echo "${srcMaskScales}}" >> ${pathsinifile} # note, not adding source masks!
+	
+	echo "; raw source" >> ${pathsinifile}
+	echo "targetRawMaskFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask.nii.gz" >> ${pathsinifile}
+	echo "affineDispl = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.mat" >> ${pathsinifile}	
 
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=[${le}, ${le}, ${le}, ${le}, ${le}, ${le}, ${le}];\"";
