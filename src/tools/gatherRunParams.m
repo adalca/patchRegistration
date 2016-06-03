@@ -25,7 +25,7 @@ function [params, subjNames, folders] = gatherRunParams(path, verbose)
     
     % extract all folder names
     folders = {d.name};
-    isfolder = cellfun(@(s) isdir(fullfile(path,s)) && ~strcmp(s(1), '.'), folders);
+    isfolder = cellfun(@(s) isdir(fullfile(path,s)) && ~strcmp(s(1), '.') && ~strcmp(s, 'html'), folders);
     folders = folders(isfolder);
     nRuns = numel(folders);
     

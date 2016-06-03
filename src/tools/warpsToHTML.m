@@ -7,7 +7,9 @@ outlineLabels = [4, 43, 3, 42];
 [paramsANTs, subjNamesANTs, foldersANTs] = gatherRunParams(ANTsOutPath);
 
 % Set up html file
-fid = fopen([saveImagesPath, 'outlines.html'],'a');
+mkdir(saveImagesPath);
+mkdir([PBROutPath, 'html/']);
+fid = fopen([PBROutPath, 'html/outlines.html'],'a');
 fprintf(fid, '\n<H1>Outlines</H1>');
 
 for subjectID = 1:numel(subjNamesPBR)
@@ -40,8 +42,8 @@ for subjectID = 1:numel(subjNamesPBR)
     % grab the volume ds7us7 and the segmentation
     volNii = loadNii(fullfile(strokeInPath, subjectName, sprintf('/%s_ds7_us7_reg.nii.gz', subjectName)));
     vol = volNii.img;
-    segRawPBRnii = loadNii(fullfile(strokeAtlasPath, '/stroke61_seg_proc_ds7_us7.nii.gz'));
-    segRawPBR = segRawPBRnii.img;
+    segPBRnii = loadNii(fullfile(strokeAtlasPath, '/stroke61_seg_proc_ds7_us7.nii.gz'));
+    segPBR = segPBRnii.img;
     
     % Start new row in the HTML file table
     fprintf(fid, ['\n<H2>Subject ', subjectName, ' slice ', num2str(centroid), '</H2>']);
@@ -51,7 +53,7 @@ for subjectID = 1:numel(subjNamesPBR)
     for scale = 1:nScales   
         fprintf(fid, '\n<tr>');
         fprintf(fid, ['\n<td>', 'Scale ', num2str(scale), '</td>']);
-        for param = PBRID:nParamsPBR + PBRID - 1        
+        for param = PBRID:(nParamsPBR + PBRID - 1)        
             % extract stats for this run
             try
                 stats = load(fullfile(PBROutPath, foldersPBR{param}, sprintf('/out/%d_%d.mat', scale, nInnerReps)));        
@@ -72,14 +74,14 @@ for subjectID = 1:numel(subjNamesPBR)
             % apply the warp to the atlas segmentation
             displ = stats.displVolumes.cdispl;
             scDispl = resizeWarp(displ, size(vol));
-            warpedSeg = volwarp(segRawPBR, scDispl, warpDir);
+            warpedSeg = volwarp(segPBR, scDispl, warpDir);
             warpedSegReduced = ismember(warpedSeg, outlineLabels);
             assert(isequal(size(vol),size(warpedSeg)));
             [rgbImages, ~] = showVolStructures2D(vol(:, :, centroid), warpedSegReduced(:, :, centroid), {'axial'}, 3, 3, 1); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));
             
             % save image locally in the images directory
-            foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-PBR', subjectName); mkdir(foldername);
-            imgPath = ['stroke-PBR_', subjectName, sprintf('/axial_scale%d_%d.png', scale, centroid)];
+            foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-PBR', foldersPBR{param}); mkdir(foldername);
+            imgPath = ['../../../images/stroke-PBR_', foldersPBR{param}, sprintf('/axial_scale%d_%d.png', scale, centroid)];
             imwrite(rgbImages, fullfile(foldername, sprintf('axial_scale%d_%d.png', scale, centroid)));
             
             % add image to the html file
@@ -89,15 +91,15 @@ for subjectID = 1:numel(subjNamesPBR)
             fprintf(fid, '\n</figure></td>');
         end
         if scale == nScales     
-            for param = ANTsID : nParamsANTs + ANTsID - 1
+            for param = ANTsID : (nParamsANTs + ANTsID - 1)
                 % add the ANTs segmentation result
                 segANTsnii = loadNii(fullfile(ANTsOutPath, foldersANTs{param}, '/final/', sprintf('/stroke61-seg-in-%s_via_stroke61-2-%s-warp.nii.gz', subjectName, subjectName)));
                 segANTs = ismember(segANTsnii.img, outlineLabels);
                 [rgbImages, ~] = showVolStructures2D(vol(:, :, centroid), segANTs(:, :, centroid), {'axial'}, 3, 3, 1); %title(strrep(['ANTs ', foldersANTs{param}], '_', '\_'));
                 
                 % save the image locally in the images directory
-                foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-ANTs', subjectName); mkdir(foldername);
-                imgPath = ['stroke-ANTs_', subjectName, sprintf('/axial_scale%d_%d.png', scale, centroid)];
+                foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-ANTs', foldersANTs{param}); mkdir(foldername);
+                imgPath = ['../../../images/stroke-ANTs_', foldersANTs{param}, sprintf('/axial_scale%d_%d.png', scale, centroid)];
                 imwrite(rgbImages, fullfile(foldername, sprintf('axial_scale%d_%d.png', scale, centroid)));
                 
                 % add image to the html file
