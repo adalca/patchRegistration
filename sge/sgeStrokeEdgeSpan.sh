@@ -19,7 +19,7 @@ do
   lambda_node=$lambda_node"1,"
 done
 lambda_node=$lambda_node"1]"
-nScales="$#"+1
+nScales=`expr $# + 1`
 
 # prepare SGE variables necessary to move SGE environment away from AFS.
 export SGE_LOG_PATH=/data/vision/polina/scratch/adalca/patchSynthesis/sge/
@@ -94,7 +94,6 @@ do
 echo $subjid
   while read line;
   do
-echo $line
     le=$line
     for gs in $varGridSpacing
     do
@@ -115,9 +114,9 @@ echo $line
 
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
-	    echo "; names" >> ${pathsinifile}
-	    echo "targetName = ${subjid}" >> ${pathsinifile}
-	    echo "sourceName = ${datatype}61" >> ${pathsinifile}
+	echo "; names" > ${pathsinifile}
+	echo "targetName = ${subjid}" >> ${pathsinifile}
+	echo "sourceName = ${datatype}61" >> ${pathsinifile}
         echo "; paths" >> ${pathsinifile}
         echo "targetFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz" >> ${pathsinifile}
         echo "sourceFile = ${ATLAS_PATH}${datatype}61_brain_proc_ds${dsRate}_us${dsRate}.nii.gz" >> ${pathsinifile}
@@ -131,7 +130,8 @@ echo $line
         srcScales="sourceScales = {"
         tarScales="targetScales = {"
         tarMaskScales="targetMaskScales = {"
-        for scale in `seq ${nScales}+1` # 1 2 3 4 5 6 `
+        nScalesPlusOne=`expr ${nScales} + 1`
+	for scale in `seq ${nScalesPlusOne}` # 1 2 3 4 5 6 `
         do
           if [ $scale -eq 1 ]
 	      then continue
@@ -154,9 +154,9 @@ echo $line
         gstext=`eval "echo ${gridSpacingTemplate}"`
         par2="\"params.gridSpacing=bsxfun(@times,[1,1,1],$gstext);\"";
         par3="\"params.nInnerReps=${ni};\"";
-	    par4="\"params.mrf.lambda_node=${lambda_node}\"";
+	par4="\"params.mrf.lambda_node=${lambda_node}\"";
         par5="\"params.patchSize=bsxfun(@times,[1,1,1],[5,5,7,7,9,9]')\"";
-	    par6="\"params.nScales=6\"";
+	par6="\"params.nScales=$nScales\"";
         outname="${outfolder}/%d_%d.mat"
         lcmd="${mccSh} $mcr ${pathsinifile} ${paramsinifile} ${optsinifile} $par1 $par2 $par3 $par4 $par5 $par6"
 
@@ -176,10 +176,10 @@ echo $line
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-         #sleep 10
+        # sleep 1
       done
     done
-  done
+  done < lambdaEdgeFile.txt
   cnt=`expr $cnt + 1`
   if [ "$cnt" -eq "100" ] ; then
     exit 0;
