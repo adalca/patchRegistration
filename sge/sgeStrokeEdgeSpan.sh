@@ -1,4 +1,4 @@
-#!/bin/bash
+    #!/bin/bash
 # run stroke registration
 
 ###############################################################################
@@ -153,20 +153,19 @@ echo $subjid
 	      par6="\"params.nScales=$nScales\"";
         outname="${outfolder}/%d_%d.mat"
         regcmd="${regMccSh} $mcr ${pathsinifile} ${paramsinifile} ${optsinifile} $par1 $par2 $par3 $par4 $par5 $par6"
-        regcmd=""
         
         # prepare command for upsampling warp
         statFile="${outfolder}/${nScales}_${ni}.mat"
         subjFile="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz"
         atlSegFile="${ATLAS_PATH}/${ATLAS_FILE_SUFFIX}_seg_proc_ds${dsRate}_us${dsRate}.nii.gz"
-        atlSeg2SubjRegNii="${veroutpath}${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
+        atlSeg2SubjRegNii="${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
         upcmd="${upMccSh} $mcr $statFile $subjFile $atlSegFile $atlSeg2SubjRegNii"
         
         # prepare sge warp
         sourceDsXFile="${INPUT_PATH}${subjid}/${subjid}_proc_ds${dsRate}.nii.gz"
         sourceDsXUsXMaskFile="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask.nii.gz"
         atlSeg2SubjRegMat="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.mat"
-        saveSourceRawSegNii="${veroutpath}${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}-raw_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
+        saveSourceRawSegNii="${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}-raw_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
         rawcmd="${warpMccSh} $mcr $sourceDsXFile $sourceDsXUsXMaskFile $atlSeg2SubjRegNii $atlSeg2SubjRegMat $saveSourceRawSegNii"
         
         # output commands to file
@@ -179,7 +178,7 @@ echo $subjid
         sge_par_e="--sge \"-e ${sgeopath}\""
         sge_par_l="--sge \"-l mem_free=100G \""
         sge_par_q="" #--sge \"-q qOnePerHost \""
-        cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${sgecmdfile} > ${sgerunfile}"
+        cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l /bin/sh ${sgecmdfile} > ${sgerunfile}"
         echo $cmd
         eval $cmd
 
