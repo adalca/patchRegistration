@@ -93,7 +93,8 @@ echo $subjid
       for ni in $innerReps
       do
         # prepare output folder for this setting
-        runfolder="${veroutpath}/${subjid}_${line}_${gs}_${ni}/"
+        lineWithUnderscores=${line/,/_}
+        runfolder="${veroutpath}/${subjid}_${lineWithUnderscores}_${gs}_${ni}/"
         mkdir -p $runfolder
         outfolder="${runfolder}/out/"
         mkdir -p $outfolder
@@ -107,9 +108,9 @@ echo $subjid
 
         # need to output/prepare paths.ini for each subject. Can use standard bucknerParams.ini and bucknerOpts.ini
         pathsinifile="${runfolder}/paths.ini"
-	echo "; names" > ${pathsinifile}
-	echo "targetName = ${subjid}" >> ${pathsinifile}
-	echo "sourceName = ${datatype}61" >> ${pathsinifile}
+        echo "; names" > ${pathsinifile}
+        echo "targetName = ${subjid}" >> ${pathsinifile}
+        echo "sourceName = ${datatype}61" >> ${pathsinifile}
         echo "; paths" >> ${pathsinifile}
         echo "targetFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz" >> ${pathsinifile}
         echo "sourceFile = ${ATLAS_PATH}${datatype}61_brain_proc_ds${dsRate}_us${dsRate}.nii.gz" >> ${pathsinifile}
@@ -125,7 +126,7 @@ echo $subjid
         tarMaskScales="targetMaskScales = {"
         nScalesPlusOne=`expr ${nScales} + 1`
         
-	for scale in `seq ${nScalesPlusOne}` # 1 2 3 4 5 6 `
+	      for scale in `seq ${nScalesPlusOne}` # 1 2 3 4 5 6 `
         do
           if [ $scale -eq 1 ]
 	          then continue
@@ -139,9 +140,9 @@ echo $subjid
         echo "${tarMaskScales}}" >> ${pathsinifile}
         # echo "${srcMaskScales}}" >> ${pathsinifile} # note, not adding source masks!
 	
-	echo "; raw source" >> ${pathsinifile}
-	echo "targetRawMaskFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask.nii.gz" >> ${pathsinifile}
-	echo "affineDispl = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.mat" >> ${pathsinifile}	
+        echo "; raw source" >> ${pathsinifile}
+        echo "targetRawMaskFile = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask.nii.gz" >> ${pathsinifile}
+        echo "affineDispl = ${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.mat" >> ${pathsinifile}	
 
         # prepare registration parameters and job
         par1="\"params.mrf.lambda_edge=${le};\"";
@@ -178,7 +179,7 @@ echo $subjid
         sge_par_e="--sge \"-e ${sgeopath}\""
         sge_par_l="--sge \"-l mem_free=100G \""
         sge_par_q="" #--sge \"-q qOnePerHost \""
-        cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l ${sgecmdfile} > ${sgerunfile}"
+        cmd="${PROJECT_PATH}sge/qsub-run -c $sge_par_q $sge_par_o $sge_par_e $sge_par_l /bin/sh ${sgecmdfile} > ${sgerunfile}"
         echo $cmd
         eval $cmd
 
@@ -189,7 +190,7 @@ echo $subjid
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        # sleep 10
+        sleep 10
       done
     done
   done < lambdaEdgeFile.txt
