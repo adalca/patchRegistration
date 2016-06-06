@@ -9,7 +9,7 @@ preptype="brain_pad10"
 datatype="stroke"
 dsRate="7"
 lambdaEdgeFile="lambdaEdgeFile.txt"
-runver="PBR_v605_brainpad"; # this version's running version
+runver="PBR_v606_brainpad_scale2"; # this version's running version
 
 lambda_edge="["
 lambda_node="["
@@ -30,7 +30,7 @@ varGridSpacing="5"
 innerReps="3"
 smallSubjects="14133 14209 14382 P0175 P0180 P0054 12191"
 hardSubjects="13888 10558 10557 10534 10529 10591 10578 10575 10567 10566 10564 10592 10604"
-segmSubjects="10537 10534 10530 10529 10522 14209 P0870 12191 P0054 P0180"
+segmSubjects="10537 10534 10530 10529 13888 14133 14209 14382 P0175 P0870 12191 P0054 P0180"
 nScales=`expr $# + 1`
 
 ###############################################################################
@@ -190,7 +190,7 @@ echo $subjid
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        sleep 10
+        #sleep 10
       done
     done
   done < lambdaEdgeFile.txt
