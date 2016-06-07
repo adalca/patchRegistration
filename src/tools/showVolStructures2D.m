@@ -19,13 +19,17 @@ function [rgbImages, hs] = showVolStructures2D(vol, seg, directions, multfact, t
     
     % check if color specified
     color = [];
+    interpMethod = 'linear';
     if numel(varargin)==1
         color=varargin{:};
+    elseif numel(varargin) == 2
+        color = varargin{1};
+        interpMethod = varargin{2};
     end
     
     % resize if necessary
     if multfact > 0
-        vol = volresize(vol, size(vol) .* multfact);
+        vol = volresize(vol, size(vol) .* multfact, interpMethod);
         seg = volresize(seg, size(seg) .* multfact, 'nearest');
     end
 

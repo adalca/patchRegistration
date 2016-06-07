@@ -114,7 +114,7 @@ for subjectID = 1:numel(subjNamesPBR)
                 warpedSeg = volwarp(scSegPBR, displ, warpDir, 'interpMethod', 'nearest');
                 warpedSegReduced = ismember(warpedSeg, outlineLabels);
                 assert(isequal(size(scVol),size(warpedSeg)));
-                [rgbImages, ~] = showVolStructures2D(scVol(:, :, scCentroid), warpedSegReduced(:, :, scCentroid), {'axial'}, 3, 1, 1); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));
+                [rgbImages, ~] = showVolStructures2D(scVol(:, :, scCentroid), warpedSegReduced(:, :, scCentroid), {'axial'}, 3, 1, 1, [], 'nearest'); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));
                 
                 % save image locally in the images directory
                 imgHeight = imgWidth * size(rgbImages, 1)/size(rgbImages,2);
@@ -138,13 +138,15 @@ for subjectID = 1:numel(subjNamesPBR)
                 [rgbImages, ~] = showVolStructures2D(vol(:, :, centroid), segANTs(:, :, centroid), {'axial'}, 3, 3, 1); %title(strrep(['ANTs ', foldersANTs{param}], '_', '\_'));
                 
                 % save the image locally in the images directory
+                imgHeight = imgWidth * size(rgbImages, 1)/size(rgbImages,2);
+                rgbImages = volresize(rgbImages, [imgHeight, imgWidth, 3], 'nearest');
                 foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-ANTs', foldersANTs{param}); mkdir(foldername);
                 imgPath = ['../../../images/stroke-ANTs_', foldersANTs{param}, sprintf('/axial_scale%d_%d.png', scale, centroid)];
                 imwrite(rgbImages, fullfile(foldername, sprintf('axial_scale%d_%d.png', scale, centroid)));
                 
                 % add image to the html file
                 fprintf(fid, '\n<td><figure>');
-                fprintf(fid, ['\n', '<img src="', imgPath, '" width="300px" />']);
+                fprintf(fid, ['\n', '<img src="', imgPath, sprintf('" width="%spx" height="%spx" />', num2str(imgWidth), num2str(imgHeight))]);
                 fprintf(fid, ['\n<figcaption align="bottom">', 'ANTs ', foldersANTs{param}, ' scale ', num2str(scale), '</figcaption>']);
                 fprintf(fid, '\n</figure></td>');
             end
