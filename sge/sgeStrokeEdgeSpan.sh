@@ -9,7 +9,7 @@ preptype="brain_pad10"
 datatype="stroke"
 dsRate="7"
 lambdaEdgeFile="lambdaEdgeFile.txt"
-runver="PBR_v605_brainpad"; # this version's running version
+runver="PBR_v605_brainpad_scale3"; # this version's running version
 
 lambda_edge="["
 lambda_node="["
@@ -24,7 +24,7 @@ lambda_node=$lambda_node"1]"
 # Parameters
 ###############################################################################
 
-lambdaEdgeOptions="0.01 0.03 0.05 0.075 0.1 0.125 0.15 0.175 0.2 0.225 0.25 0.275 0.3 0.325 0.35 0.375 0.4 0.425 0.45 0.475 0.5"
+lambdaEdgeOptions="0.01 0.025 0.05 0.075 0.1 0.125 0.15 0.175 0.2 0.225 0.25 0.275 0.3 0.325 0.35 0.375 0.4 0.425 0.45 0.475 0.5"
 gridSpacingTemplate='"[1;2;2;3;4;${gs}]"' # use ${gs} to decide where varGridSpacing goes
 varGridSpacing="5"
 innerReps="3"
@@ -93,7 +93,7 @@ echo $subjid
       for ni in $innerReps
       do
         # prepare output folder for this setting
-        lineWithUnderscores=${line/,/_}
+        lineWithUnderscores=${line//,/-}
         runfolder="${veroutpath}/${subjid}_${lineWithUnderscores}_${gs}_${ni}/"
         mkdir -p $runfolder
         outfolder="${runfolder}/out/"
@@ -159,14 +159,14 @@ echo $subjid
         statFile="${outfolder}/${nScales}_${ni}.mat"
         subjFile="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.nii.gz"
         atlSegFile="${ATLAS_PATH}/${ATLAS_FILE_SUFFIX}_seg_proc_ds${dsRate}_us${dsRate}.nii.gz"
-        atlSeg2SubjRegNii="${veroutpath}${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
+        atlSeg2SubjRegNii="${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
         upcmd="${upMccSh} $mcr $statFile $subjFile $atlSegFile $atlSeg2SubjRegNii"
         
         # prepare sge warp
         sourceDsXFile="${INPUT_PATH}${subjid}/${subjid}_proc_ds${dsRate}.nii.gz"
         sourceDsXUsXMaskFile="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_dsmask.nii.gz"
         atlSeg2SubjRegMat="${INPUT_PATH}${subjid}/${subjid}_ds${dsRate}_us${dsRate}_reg.mat"
-        saveSourceRawSegNii="${veroutpath}${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}-raw_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
+        saveSourceRawSegNii="${runfolder}/final/${ATLAS_FILE_SUFFIX}-seg-in-${subjid}-raw_via_${subjid}-2-${ATLAS_FILE_SUFFIX}-warp_via-scale${nScales}.nii.gz"
         rawcmd="${warpMccSh} $mcr $sourceDsXFile $sourceDsXUsXMaskFile $atlSeg2SubjRegNii $atlSeg2SubjRegMat $saveSourceRawSegNii"
         
         # output commands to file
@@ -190,7 +190,7 @@ echo $subjid
         $sgecmd
 
         # sleep for a bit to give sge time to deal with the new job (?)
-        sleep 10
+        # sleep 10
       done
     done
   done < lambdaEdgeFile.txt
