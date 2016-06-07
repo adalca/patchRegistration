@@ -1,16 +1,19 @@
-function warpsToHTML(strokeInPath, PBROutPath, ANTsOutPath, strokeAtlasPath, saveImagesPath, warpDir)
+function warpsToHTML(strokeInPath, PBROutPath, ANTsOutPath, strokeAtlasPath, saveImagesPath, warpDir, verbose)
 %% Create outline for every segmentation image
 
 inoutDesiredLabels = [4, 43];
 outlineLabels = [4, 43, 3, 42];
 [paramsPBR, subjNamesPBR, foldersPBR] = gatherRunParams(PBROutPath);
 [paramsANTs, subjNamesANTs, foldersANTs] = gatherRunParams(ANTsOutPath);
+scalefn = @(sc) sc + 1;
+color = [ 0.8500, 0.3250, 0.0980];
 
 % Set up html file
 mkdir(saveImagesPath);
 mkdir([PBROutPath, 'html/']);
-fid = fopen([PBROutPath, 'html/outlines.html'],'a');
+fid = fopen([PBROutPath, 'html/outlines.html'],'w');
 fprintf(fid, '\n<H1>Outlines</H1>');
+imgWidth = 300;
 
 for subjectID = 1:numel(subjNamesPBR)
     % determine the number of parameter configurations ran for this subject
@@ -21,7 +24,18 @@ for subjectID = 1:numel(subjNamesPBR)
     PBRID = PBRID(1);
     
     % grab stats to extract nScales and nInnerReps. They should be equal for every run for this subject. 
-    stats = load(fullfile(PBROutPath, foldersPBR{PBRID}, '/out/0_0.mat'));
+    for i = PBRID:(nParamsPBR + PBRID - 1) 
+        try
+            stats = load(fullfile(PBROutPath, foldersPBR{i}, '/out/0_0.mat'));
+            break;
+        catch 
+            if i == (nParamsPBR + PBRID - 1) 
+                warning('Skipping %s', foldersPBR{subjectID});
+                continue
+            end
+        end
+    end
+            
     nScales = stats.params.nScales;
     nInnerReps = stats.params.nInnerReps;
    
@@ -30,14 +44,7 @@ for subjectID = 1:numel(subjNamesPBR)
     ANTsID = ANTsID(1);
     segANTsnii = loadNii(fullfile(ANTsOutPath, foldersANTs{ANTsID}, '/final/', sprintf('/stroke61-seg-in-%s_via_stroke61-2-%s-warp.nii.gz', subjectName, subjectName)));
     segANTs = ismember(segANTsnii.img, inoutDesiredLabels);
-    centroidVal = 0;
-    for slice = 1:size(segANTs, 3)
-        currentCentroidVal = sum(sum(segANTs(:,:,slice)));
-        if currentCentroidVal > centroidVal
-            centroid = slice;
-            centroidVal = currentCentroidVal;
-        end 
-    end
+    centroid = centroid3D(segANTs);
     
     % grab the volume ds7us7 and the segmentation
     volNii = loadNii(fullfile(strokeInPath, subjectName, sprintf('/%s_ds7_us7_reg.nii.gz', subjectName)));
@@ -56,7 +63,7 @@ for subjectID = 1:numel(subjNamesPBR)
         for param = PBRID:(nParamsPBR + PBRID - 1)        
             % extract stats for this run
             try
-                stats = load(fullfile(PBROutPath, foldersPBR{param}, sprintf('/out/%d_%d.mat', scale, nInnerReps)));        
+                stats = load(fullfile(PBROutPath, foldersPBR{param}, sprintf('/out/%d_%d.mat', scale, nInnerReps))); 
             catch
                 warning('Skipping %s', foldersPBR{param});
                 continue
@@ -74,22 +81,55 @@ for subjectID = 1:numel(subjNamesPBR)
             % apply the warp to the atlas segmentation
             displ = stats.displVolumes.cdispl;
             scDispl = resizeWarp(displ, size(vol));
-            warpedSeg = volwarp(segPBR, scDispl, warpDir);
+            warpedSeg = volwarp(segPBR, scDispl, warpDir, 'interpMethod', 'nearest');
             warpedSegReduced = ismember(warpedSeg, outlineLabels);
             assert(isequal(size(vol),size(warpedSeg)));
-            [rgbImages, ~] = showVolStructures2D(vol(:, :, centroid), warpedSegReduced(:, :, centroid), {'axial'}, 3, 3, 1); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));
+            [rgbImages, ~] = showVolStructures2D(vol(:, :, centroid), warpedSegReduced(:, :, centroid), {'axial'}, 3, 3, 1, color); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));     
             
             % save image locally in the images directory
+            imgHeight = imgWidth * size(rgbImages, 1)/size(rgbImages,2);
+            rgbImages = volresize(rgbImages, [imgHeight, imgWidth, 3], 'nearest');
             foldername = sprintf('%s/%s_%s', saveImagesPath, 'stroke-PBR', foldersPBR{param}); mkdir(foldername);
             imgPath = ['../../../images/stroke-PBR_', foldersPBR{param}, sprintf('/axial_scale%d_%d.png', scale, centroid)];
             imwrite(rgbImages, fullfile(foldername, sprintf('axial_scale%d_%d.png', scale, centroid)));
             
             % add image to the html file
             fprintf(fid, '\n<td><figure>');
-            fprintf(fid, ['\n', '<img src="', imgPath, '" width="300px" />']);
+            fprintf(fid, ['\n', '<img src="', imgPath, sprintf('" width="%spx" height="%spx" />', num2str(imgWidth), num2str(imgHeight))]);
             fprintf(fid, ['\n<figcaption align="bottom">', 'PBR ', foldersPBR{param}, ' scale ', num2str(scale), '</figcaption>']);
             fprintf(fid, '\n</figure></td>');
+            
+            % if verbose, save and post the small scale version too
+            if verbose
+                % use small volume and segmentation
+                scVolnii = loadNii(fullfile(strokeInPath, subjectName, sprintf('/%s_ds7_us%s_reg.nii.gz', subjectName, num2str(scalefn(scale)))));
+                scVol = scVolnii.img;
+                scSegPBRnii = loadNii(fullfile(strokeAtlasPath, sprintf('/stroke61_seg_proc_ds7_us%s.nii.gz', num2str(scalefn(scale)))));
+                scSegPBR = scSegPBRnii.img;
+                %scSegPBR = volresize(segPBR, size(scVol), 'nearest');
+                % approximate centroid for this new scale
+                scSegANTs = volresize(segANTs, size(scSegPBR), 'nearest');
+                scCentroid = centroid3D(scSegANTs);
+                
+                warpedSeg = volwarp(scSegPBR, displ, warpDir, 'interpMethod', 'nearest');
+                warpedSegReduced = ismember(warpedSeg, outlineLabels);
+                assert(isequal(size(scVol),size(warpedSeg)));
+                [rgbImages, ~] = showVolStructures2D(scVol(:, :, scCentroid), warpedSegReduced(:, :, scCentroid), {'axial'}, 3, 1, 1); %title(strrep(['PBR ', foldersPBR{param}, ' scale ', num2str(scale)], '_', '\_'));
+                
+                % save image locally in the images directory
+                imgHeight = imgWidth * size(rgbImages, 1)/size(rgbImages,2);
+                rgbImages = volresize(rgbImages, [imgHeight, imgWidth, 3], 'nearest');
+                imgPath = ['../../../images/stroke-PBR_', foldersPBR{param}, sprintf('/axial_scale%d_%d-small.png', scale, scCentroid)];
+                imwrite(rgbImages, fullfile(foldername, sprintf('axial_scale%d_%d-small.png', scale, scCentroid)));
+
+                % add image to the html file
+                fprintf(fid, '\n<td><figure>');
+                fprintf(fid, ['\n', '<img src="', imgPath, sprintf('" width="%spx" height="%spx" />', num2str(imgWidth), num2str(imgHeight))]);
+                fprintf(fid, ['\n<figcaption align="bottom">', 'PBR ', foldersPBR{param}, ' scale ', num2str(scale), ' small </figcaption>']);
+                fprintf(fid, '\n</figure></td>');
+            end 
         end
+        
         if scale == nScales     
             for param = ANTsID : (nParamsANTs + ANTsID - 1)
                 % add the ANTs segmentation result
