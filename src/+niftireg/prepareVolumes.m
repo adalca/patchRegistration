@@ -1,71 +1,81 @@
-function [source, target, varargout] = prepareVolumes(paths, volPad, opts)
+function vols = prepareVolumes(paths, params)
 % preprocess the nifti files into volumes to be used in the registration algorithm
 % 
-% [source, target] = prepareVolumes(paths, volPad, opts)
-% [source, target, sourceMask, targetMask] = prepareVolumes(paths, volPad, opts)
+% vols = prepareVolumes(paths, params) load nifti volumes of moving and fixed image. 
 %
-% if opts.scaleMethod is 'load', then we pre-load all images in cells source and target
-%   otherwise source and target are each a volume
-% either option can optionally load sparse data 
+%   if params.scale.method is 'resize', paths.in.moving and paths.in.fixed should provide nifti
+%   paths to the moving and fixed image, respectively. In addition, if paths.in.movingMask and
+%   paths.in.fixedMask are provided, they will be loaded in as the appropriate masks. If these masks
+%   are provided in the paths but are empty, they are initialized as all ones.
 %
-% opts: scaleMethod, distance
+%   if params.scale.method is 'load', paths.in.movingScales and paths.in.fixedScales should provide
+%   a string with an array of nifti paths: e.g. '{''/path/to/firstscale.nii.gz'',
+%   ''/path/to/secondscale.nii.gz''}' we then we pre-load all images in cells moving and fixed.
+%   Masks can be provided through movingMaskScales and fixedMaskScales. 
+%
+%   Finally, if paths.in.initDispl is provided, it is loaded in.
+%
+% volumes is a struct that has 'moving' and 'fixed' fields, and optionally movingMask, fixedMask,
+% and initDispl.
+%
+% params used: params.scale.method
 
-    doload = strcmp(opts.scaleMethod, 'load');
-    dosparse = strcmp(opts.distance, 'sparse');
+    movingMask = [];
+    fixedMask = [];
+    if ~strcmp(params.scale.method, 'load')
+        % prepare moving
+        moving = nii2vol(paths.in.moving);
 
-    if ~doload
-        % prepare source
-        source = niftireg.prepNiiToVol(paths.sourceFile, volPad, opts.maxVolSize);
+        % prepare fixed
+        fixed = nii2vol(paths.in.fixed);
 
-        % prepare target
-        target = niftireg.prepNiiToVol(paths.targetFile, volPad, opts.maxVolSize);
+        % prepare moving mask
+        if isfield(paths.in, 'movingMask') && ~isempty(paths.in.movingMask)
+            movingMask = double(nii2vol(paths.in.movingMask));
+        elseif isfield(paths.in, 'movingMask')
+            fprintf('No moving mask found. Using all-ones\n');
+            movingMask = ones(size(moving));
+        end
 
-        % prepare masks is available
-        if dosparse
-            % prepare source mask
-            if isfield(paths, 'sourceMaskFile') && ~isempty(paths.sourceMaskFile)
-                sourceMask = double(niftireg.prepNiiToVol(paths.sourceMaskFile, volPad, opts.maxVolSize) > 0);
-            else
-                warning('No source mask found. Using all-ones');
-                sourceMask = ones(size(source));
-            end
-
-            % prepare target mask
-            if isfield(paths, 'targetMaskFile') && ~isempty(paths.targetMaskFile)
-                targetMask = double(niftireg.prepNiiToVol(paths.targetMaskFile, volPad, opts.maxVolSize)  > 0);
-            else
-                warning('No target mask found. Using all-ones');
-                targetMask = ones(size(target));
-            end
+        % prepare fixed mask
+        if isfield(paths.in, 'fixedMask') && ~isempty(paths.in.fixedMask)
+            fixedMask = double(nii2vol(paths.in.fixedMask));
+        elseif isfield(paths.in, 'fixedMask')
+            fprintf('No fixed mask found. Using all-ones\n');
+            fixedMask = ones(size(fixed));
         end
         
     else % doload
-        % prepare source and target cells
-        sourceScales = eval(paths.sourceScales);
-        targetScales = eval(paths.targetScales);
-        source = cellfunc(@(x) niftireg.prepNiiToVol(x, volPad), sourceScales);
-        target = cellfunc(@(x) niftireg.prepNiiToVol(x, volPad), targetScales);
+        % prepare moving and fixed cells
+        movingScales = eval(paths.in.movingScales);
+        fixedScales = eval(paths.in.fixedScales);
+        moving = cellfunc(@nii2vol, movingScales);
+        fixed = cellfunc(@nii2vol, fixedScales);
         
         % prepare sparse structures
-        if dosparse
-            if isfield(paths, 'sourceMaskScales') && ~isempty(paths.sourceMaskScales)
-                sourceMaskScales = eval(paths.sourceMaskScales);
-                sourceMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad) > 0), sourceMaskScales);
-            else
-                warning('No source mask found. Using all-ones');
-                sourceMask = cellfunc(@(x) ones(size(x)), source);
-            end
-            
-            if isfield(paths, 'targetMaskScales') && ~isempty(paths.targetMaskScales)
-                targetMaskScales = eval(paths.targetMaskScales);
-                targetMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad) > 0), targetMaskScales);
-            else
-                warning('No target mask found. Using all-ones');
-                targetMask = cellfunc(@(x) ones(size(x)), target);
-            end
+        if isfield(paths.in, 'movingMaskScales') && ~isempty(paths.in.movingMaskScales)
+            movingMaskScales = eval(paths.in.movingMaskScales);
+            movingMask = cellfunc(@(x) double(nii2vol(x)), movingMaskScales);
+        elseif isfield(paths.in, 'movingMaskScales')
+            fprintf('No moving mask found. Using all-ones\n');
+            movingMask = cellfunc(@(x) ones(size(x)), moving);
+        end
+
+        if isfield(paths.in, 'fixedMaskScales') && ~isempty(paths.in.fixedMaskScales)
+            fixedMaskScales = eval(paths.in.fixedMaskScales);
+            fixedMask = cellfunc(@(x) double(nii2vol(x)), fixedMaskScales);
+        elseif isfield(paths.in, 'fixedMaskScales')
+            fprintf('No fixed mask found. Using all-ones\n');
+            fixedMask = cellfunc(@(x) ones(size(x)), fixed);
         end
     end
     
-    varargout{1} = sourceMask;
-    varargout{2} = targetMask;
+    if isfield(paths.in, 'initDispl') 
+        vols.initDispl = nii2vol(paths.in.initDispl);
+    end
+    
+    vols.moving = moving;
+    if ~isempty(movingMask), vols.movingMask = movingMask; end
+    vols.fixed = fixed;
+    if ~isempty(fixedMask), vols.fixedMask = fixedMask; end
 end

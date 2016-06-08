@@ -1,34 +1,16 @@
-function displ = registerNii(pathsFile, paramsFile, optsFile, varargin)
+function displ = registerNii(varargin)
 % patch-based discrete registration
 % - pathsFile is a .ini file that contains all necessary paths
 % - paramsFile is a .ini file that contains all the necessary parameters,
-% - optsFile is a .ini file that contains all necessary options
 % - varargin takes in optional files for sourceMask and targetMask, in case
 % registration is sparse
-%
-% TODO: use cubic interpolation? see if there is a difference?
 
     % parse inputs
-    [source, target, paths, params, opts] = ...
-        niftireg.parseInputs(pathsFile, paramsFile, optsFile, varargin{:});
+    [vols, paths, params] = niftireg.parseInputs(varargin{:});
     
     % Patch Registration    
-    displ = patchreg.multiscale(source, target, params, opts);
+    displ = patchreg.multiscale(vols, params);
 
-    % save nifti
-    cfn = @(v) cropVolume(v, params.volPad + 1, size(v) - params.volPad);
-    displ = cellfunc(@(w) cfn(w), displ);
-    displName = sprintf('%s-2-%s-warp', paths.sourceName, paths.targetName);
-    displFile = sprintf('%s.nii.gz', displName);
-    displNii = make_nii(cat(5, displ{:}));
-    saveNii(displNii, [paths.savepathfinal displFile]);
-    
-    % save final displacement and volumes to niftis
-    % TODO: this step assumes segmentations are passed. We should edit this to be a very separate
-    % function.
-    niftireg.displ2niftis(displ, source, target, paths, params, opts);
-    
-    % Immediate Output Visualization
-    % TODO: this is unfinished!
-    niftireg.visualize();
+    % save niftis if necessary
+    niftireg.displ2niftis(displ, vols.moving, vols.fixed, paths, params);
 end

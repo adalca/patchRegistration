@@ -1,88 +1,58 @@
 function displ2niftis(varargin)
-% meant as a post-displacement processing script
+% warp and save nifti volumes given registration field
+%   displ2niftis(displ, source, target, paths, params)
 %
-% TODO: should separate warping displacement. only do seg if they are in the paths file.
-% TODO: instead of inverting the warp and applying the inverse warp, just apply the warp backwards.
+%   displ2niftis(registerNiiArguments...)
+   
+    % for now, we are not careful about headers.
+    warning('displ2niftis: Output niftis ignores appropriate header data.')
 
-    %% preamble
-    if iscell(varargin{1})
-        [displ, source, target, paths, params, opts] = varargin{:};
-        
-    else % assuming same inputs as above
-        [source, target, paths, params, opts] = niftireg.parseInputs(varargin{:});
-        displName = sprintf('%s-2-%s-warp', paths.sourceName, paths.targetName);
-        displFile = sprintf('%s.nii.gz', displName);
-        displNii = loadNii([paths.savepathfinal, displFile]);
-        displ = dimsplit(5, displNii.img);
-        displ = displ(:)'
+    % parse inputs
+    if iscell(varargin{1}) % called via matlab
+        [displ, moving, fixed, paths, params] = varargin{:};
+        if isfield(paths.out, 'displ') && ~isempty(paths.out.displ)
+            saveNii(make_nii(cat(5, displ{:})), paths.out.displ);
+        end
+    else % assuming same inputs as registerNii
+        [moving, fixed, paths, params] = niftireg.parseInputs(varargin{:});
+        displ = dimsplit(5, nii2vol(paths.out.displ));
+        displ = displ(:)';
     end
 
     % prepare "original" volumes to warp 
-    if strcmp(opts.scaleMethod, 'load')
-        source = source{end};
-        target = target{end};
+    if strcmp(params.scale.method, 'load')
+        moving = moving{end};
+        fixed = fixed{end};
     end
 
-    doSourceSeg = isfield(paths, 'sourceSegFile');
-    doTargetSeg = isfield(paths, 'targetSegFile');
-    
-    
-    %% prepare necessary volumes and warps
     % get inverse displacement
-    fn = @(v,d) volwarpForwardApprox(v, d, 'nLayers', 2);
-    displInv = invertwarp(displ, fn);    
-    
-    % crop volumes
-    cfn = @(v) cropVolume(v, params.volPad + 1, size(v) - params.volPad);
-    source = cfn(source);
-    target = cfn(target);
-    displ = cellfunc(@(w) cfn(w), displ);
-    displInv = cellfunc(@(w) cfn(w), displInv);
-    
-    % prepare segmentations, non-padded
-    % TODO: make sure we're looking at the right files in load and non-load options
-    if doSourceSeg, sourceSeg = nii2vol(paths.sourceSegFile); end
-    if doTargetSeg, targetSeg = nii2vol(paths.targetSegFile); end
+    if any(cellfun(@(v) isfield(paths.out, v), {'invDispl', 'fixed', 'fixedSeg'}))
+        fn = @(v,d) volwarpForwardApprox(v, d, 'nLayers', 2);
+        displInv = invertwarp(displ, fn);   
+        if isfield(paths.out, 'invDispl') && ~isempty(paths.out.invDispl)
+            saveNii(make_nii(cat(5, displInv{:})), paths.out.invDispl)
+        end
+    end
     
     % compose the final images using the resulting displacements
-    sourceWarped = volwarp(source, displ, opts.warpDir);
-    targetWarped = volwarp(target, displInv, opts.warpDir);
+    if isfield(paths.out, 'moving') && ~isempty(paths.out.moving)
+        movingWarped = volwarp(moving, displ, params.warp.dir);
+        saveNii(make_nii(movingWarped), paths.out.moving);
+    end
+    if isfield(paths.out, 'fixed') && ~isempty(paths.out.fixed)
+        fixedWarped = volwarp(fixed, displInv, params.warp.dir);
+        saveNii(make_nii(fixedWarped), paths.out.fixed);
+    end
 
     % warp segmentations
-    if doSourceSeg, sourceWarpedSeg = volwarp(sourceSeg, displ, opts.warpDir, 'interpMethod', 'nearest'); end
-    if doTargetSeg, targetWarpedSeg = volwarp(targetSeg, displInv, opts.warpDir, 'interpMethod', 'nearest'); end
-
-
-    
-    %% save niftis
-        
-    % prepare nifti file names
-    srcName = paths.sourceName;
-    tgtName = paths.targetName;
-    displName = sprintf('%s-2-%s-warp', srcName, tgtName);
-    displInvName = sprintf('%s-2-%s-invWarp', srcName, tgtName);
-    displFile = sprintf('%s.nii.gz', displName);
-    displInvFile = sprintf('%s.nii.gz', displInvName);
-    sourceWarpedFile = sprintf('%s-in-%s_via_%s.nii.gz', srcName, tgtName, displName);
-    targetWarpedFile = sprintf('%s-in-%s_via_%s.nii.gz', tgtName, srcName, displInvName);
-    sourceWarpedSegFile = sprintf('%s-seg-in-%s_via_%s.nii.gz', srcName, tgtName, displName);
-    targetWarpedSegFile = sprintf('%s-seg-in-%s_via_%s.nii.gz', tgtName, srcName, displInvName);
-    
-    % make niftis 
-    warning('displ2niftis: Making niftis while ignoring original meta-data. Uhoh, fixme!')
-    displNii = make_nii(cat(5, displ{:}));
-    displInvNii = make_nii(cat(5, displInv{:}));
-    sourceWarpedNii = make_nii(sourceWarped);
-    targetWarpedNii = make_nii(targetWarped);
-    if doSourceSeg, sourceWarpedSegNii = make_nii(sourceWarpedSeg); end
-    if doTargetSeg, targetWarpedSegNii = make_nii(targetWarpedSeg); end
-    
-    % save niftis
-    saveNii(displNii, [paths.savepathfinal displFile]);
-    saveNii(displInvNii, [paths.savepathfinal displInvFile]);
-    saveNii(sourceWarpedNii, [paths.savepathfinal sourceWarpedFile]);
-    saveNii(targetWarpedNii, [paths.savepathfinal targetWarpedFile]);
-    if doSourceSeg, saveNii(sourceWarpedSegNii, [paths.savepathfinal sourceWarpedSegFile]); end
-    if doTargetSeg, saveNii(targetWarpedSegNii, [paths.savepathfinal targetWarpedSegFile]); end
-
+    if isfield(paths.in, 'movingSeg') && isfield(paths.out, 'movingSeg') , 
+        movingSeg = nii2vol(paths.in.movingSeg); 
+        movingWarpedSeg = volwarp(movingSeg, displ, params.warp.dir, 'interpMethod', 'nearest'); 
+        saveNii(make_nii(movingWarpedSeg), paths.out.movingSeg); 
+    end
+    if isfield(paths.in, 'fixedSeg') && isfield(paths.out, 'fixedSeg'), 
+        fixedSeg = nii2vol(paths.in.fixedSeg); 
+        fixedWarpedSeg = volwarp(fixedSeg, displInv, params.warp.dir, 'interpMethod', 'nearest');
+        saveNii(make_nii(fixedWarpedSeg), paths.out.fixedSeg); 
+    end
 end

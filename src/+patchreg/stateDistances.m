@@ -1,7 +1,5 @@
-function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
-    stateDistances(source, target, patchSize, patchOverlap, searchSize, ...
-    locweight, distanceMetric, libraryMethod, varargin)
-% As an easy start, we can assume the reference/target grid is dense ('sliding'). It would be nicer
+function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols, params)
+% As an easy start, we can assume the reference/fixed grid is dense ('sliding'). It would be nicer
 % to change this in the future, but it could be a good start.
 %
 % patches is nSrcGridPts x prod(patchSize) x prod(searchSize)
@@ -9,10 +7,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
 % Rought outline of algorithm:
 %
 % compute srcgridsize and refgridsize using patchlib.grid();
-% compute the source library (size should be nSrcGridPts x prod(patchSize))
+% compute the moving library (size should be nSrcGridPts x prod(patchSize))
 % compute the reference library (size should be nRefGridPts(==nRefSize) x prod(patchSize))
 %
-% for each point in the source grid
+% for each point in the moving grid
 %    get the location in 2D/3D
 %    compute all the locations in the reference library within the searchSize
 %    transform these locations into a linear index (subvec2ind()) based on the reference grid
@@ -22,43 +20,41 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
 %       patches, e.g. for computation at the edges of the volume, set distance of infinity (I think)
 %   also fill in patches array in a consistent matter.
     
-    nDims = ndims(source);
+    % load some params for easier access
+    patchSize = params.patchSize;
+    patchOverlap = params.patchOverlap;
+    searchSize = params.searchSize;
+    nDims = ndims(vols.moving);
+    domask = isfield(vols, 'movingMask') && strcmp(params.dist.metric, 'sparse');
 
-    [srcIdx, ~, srcgridsize, ~] = patchlib.grid(size(source), patchSize, patchOverlap);
-    [refIdx, ~, refgridsize, ~] = patchlib.grid(size(target), patchSize);
+    [srcIdx, ~, srcgridsize, ~] = patchlib.grid(size(vols.moving), patchSize, patchOverlap);
+    [refIdx, ~, refgridsize, ~] = patchlib.grid(size(vols.fixed), patchSize);
     
-    if strcmp(libraryMethod, 'full')
-        % compute source library
-        srcLib = patchlib.vol2lib(source, patchSize, patchOverlap);
-
+    % compute full libraries if necessary
+    if strcmp(params.dist.libraryMethod, 'full')
+        % compute moving library
+        movLib = patchlib.vol2lib(vols.moving, patchSize, patchOverlap);
         % build the reference libraries
-        refLib = patchlib.vol2lib(target, patchSize);
+        fixLib = patchlib.vol2lib(vols.fixed, patchSize);
+        
+        % parse optional inputs
+        if domask
+            % compute moving mask library
+            movMaskLib = patchlib.vol2lib(vols.movingMask, patchSize, patchOverlap);
+            % build the reference mask libraries
+            fixMaskLib = patchlib.vol2lib(vols.fixedMask, patchSize);
+        end
     end
     
-    P = prod(patchSize);
     K = prod(searchSize);
     pDst = Inf(numel(srcIdx), K);
     pIdx = ones(numel(srcIdx), K); % Should be investigated. ones is a hack
     patches = nan(numel(srcIdx), 1, prod(searchSize)); % We never use the patches in this case. The second argument should be P, but we're putting 1 for memory win.
     local = (searchSize(1) - 1)/2;
-    srcgridsub = ind2subvec(size(source), srcIdx(:));
-    refgridsub = ind2subvec(size(target), refIdx(:));
+    srcgridsub = ind2subvec(size(vols.moving), srcIdx(:));
+    refgridsub = ind2subvec(size(vols.fixed), refIdx(:));
     
-    % parse optional inputs
-    if(numel(varargin) == 2)
-        srcMask = varargin{1};
-        refMask = varargin{2};
-        
-        if strcmp(libraryMethod, 'full')
-            % compute source mask library
-            srcMaskLib = patchlib.vol2lib(srcMask, patchSize, patchOverlap);
-
-            % build the reference mask libraries
-            refMaskLib = patchlib.vol2lib(refMask, patchSize);
-        end
-    end
-    
-    % for each point in the source grid
+    % for each point in the moving grid
     for i = 1:numel(srcIdx)
         srcsubi = srcgridsub(i, :);
         range = cell(1, nDims);
@@ -66,70 +62,61 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
             range{j} = max(srcsubi(j)-local, 1):min(srcsubi(j)+local, refgridsize(j));
             assert(~isempty(range{j}));
         end
-        
         rangeNumbers = ndgrid2vec(range{:});
         
-        % tranform indexes from target space to reference index.
-        refNeighborIdx = ind2ind(size(target), refgridsize, refIdx(range{:}));
-        refNeighborIdx = refNeighborIdx(:);
-        nNeighbors = numel(refNeighborIdx);
+        % tranform indexes from fixed space to reference index.
+        fixNeighborIdx = ind2ind(size(vols.fixed), refgridsize, refIdx(range{:}));
+        fixNeighborIdx = fixNeighborIdx(:);
+        nNeighbors = numel(fixNeighborIdx);
         
-        if strcmp(libraryMethod, 'local')
-            % compute source library
-            srcLibCurrent = patchlib.vol2lib(source, patchSize, 'locations', srcsubi);
+        % extract appropriate patches, either by computing local libraries or taking a subset of the
+        % full libraries.
+        if strcmp(params.dist.libraryMethod, 'local')
+            % compute moving library
+            movingLibCurrent = patchlib.vol2lib(vols.moving, patchSize, 'locations', srcsubi);
 
             % build the reference libraries (same as neighboring patches)
-            targetCrop = cropVolume(target, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
-            neighborPatches = patchlib.vol2lib(targetCrop, patchSize);
-            %neighborPatches = patchlib.vol2lib(target, patchSize, 'locations', rangeNumbers);
-            %assert(all(neighborPatches(:)==neighborPatches2(:)));
+            fixedCrop = cropVolume(vols.fixed, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
+            neighborPatches = patchlib.vol2lib(fixedCrop, patchSize);
             
             % parse optional inputs
-            if(numel(varargin) == 2)
-                % compute source mask library
-                srcMaskLibCurrent = patchlib.vol2lib(srcMask, patchSize, 'locations', srcsubi);
+            if domask
+                % compute moving mask library
+                movingMaskLibCurrent = patchlib.vol2lib(vols.movingMask, patchSize, 'locations', srcsubi);
 
-                % build the reference mask libraries (same as neighboring
-                % mask patches)
-                %neighborMaskPatches = patchlib.vol2lib(refMask, patchSize, 'locations', rangeNumbers);  
-                targetMaskCrop = cropVolume(refMask, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
-                neighborMaskPatches = patchlib.vol2lib(targetMaskCrop, patchSize);
+                % build the reference mask libraries (same as neighboring mask patches)
+                fixedMaskCrop = cropVolume(vols.fixedMask, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
+                neighborMaskPatches = patchlib.vol2lib(fixedMaskCrop, patchSize);
             end
         else
-            % extract source library
-            srcLibCurrent = srcLib(i, :);
+            % extract moving library
+            movingLibCurrent = movLib(i, :);
+            neighborPatches = fixLib(fixNeighborIdx, :);
 
             % parse optional inputs
-            if(numel(varargin) == 2)
-                % compute source mask library
-                srcMaskLibCurrent = srcMaskLib(i, :);         
-            end
-            
-            % get the neighbor patches
-            neighborPatches = refLib(refNeighborIdx, :);
-            if(numel(varargin)==2)
-                neighborMaskPatches = refMaskLib(refNeighborIdx, :);
+            if domask
+                % compute moving mask library
+                movingMaskLibCurrent = movMaskLib(i, :);         
+                % get the neighbor patches
+                neighborMaskPatches = fixMaskLib(fixNeighborIdx, :);
             end
         end     
         
-        % store the neighbor patches
-        % patches(i, :, 1:nNeighbors) = reshape(neighborPatches, [1, P, nNeighbors]);
-        
         % patch intensity distance of current patch to neighbors
         % normal pdist2:
-        switch distanceMetric
+        switch params.dist.metric
             case 'euclidean'
-                d = pdist2(srcLibCurrent, neighborPatches);
+                d = pdist2(movingLibCurrent, neighborPatches);
                 
             case 'seuclidean'
                 % relative pdist2:
-                avg = bsxfun(@plus, srcLibCurrent, neighborPatches) / 2 + eps;
-                d = sum((bsxfun(@times, srcLibCurrent, 1./avg) - neighborPatches./avg) .^2, 2)';
+                avg = bsxfun(@plus, movingLibCurrent, neighborPatches) / 2 + eps;
+                d = sum((bsxfun(@times, movingLibCurrent, 1./avg) - neighborPatches./avg) .^2, 2)';
                 
             case 'sparse'
                 % distance function for sparse data
-                patchDifference = bsxfun(@minus, srcLibCurrent, neighborPatches) .^2 + eps;
-                productMask = bsxfun(@times, srcMaskLibCurrent, neighborMaskPatches) + eps;
+                patchDifference = bsxfun(@minus, movingLibCurrent, neighborPatches) .^2 + eps;
+                productMask = bsxfun(@times, movingMaskLibCurrent, neighborMaskPatches) + eps;
                 numeratorD = sum(productMask .* patchDifference, 2)';
                 denominatorD = sum(productMask, 2)';
                 d = bsxfun(@times, numeratorD, prod(patchSize)./denominatorD) .^ 0.5;
@@ -138,11 +125,11 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
         end
         
         % compute spatial distance of current location to neighbors
-        dNeigh = locweight * pdist2(srcsubi, refgridsub(refNeighborIdx, :));
+        dNeigh = params.dist.location * pdist2(srcsubi, refgridsub(fixNeighborIdx, :));
         
         % note we don't use 1:K, instead we use 1:numel(p) since we might allow less than K matches
         pDst(i, 1:nNeighbors) = d + dNeigh;   
-        pIdx(i, 1:nNeighbors) = refNeighborIdx;
+        pIdx(i, 1:nNeighbors) = fixNeighborIdx;
     end
 end
 
