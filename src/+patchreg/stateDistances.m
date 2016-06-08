@@ -61,6 +61,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = ...
     % for each point in the source grid
     for i = 1:numel(srcIdx)
         srcsubi = srcgridsub(i, :);
+        if abs(srcsubi - [41,55,42]) < 2
+            disp('hi andreea. cat.');
+        end
+            
         range = cell(1, nDims);
         for j = 1:nDims
             range{j} = max(srcsubi(j)-local, 1):min(srcsubi(j)+local, refgridsize(j));

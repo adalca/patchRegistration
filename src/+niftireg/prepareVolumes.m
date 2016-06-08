@@ -24,7 +24,7 @@ function [source, target, varargout] = prepareVolumes(paths, volPad, opts)
         if dosparse
             % prepare source mask
             if isfield(paths, 'sourceMaskFile') && ~isempty(paths.sourceMaskFile)
-                sourceMask = double(niftireg.prepNiiToVol(paths.sourceMaskFile, volPad, opts.maxVolSize) > 0);
+                sourceMask = double(niftireg.prepNiiToVol(paths.sourceMaskFile, volPad, opts.maxVolSize));
             else
                 warning('No source mask found. Using all-ones');
                 sourceMask = ones(size(source));
@@ -32,7 +32,7 @@ function [source, target, varargout] = prepareVolumes(paths, volPad, opts)
 
             % prepare target mask
             if isfield(paths, 'targetMaskFile') && ~isempty(paths.targetMaskFile)
-                targetMask = double(niftireg.prepNiiToVol(paths.targetMaskFile, volPad, opts.maxVolSize)  > 0);
+                targetMask = double(niftireg.prepNiiToVol(paths.targetMaskFile, volPad, opts.maxVolSize));
             else
                 warning('No target mask found. Using all-ones');
                 targetMask = ones(size(target));
@@ -50,7 +50,7 @@ function [source, target, varargout] = prepareVolumes(paths, volPad, opts)
         if dosparse
             if isfield(paths, 'sourceMaskScales') && ~isempty(paths.sourceMaskScales)
                 sourceMaskScales = eval(paths.sourceMaskScales);
-                sourceMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad) > 0), sourceMaskScales);
+                sourceMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad)), sourceMaskScales);
             else
                 warning('No source mask found. Using all-ones');
                 sourceMask = cellfunc(@(x) ones(size(x)), source);
@@ -58,7 +58,7 @@ function [source, target, varargout] = prepareVolumes(paths, volPad, opts)
             
             if isfield(paths, 'targetMaskScales') && ~isempty(paths.targetMaskScales)
                 targetMaskScales = eval(paths.targetMaskScales);
-                targetMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad) > 0), targetMaskScales);
+                targetMask = cellfunc(@(x) double(niftireg.prepNiiToVol(x, volPad)), targetMaskScales);
             else
                 warning('No target mask found. Using all-ones');
                 targetMask = cellfunc(@(x) ones(size(x)), target);

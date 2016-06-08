@@ -36,7 +36,11 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(source, target, param
     srcSize = size(source);
     maskParams = {};
     if(strcmp(opts.distance, 'sparse'))
-        maskParams = {params.sourceMask, params.targetMask};
+        if strcmp(opts.warpDir, 'backward')
+            maskParams = {params.targetMask, params.sourceMask};
+        else
+            maskParams = {params.sourceMask, params.targetMask};
+        end
     end
     
     % get optimal patch movements via knnsearch and patchmrf.
