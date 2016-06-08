@@ -14,7 +14,7 @@ function [rgbImage, colors] = overlapVolSeg(labelVol, segVol, labels, colors, th
 % specification of colors to be used for each non-zero label
 %
 % [rgbImage, ...] = overlapVolSeg(labelVol, segvolslice, colors, labels,
-% dooutline) specify boolean dooutline, which if true executes slice-wise
+% thickness) specify thickness, which if true executes slice-wise
 % labelOutline() computation of each label. colors can be [] here, in which
 % case the default colors behavior takes over
 
