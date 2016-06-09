@@ -50,7 +50,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
     pDst = Inf(numel(srcIdx), K);
     pIdx = ones(numel(srcIdx), K); % Should be investigated. ones is a hack
     patches = nan(numel(srcIdx), 1, prod(searchSize)); % We never use the patches in this case. The second argument should be P, but we're putting 1 for memory win.
-    local = (searchSize(1) - 1)/2;
+    local = (searchSize(1) - 1)/2 .* params.searchGridSize;
     srcgridsub = ind2subvec(size(vols.moving), srcIdx(:));
     refgridsub = ind2subvec(size(vols.fixed), refIdx(:));
     
@@ -63,13 +63,15 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
             
         range = cell(1, nDims);
         for j = 1:nDims
-            range{j} = max(srcsubi(j)-local, 1):min(srcsubi(j)+local, refgridsize(j));
+            range{j} = max(srcsubi(j)-local, 1):params.searchGridSize:min(srcsubi(j)+local, refgridsize(j));
             assert(~isempty(range{j}));
         end
         rangeNumbers = ndgrid2vec(range{:});
         
         % tranform indexes from fixed space to reference index.
-        fixNeighborIdx = ind2ind(size(vols.fixed), refgridsize, refIdx(range{:}));
+        % fixNeighborIdx = ind2ind(size(vols.fixed), refgridsize, refIdx(range{:}));
+        n = ndgrid2cell(range{:}); 
+        fixNeighborIdx = sub2ind(refgridsize, n{:});
         fixNeighborIdx = fixNeighborIdx(:);
         nNeighbors = numel(fixNeighborIdx);
         

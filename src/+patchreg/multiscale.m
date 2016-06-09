@@ -46,7 +46,7 @@ function displ = multiscale(vols, params, varargin)
 
             % run registration at given scale
             sstic = tic();
-            locparams = scaleParams(params, s);
+            locparams = scaleParams(params, s, t);
             localDispl = patchreg.singlescale(scvolsw, locparams, 'currentdispl', displ, varargin{:});
             sstime = toc(sstic);
 
@@ -80,13 +80,18 @@ function displ = multiscale(vols, params, varargin)
     end    
 end
 
-function locparams = scaleParams(params, s)
+function locparams = scaleParams(params, s, t)
 % extract this scale's parameters
     locparams = params;
     locparams.patchSize = locparams.patchSize(s, :);
     locparams.gridSpacing = locparams.gridSpacing(s, :);
     locparams.searchSize = locparams.searchSize(s, :);
-    locparams.mrf.lambda_edge = locparams.mrf.lambda_edge(s);
+    if params.adaptSearchGridSpacing
+        locparams.searchGridSize = params.nInnerReps - t + 1;
+    else
+        locparams.searchGridSize = 1;
+    end
+    locparams.mrf.lambda_edge = locparams.mrf.lambda_edge(s) ./ locparams.searchGridSize;
     locparams.mrf.lambda_node = locparams.mrf.lambda_node(s);
 end
 
