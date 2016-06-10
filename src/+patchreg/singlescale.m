@@ -25,9 +25,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(vols, params, varargi
     movingPatchOverlap = patchSize - params.gridSpacing; % patchSize - (source grid spacing)
     params.patchOverlap = movingPatchOverlap;
     
-    % get proposed patch displacement and cost/distances
-    local = (params.searchSize - 1) / 2;
-    searchPatch = ones(1, ndims(vols.moving)) .* local .* 2 + 1;
+    % prepare volumes for patch distances
     dstvols = vols;
     if (strcmp(params.warp.dir, 'backward')) % switch moving and fixed
         dstvols.fixed = vols.moving;
@@ -37,18 +35,18 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(vols, params, varargi
             dstvols.movingMask = vols.fixedMask;
         end
     end
-    if strcmp(params.dist.search, 'complete')
-        [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(dstvols, params);
-        
+    
+    % get proposed patch displacement and cost/distances
+    [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(dstvols, params);
+    if isIntegerValue(params.dist.search); % only keep the top k
+        [~, si] = sort(pDst, 'ascend');
+        topkidx = si(1:params.dist.search);
+        patches = patches(:, :, topkidx);
+        pDst = pDst(:, topkidx);
+        pIdx = pIdx(:, topkidx);
     else
-        assert(strcmp(params.dist.search, 'topk'), 'dist.search can only be complete or topk');
-        
-        % unverified/explored.
-        refPatchOverlap = 'sliding';
-        [patches, pDst, pIdx, ~, srcgridsize, refgridsize] = ...
-            patchlib.volknnsearch(vols{:}, patchSize, movingPatchOverlap, refPatchOverlap, ...
-            'local', local, 'location', params.location, 'K', prod(searchPatch), 'fillK', true, ...
-            inputs.searchargs{:});
+        assert(ischar(params.dist.search) && strcmp(params.dist.search, 'complete'), ...
+            'dist.search can only be ''complete'' or an int');
     end
     
     % transform patch movements to a (regularized) warp
