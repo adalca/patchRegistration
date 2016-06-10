@@ -73,8 +73,8 @@ function displ = multiscale(vols, params, varargin)
     
     if isfield(params, 'debug') && isfield(params.debug, 'out') && ~isempty(params.debug.out)
         state = struct('runTime', toc(mastertic)); %#ok<NASGU>
-        volumes = struct('moving', moving, 'fixed', fixed); %#ok<NASGU>
-        displVolumes = struct('displ', displ); %#ok<NASGU>
+        volumes = struct('moving', scvols.moving, 'fixed', scvols.fixed); %#ok<NASGU>
+        displVolumes = struct('displ', {displ}); %#ok<NASGU>
         filename = sprintf(params.debug.out, 0, 0);
         save(filename, 'params', 'displVolumes', 'volumes', 'state');
     end    
@@ -91,7 +91,7 @@ function locparams = scaleParams(params, s, t)
     else
         locparams.searchGridSize = 1;
     end
-    locparams.mrf.lambda_edge = locparams.mrf.lambda_edge(s) ./ locparams.searchGridSize;
+    locparams.mrf.lambda_edge = locparams.mrf.lambda_edge(s); % ./ locparams.searchGridSize;
     locparams.mrf.lambda_node = locparams.mrf.lambda_node(s);
 end
 

@@ -83,7 +83,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
 
             % build the reference libraries (same as neighboring patches)
             fixedCrop = cropVolume(vols.fixed, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
-            neighborPatches = patchlib.vol2lib(fixedCrop, patchSize);
+            neighborPatches = patchlib.vol2lib(fixedCrop, patchSize, patchSize - params.searchGridSize);
             
             % parse optional inputs
             if domask
@@ -92,7 +92,7 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
 
                 % build the reference mask libraries (same as neighboring mask patches)
                 fixedMaskCrop = cropVolume(vols.fixedMask, min(rangeNumbers), max(rangeNumbers) + patchSize - 1);
-                neighborMaskPatches = patchlib.vol2lib(fixedMaskCrop, patchSize);
+                neighborMaskPatches = patchlib.vol2lib(fixedMaskCrop, patchSize, patchSize - params.searchGridSize);
             end
         else
             % extract moving library
