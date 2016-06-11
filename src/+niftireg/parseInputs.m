@@ -21,6 +21,8 @@ function [vols, paths, params] = parseInputs(pathsFile, paramsFile, varargin)
     % prepare nifti data
     vols = niftireg.prepareVolumes(paths, params);
     if iscell(vols.moving)
-        assert(params.scale.nScales == numel(vols.moving), 'nScales don''t match');
+        assert(params.scale.nScales == numel(vols.moving), ...
+            sprintf('nScales don''t match: params.scale.nScales = %d, but found %d volumes', ...
+            params.scale.nScales, numel(vols.moving)));
     end
     
