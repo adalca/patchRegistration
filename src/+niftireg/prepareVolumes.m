@@ -33,7 +33,7 @@ function vols = prepareVolumes(paths, params)
         if isfield(paths.in, 'movingMask') && ~isempty(paths.in.movingMask)
             movingMask = double(nii2vol(paths.in.movingMask));
         elseif isfield(paths.in, 'movingMask')
-            fprintf('No moving mask found. Using all-ones\n');
+            if params.verbose; fprintf('No moving mask found. Using all-ones\n'); end
             movingMask = ones(size(moving));
         end
 
@@ -41,7 +41,7 @@ function vols = prepareVolumes(paths, params)
         if isfield(paths.in, 'fixedMask') && ~isempty(paths.in.fixedMask)
             fixedMask = double(nii2vol(paths.in.fixedMask));
         elseif isfield(paths.in, 'fixedMask')
-            fprintf('No fixed mask found. Using all-ones\n');
+            if params.verbose; fprintf('No fixed mask found. Using all-ones\n'); end
             fixedMask = ones(size(fixed));
         end
         
@@ -57,7 +57,7 @@ function vols = prepareVolumes(paths, params)
             movingMaskScales = eval(paths.in.movingMaskScales);
             movingMask = cellfunc(@(x) double(nii2vol(x)), movingMaskScales);
         elseif isfield(paths.in, 'movingMaskScales')
-            fprintf('No moving mask found. Using all-ones\n');
+            if params.verbose; fprintf('No moving mask found. Using all-ones\n'); end
             movingMask = cellfunc(@(x) ones(size(x)), moving);
         end
 
@@ -65,7 +65,7 @@ function vols = prepareVolumes(paths, params)
             fixedMaskScales = eval(paths.in.fixedMaskScales);
             fixedMask = cellfunc(@(x) double(nii2vol(x)), fixedMaskScales);
         elseif isfield(paths.in, 'fixedMaskScales')
-            fprintf('No fixed mask found. Using all-ones\n');
+            if params.verbose; fprintf('No fixed mask found. Using all-ones\n'); end
             fixedMask = cellfunc(@(x) ones(size(x)), fixed);
         end
     end

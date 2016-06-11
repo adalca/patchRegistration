@@ -38,7 +38,7 @@ function displ = multiscale(vols, params, varargin)
             
             % if verbose, print a bit of information
             if params.verbose
-               fprintf('multiscale: scale %d iter %d size %s\n', s, t, sprintf('%d ', scMovingSize));
+               fprintf('Starting: scale %d iter %d size %s\n', s, t, sprintf('%d ', scMovingSize));
             end
 
             % warp moving image
@@ -65,6 +65,10 @@ function displ = multiscale(vols, params, varargin)
                 filename = sprintf(params.debug.out, s, t);
                 save(filename, 'params', 'state', 'displVolumes', 'volumes');
             end 
+			
+			if params.verbose
+				fprintf('scale %d iter %d finished in %3.2f sec\n', s, t, sstime);
+			end
             
             % final warp for this iteration is the composed warp
             displ = cdispl;
