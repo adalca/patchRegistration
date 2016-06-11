@@ -90,7 +90,7 @@ function locparams = scaleParams(params, s, t)
     locparams.patchSize = locparams.patchSize(s, :);
     locparams.gridSpacing = locparams.gridSpacing(s, :);
     locparams.searchSize = locparams.searchSize(s, :);
-    if params.adaptSearchGridSpacing
+    if params.hack.adaptSearchGridSpacing
         locparams.searchGridSize = params.nInnerReps - t + 1;
     else
         locparams.searchGridSize = 1;
