@@ -39,11 +39,15 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(vols, params, varargi
     % get proposed patch displacement and cost/distances
     [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(dstvols, params);
     if isIntegerValue(params.dist.search); % only keep the top k
-        [~, si] = sort(pDst, 'ascend');
-        topkidx = si(1:params.dist.search);
-        patches = patches(:, :, topkidx);
-        pDst = pDst(:, topkidx);
-        pIdx = pIdx(:, topkidx);
+        [~, si] = sort(pDst, 2, 'ascend');
+        for xi = 1:size(pDst, 1)
+            patches(xi, :) = patches(xi, :, si(xi,:));
+            pDst(xi, :) = pDst(xi, si(xi,:));
+            pIdx(xi, :) = pIdx(xi, si(xi,:));
+        end
+        patches = patches(:, :, 1:params.dist.search);
+        pDst = pDst(:, 1:params.dist.search);
+        pIdx = pIdx(:, 1:params.dist.search);
     else
         assert(ischar(params.dist.search) && strcmp(params.dist.search, 'complete'), ...
             'dist.search can only be ''complete'' or an int');

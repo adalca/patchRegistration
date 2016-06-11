@@ -57,9 +57,6 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
     % for each point in the moving grid
     for i = 1:numel(srcIdx)
         srcsubi = srcgridsub(i, :);
-        if abs(srcsubi - [41,55,42]) < 2
-            disp('hi andreea. cat.');
-        end
             
         range = cell(1, nDims);
         for j = 1:nDims
