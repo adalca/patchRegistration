@@ -118,6 +118,18 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
                 
             case 'sparse'
                 % distance function for sparse data
+                if isfield(params.hack, 'maxThr')
+                    neighborThrIdx = neighborPatches > params.hack.maxThr;
+                    movingThrIdx = movingLibCurrent > params.hack.maxThr;
+                    
+                    % update the the mask.
+                    upNeighborMask = max((neighborPatches - params.hack.maxThr) ./ params.hack.maxThr, 0.25);
+                    movingMaskLibCurrent = max((movingLibCurrent - params.hack.maxThr) ./ params.hack.maxThr, 0.25);
+                    
+                    neighborMaskPatches(neighborThrIdx) = min(neighborMaskPatches(neighborThrIdx), upNeighborMask);
+                    movingMaskLibCurrent(movingThrIdx) = min(movingMaskLibCurrent(movingThrIdx), movingMaskLibCurrent);
+                end
+                    
                 patchDifference = bsxfun(@minus, movingLibCurrent, neighborPatches) .^2 + eps;
                 productMask = bsxfun(@times, movingMaskLibCurrent, neighborMaskPatches) + eps;
                 numeratorD = sum(productMask .* patchDifference, 2)';
