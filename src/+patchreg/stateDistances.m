@@ -133,6 +133,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
         % note we don't use 1:K, instead we use 1:numel(p) since we might allow less than K matches
         pDst(i, 1:nNeighbors) = d + dNeigh;   
         pIdx(i, 1:nNeighbors) = fixNeighborIdx;
+        
+        if all(srcsubi > 3)
+            disp('a');
+        end
     end
 end
 
