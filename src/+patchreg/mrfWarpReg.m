@@ -35,5 +35,13 @@ function [warp, quiltedPatches, quiltedpIdx] = ...
             'pIdx', pIdx, 'refgridsize', refgridsize, 'srcSize', srcSize, mrfargs{:});
         
      % get warp from optimal indeces
-     warp = idx2warp(quiltedpIdx, srcSize, patchSize, srcPatchOverlap, refgridsize);
+     nannodes = [];
+     if isfield(inputs.mrf, 'excludeNodes') && ~isempty(inputs.mrf.excludeNodes)
+         z = zeros(size(pDst, 1), 1);
+         z(inputs.mrf.excludeNodes) = 1;
+         z(z == 0) = quiltedpIdx;
+         quiltedpIdx = z;
+         nannodes = inputs.mrf.excludeNodes;
+     end
+     warp = idx2warp(quiltedpIdx, srcSize, patchSize, srcPatchOverlap, refgridsize, nannodes);
 end
