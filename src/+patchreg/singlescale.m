@@ -38,7 +38,7 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(vols, params, varargi
     
     % get proposed patch displacement and cost/distances
     [patches, pDst, pIdx, srcgridsize, refgridsize] = patchreg.stateDistances(dstvols, params);
-    if isinteger(params.dist.nStates) && isIntegerValue(params.dist.nStates); % only keep the top k
+    if isnumeric(params.dist.nStates) && isIntegerValue(params.dist.nStates); % only keep the top k
         nStates = min(size(pDst, 2), params.dist.nStates);
         [~, si] = sort(pDst, 2, 'ascend');
         for xi = 1:size(pDst, 1)
