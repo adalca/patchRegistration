@@ -146,9 +146,6 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
         pDst(i, 1:nNeighbors) = d + dNeigh;   
         pIdx(i, 1:nNeighbors) = fixNeighborIdx;
         
-        if all(srcsubi > 3)
-            disp('a');
-        end
     end
 end
 
