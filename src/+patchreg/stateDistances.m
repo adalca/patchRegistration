@@ -124,10 +124,10 @@ function  [patches, pDst, pIdx, srcgridsize, refgridsize] = stateDistances(vols,
                     
                     % update the the mask.
                     upNeighborMask = max((neighborPatches - params.hack.maxThr) ./ params.hack.maxThr, 0.25);
-                    movingMaskLibCurrent = max((movingLibCurrent - params.hack.maxThr) ./ params.hack.maxThr, 0.25);
+                    upMaskLibCurrent = max((movingLibCurrent - params.hack.maxThr) ./ params.hack.maxThr, 0.25);
                     
-                    neighborMaskPatches(neighborThrIdx) = min(neighborMaskPatches(neighborThrIdx), upNeighborMask(neighborThrIdx));
-                    movingMaskLibCurrent(movingThrIdx) = min(movingMaskLibCurrent(movingThrIdx), movingMaskLibCurrent(movingThrIdx));
+                    neighborMaskPatches(neighborThrIdx) = min(neighborMaskPatches(neighborThrIdx), upNeighborMask);
+                    movingMaskLibCurrent(movingThrIdx) = min(movingMaskLibCurrent(movingThrIdx), upMaskLibCurrent);
                 end
                     
                 patchDifference = bsxfun(@minus, movingLibCurrent, neighborPatches) .^2 + eps;
