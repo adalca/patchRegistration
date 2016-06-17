@@ -52,17 +52,17 @@ function [warp, quiltedPatches, quiltedpIdx] = singlescale(vols, params, varargi
     else
         assert(ischar(params.dist.nStates) && strcmp(params.dist.nStates, 'complete'), ...
             'dist.search can only be ''complete'' or an int');
-        
-        if isfield(params.hack, 'keepNodes') && params.hack.keepNodes > 0 % in percentage
-            assert(params.hack.keepNodes <= 100, 'keepNodes should be in (0, 100]');
-            pDstWithNans = pDst;
-            pDstWithNans(isinf(pDstWithNans)) = nan;
-            madDst = mad(pDstWithNans, 1, 2);
-            [~, si] = sort(madDst, 'ascend');
-            nExcludeNode = size(pDst, 1) * (1 - params.hack.keepNodes ./ 100);
-            
-            inputs.mrf.excludeNodes = si(1:nExcludeNode);
-        end
+    end
+    
+    if isfield(params.hack, 'keepNodes') && params.hack.keepNodes > 0 % in percentage
+        assert(params.hack.keepNodes <= 100, 'keepNodes should be in (0, 100]');
+        pDstWithNans = pDst;
+        pDstWithNans(isinf(pDstWithNans)) = nan;
+        madDst = mad(pDstWithNans, 1, 2);
+        [~, si] = sort(madDst, 'ascend');
+        nExcludeNode = size(pDst, 1) * (1 - params.hack.keepNodes ./ 100);
+
+        inputs.mrf.excludeNodes = si(1:nExcludeNode);
     end
     
     % transform patch movements to a (regularized) warp
