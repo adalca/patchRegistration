@@ -24,7 +24,7 @@ PATHS.patchRegistration = fileparts(mfilename('fullpath'));
 
 %% add paths
 allpaths = struct2cell(PATHS);
-addpath(genpath(allpaths));
+cellfun(@(p) addpath(genpath(p)), allpaths);
 
 %% settings
 % turn off backtrace for warnings.

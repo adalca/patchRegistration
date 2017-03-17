@@ -160,7 +160,7 @@ function [params, pp] = parseInputs(vols, params)
     else
         % pre-compute the moving and fixed sizes at each scale.
         % e.g. 2.^linspace(log2(32), log2(256), 4)
-        minScale = min(opts.minVolSize, min([size(moving), size(fixed)])/2);
+        minScale = min(params.scale.minVolSize, min([size(moving), size(fixed)])/2);
         pp.movingSizes = logSizes(minScale, params.scale.nScales, size(moving));
         pp.fixedSizes = logSizes(minScale, params.scale.nScales, size(fixed));
         pp.movingOrig = moving;
