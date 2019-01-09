@@ -21,7 +21,8 @@ Finally, run `registerNii('/paths/to/paths.ini', '/paths/to/params.ini')` to reg
 A wrapper for running 2D registration is in defelopment, but it should be quite easy to run `patchreg.multiscale` with a params file similar to the one in the `config` folder.
 
 ## Contact
-{adalca,abobu}@csail.mit.edu  
+The quickest way to get help is to open a [github issue](https://github.com/adalca/patchRegistration/issues).  
+Please also feel free to email us at {adalca,abobu}@csail.mit.edu  
 
 ## Reference  
 [Adrian V. Dalca](http://adalca.mit.edu), [Andreea Bobu](https://people.eecs.berkeley.edu/~abobu/), [Natalia Rost](https://www.massgeneral.org/doctors/doctor.aspx?id=17477), [Polina Golland](https://people.csail.mit.edu/polina/)  
