@@ -4,14 +4,8 @@
 %% required toolboxes
 % the following toolboxes are required for patchRegistration
 
-% mgh toolbox. available at https://github.com/adalca/mgt
-PATHS.mgt = '/path/to/mgt';
-
-% mmit toolbox. available at https://github.com/adalca/mmit
-PATHS.mmit = '/path/to/mmit';
-
-% mivt toolbox. available at https://github.com/adalca/mivt
-PATHS.mivt = '/path/to/mivt';
+% mgh toolbox. available at https://github.com/adalca/matlib
+PATHS.mgt = '/path/to/matlib';
 
 % mmit toolbox. available at https://github.com/adalca/patchlib
 PATHS.patchlib = '/path/to/patchlib';
