@@ -24,5 +24,7 @@ A wrapper for running 2D registration is in defelopment, but it should be quite 
 {adalca,abobu}@csail.mit.edu  
 
 ## Reference  
-A.V. Dalca, A. Bobu, N.S. Rost, P. Golland. Patch-Based Discrete Registration of Clinical Brain Images 
-*In Proc. MICCAI-PATCHMI Patch-based Techniques in Medical Imaging*, LNCS 9993, pp 60-67, 2016. 
+[Adrian V. Dalca](http://adalca.mit.edu), [Andreea Bobu](https://people.eecs.berkeley.edu/~abobu/), [Natalia Rost](https://www.massgeneral.org/doctors/doctor.aspx?id=17477), [Polina Golland](https://people.csail.mit.edu/polina/)  
+Patch-Based Discrete Registration of Clinical Brain Images  
+*In Proc. MICCAI-PATCHMI Patch-based Techniques in Medical Imaging*, LNCS 9993, pp 60-67, 2016.  
+[bibtex](reference.bib)
