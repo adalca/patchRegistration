@@ -25,7 +25,7 @@ The quickest way to get help is to open a [github issue](https://github.com/adal
 Please also feel free to email us at {adalca,abobu}@csail.mit.edu  
 
 ## Reference  
+**Patch-Based Discrete Registration of Clinical Brain Images**
 [Adrian V. Dalca](http://adalca.mit.edu), [Andreea Bobu](https://people.eecs.berkeley.edu/~abobu/), [Natalia Rost](https://www.massgeneral.org/doctors/doctor.aspx?id=17477), [Polina Golland](https://people.csail.mit.edu/polina/)  
-Patch-Based Discrete Registration of Clinical Brain Images  
 *In Proc. MICCAI-PATCHMI Patch-based Techniques in Medical Imaging*, LNCS 9993, pp 60-67, 2016.  
 [bibtex](reference.bib)
